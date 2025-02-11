@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Input } from "../ui/input";
 import { Button } from "../ui/button";
@@ -22,6 +22,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../ui/select";
+import { getInterviews } from "@/lib/api/interviews";
 
 interface Interview {
   id: string;
@@ -40,60 +41,26 @@ interface Interview {
   interviewer: string;
 }
 
-const mockInterviews: Interview[] = [
-  {
-    id: "1",
-    candidateName: "John Smith",
-    position: "Senior Frontend Developer",
-    date: new Date(2024, 3, 25),
-    time: "10:00 AM",
-    type: "Technical Round",
-    status: "HR round",
-    interviewer: "Alex Johnson",
-  },
-  {
-    id: "2",
-    candidateName: "Sarah Wilson",
-    position: "UX Designer",
-    date: new Date(2024, 3, 25),
-    time: "2:30 PM",
-    type: "HR Round",
-    status: "Cleared",
-    interviewer: "Emma Davis",
-  },
-  {
-    id: "3",
-    candidateName: "Michael Brown",
-    position: "Full Stack Developer",
-    date: new Date(2024, 3, 26),
-    time: "11:00 AM",
-    type: "Technical Round",
-    status: "Rejected in -2",
-    interviewer: "David Miller",
-  },
-  {
-    id: "4",
-    candidateName: "Emily Davis",
-    position: "Product Designer",
-    date: new Date(2024, 3, 24),
-    time: "3:00 PM",
-    type: "HR Round",
-    status: "Offered",
-    interviewer: "Sophie Wilson",
-  },
-  {
-    id: "5",
-    candidateName: "James Wilson",
-    position: "Backend Developer",
-    date: new Date(2024, 3, 24),
-    time: "4:30 PM",
-    type: "Technical Round",
-    status: "Rejected in screening",
-    interviewer: "Robert Taylor",
-  },
-];
+// ✅ Moved this function above the component
+function getProgressColor(status: Interview["status"]): string {
+  switch (status) {
+    case "HR round":
+      return "bg-blue-500 hover:bg-blue-600 text-white";
+    case "Cleared":
+      return "bg-green-500 hover:bg-green-600 text-white";
+    case "Rejected in screening":
+    case "Rejected -1":
+    case "Rejected in -2":
+      return "bg-red-500 hover:bg-red-600 text-white";
+    case "Offered":
+      return "bg-purple-500 hover:bg-purple-600 text-white";
+    default:
+      return "";
+  }
+}
 
 export function InterviewList() {
+  const [interviews, setInterviews] = useState<Interview[]>([]);
   const [showNotes, setShowNotes] = useState<{
     id: string;
     name: string;
@@ -103,6 +70,20 @@ export function InterviewList() {
     name: string;
   } | null>(null);
   const [showFilters, setShowFilters] = useState(false);
+
+  useEffect(() => {
+    const fetchInterviews = async () => {
+      try {
+        const data = await getInterviews();
+        console.log(data);
+        setInterviews(data);
+      } catch (error) {
+        console.error("Error fetching interviews:", error);
+      }
+    };
+
+    fetchInterviews();
+  }, []);
 
   return (
     <Card>
@@ -142,12 +123,12 @@ export function InterviewList() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {mockInterviews.map((interview) => (
+              {interviews.map((interview) => (
                 <TableRow key={interview.id}>
                   <TableCell className="font-medium">
-                    {interview.candidateName}
+                    {interview.candidates.name}
                   </TableCell>
-                  <TableCell>{interview.position}</TableCell>
+                  <TableCell> {interview.candidates.position}</TableCell>
                   <TableCell>
                     <div className="space-y-1">
                       <div>{format(interview.date, "MMM dd, yyyy")}</div>
@@ -167,7 +148,7 @@ export function InterviewList() {
                   </TableCell>
                   <TableCell>
                     <Select
-                      defaultValue={interview.status}
+                      defaultValue={interview.status || "HR round"} // ✅ Ensuring a default value exists
                       onValueChange={(value) => {
                         console.log(
                           `Changed status for ${interview.id} to ${value}`,
@@ -179,26 +160,20 @@ export function InterviewList() {
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="Rejected in screening">
-                          <Badge className="bg-red-500">
-                            Rejected in screening
-                          </Badge>
-                        </SelectItem>
-                        <SelectItem value="Rejected -1">
-                          <Badge className="bg-red-500">Rejected -1</Badge>
-                        </SelectItem>
-                        <SelectItem value="Rejected in -2">
-                          <Badge className="bg-red-500">Rejected in -2</Badge>
-                        </SelectItem>
-                        <SelectItem value="Cleared">
-                          <Badge className="bg-green-500">Cleared</Badge>
-                        </SelectItem>
-                        <SelectItem value="HR round">
-                          <Badge className="bg-blue-500">HR round</Badge>
-                        </SelectItem>
-                        <SelectItem value="Offered">
-                          <Badge className="bg-purple-500">Offered</Badge>
-                        </SelectItem>
+                        {[
+                          "Rejected in screening",
+                          "Rejected -1",
+                          "Rejected in -2",
+                          "Cleared",
+                          "HR round",
+                          "Offered",
+                        ].map((status) => (
+                          <SelectItem key={status} value={status}>
+                            <Badge className={getProgressColor(status)}>
+                              {status}
+                            </Badge>
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                   </TableCell>
@@ -235,7 +210,7 @@ export function InterviewList() {
         </div>
         <div className="flex items-center justify-between space-x-2 py-4">
           <div className="text-sm text-muted-foreground">
-            Showing {mockInterviews.length} interviews
+            Showing {interviews.length} interviews
           </div>
           <div className="flex space-x-2">
             <Button variant="outline" size="sm" disabled>
@@ -263,21 +238,4 @@ export function InterviewList() {
       />
     </Card>
   );
-}
-
-function getProgressColor(status: Interview["status"]): string {
-  switch (status) {
-    case "HR round":
-      return "bg-blue-500 hover:bg-blue-600 text-white";
-    case "Cleared":
-      return "bg-green-500 hover:bg-green-600 text-white";
-    case "Rejected in screening":
-    case "Rejected -1":
-    case "Rejected in -2":
-      return "bg-red-500 hover:bg-red-600 text-white";
-    case "Offered":
-      return "bg-purple-500 hover:bg-purple-600 text-white";
-    default:
-      return "";
-  }
 }

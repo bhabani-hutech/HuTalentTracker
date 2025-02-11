@@ -16,9 +16,9 @@ interface PipelineChartProps {
 
 export function PipelineChart({ data }: PipelineChartProps) {
   return (
-    <ResponsiveContainer width="100%" height="100%">
+    <ResponsiveContainer width="100%" height={300}>
       <BarChart
-        data={data}
+        data={data || []}
         margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
       >
         <XAxis
@@ -34,7 +34,11 @@ export function PipelineChart({ data }: PipelineChartProps) {
           tickFormatter={(value) => `${value}`}
         />
         <Tooltip />
-        <Bar dataKey="count" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+        <Bar
+          dataKey="count"
+          fill="hsl(var(--primary), 1)" // Ensure valid hsl color format
+          radius={[4, 4, 0, 0]}
+        />
       </BarChart>
     </ResponsiveContainer>
   );
