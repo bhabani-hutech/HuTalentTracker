@@ -6,6 +6,7 @@ import InterviewSchedule from "./pages/interview-schedule";
 import InterviewFeedback from "./pages/interview-feedback";
 import Settings from "./pages/settings";
 import routes from "tempo-routes";
+import { Icons } from "@/components/icons";
 
 const StatusTracking = lazy(() => import("./pages/status-tracking"));
 const AssociateOnboarding = lazy(() => import("./pages/associate-onboarding"));
@@ -20,11 +21,11 @@ import {
   Calendar,
   MessageSquare,
   ListTodo,
-  UserPlus,
   Database,
   Settings as SettingsIcon,
   Briefcase,
 } from "lucide-react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 const navigationItems: NavItem[] = [
   {
@@ -69,66 +70,60 @@ const navigationItems: NavItem[] = [
   },
 ];
 
-import { AuthProvider } from "./lib/auth/AuthContext";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { LoginForm } from "./components/auth/LoginForm";
-import { ProtectedRoute } from "./components/layout/ProtectedRoute";
-
 const queryClient = new QueryClient();
+
+function AppContent() {
+  return (
+    <div className="relative flex min-h-screen">
+      <SiteHeader items={navigationItems} />
+      <main
+        className="flex-1 transition-all duration-300 pb-14"
+        style={{ paddingLeft: "var(--sidebar-width, 250px)" }}
+      >
+        <Suspense
+          fallback={
+            <div className="flex h-screen items-center justify-center">
+              <Icons.spinner className="h-8 w-8 animate-spin" />
+            </div>
+          }
+        >
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/resume-sourcing" element={<ResumeSourcing />} />
+            <Route
+              path="/interview-scheduling"
+              element={<InterviewSchedule />}
+            />
+            <Route path="/interview-feedback" element={<InterviewFeedback />} />
+            <Route path="/status-tracking" element={<StatusTracking />} />
+            <Route
+              path="/associate-onboarding"
+              element={<AssociateOnboarding />}
+            />
+            <Route path="/settings" element={<Settings />} />
+            <Route path="/master-data" element={<Settings />} />
+            {import.meta.env.VITE_TEMPO === "true" && (
+              <>
+                <Route path="/tempobook/*" />
+                <Route
+                  path="/tempobook/preview/:id"
+                  element={<DocumentPreviewPage />}
+                />
+              </>
+            )}
+          </Routes>
+          {import.meta.env.VITE_TEMPO === "true" && useRoutes(routes)}
+        </Suspense>
+      </main>
+      <SiteFooter />
+    </div>
+  );
+}
 
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <div className="relative flex min-h-screen">
-          <SiteHeader items={navigationItems} />
-          <main
-            className="flex-1 transition-all duration-300 pb-14"
-            style={{ paddingLeft: "var(--sidebar-width, 250px)" }}
-          >
-            <Suspense fallback={<p>Loading...</p>}>
-              <Routes>
-                <Route path="/login" element={<LoginForm />} />
-                <Route
-                  path="/"
-                  element={
-                    <ProtectedRoute>
-                      <Home />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route path="/resume-sourcing" element={<ResumeSourcing />} />
-                <Route
-                  path="/interview-scheduling"
-                  element={<InterviewSchedule />}
-                />
-                <Route
-                  path="/interview-feedback"
-                  element={<InterviewFeedback />}
-                />
-                <Route path="/status-tracking" element={<StatusTracking />} />
-                <Route
-                  path="/associate-onboarding"
-                  element={<AssociateOnboarding />}
-                />
-                <Route path="/settings" element={<Settings />} />
-                <Route path="/master-data" element={<Settings />} />
-                {import.meta.env.VITE_TEMPO === "true" && (
-                  <>
-                    <Route path="/tempobook/*" />
-                    <Route
-                      path="/tempobook/preview/:id"
-                      element={<DocumentPreviewPage />}
-                    />
-                  </>
-                )}
-              </Routes>
-              {import.meta.env.VITE_TEMPO === "true" && useRoutes(routes)}
-            </Suspense>
-          </main>
-          <SiteFooter />
-        </div>
-      </AuthProvider>
+      <AppContent />
     </QueryClientProvider>
   );
 }

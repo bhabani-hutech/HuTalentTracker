@@ -19,6 +19,32 @@ export interface Candidate {
   updated_at?: string;
 }
 
+export interface InterviewFeedback {
+  id: string;
+  interview_id: string;
+  candidate_id: string;
+  interviewer_id: string;
+  technical_skills: number;
+  communication_skills: number;
+  problem_solving: number;
+  experience_fit: number;
+  cultural_fit: number;
+  strengths?: string;
+  improvements?: string;
+  recommendation:
+    | "Strong Hire"
+    | "Hire"
+    | "Maybe"
+    | "No Hire"
+    | "Strong No Hire";
+  comments?: string;
+  created_at?: string;
+  updated_at?: string;
+  interview?: Interview;
+  candidate?: Candidate;
+  interviewer?: User;
+}
+
 export interface Interview {
   id: string;
   candidate_id: string;
