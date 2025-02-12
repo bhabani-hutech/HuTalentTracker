@@ -75,7 +75,7 @@ export function InterviewList() {
     const fetchInterviews = async () => {
       try {
         const data = await getInterviews();
-        console.log(data);
+        // console.log(data);
         setInterviews(data);
       } catch (error) {
         console.error("Error fetching interviews:", error);
