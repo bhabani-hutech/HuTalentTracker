@@ -1,45 +1,31 @@
 import { supabase } from "../supabase";
-import { Interview } from "@/types/database";
+
+export type Interview = {
+  id: string;
+  interviewee_name: string;
+  interviewer: string;
+  date_time: string;
+  status: "scheduled" | "completed" | "cancelled" | "no_show";
+  created_at?: string;
+  updated_at?: string;
+};
 
 export async function getInterviews() {
   const { data, error } = await supabase
     .from("interviews")
-    .select(
-      `
-      *,
-      candidates (*),
-      users (*)
-    `,
-    )
-    .order("date", { ascending: true });
+    .select("*")
+    .order("date_time", { ascending: true });
 
   if (error) throw error;
   return data as Interview[];
 }
 
-export async function getInterviewById(id: string) {
-  const { data, error } = await supabase
-    .from("interviews")
-    .select(
-      `
-      *,
-      candidates (*),
-      users (*)
-    `,
-    )
-    .eq("id", id)
-    .single();
-
-  if (error) throw error;
-  return data as Interview;
-}
-
 export async function createInterview(
-  interviewData: Omit<Interview, "id" | "created_at" | "updated_at">,
+  interview: Omit<Interview, "id" | "created_at" | "updated_at">,
 ) {
   const { data, error } = await supabase
     .from("interviews")
-    .insert([interviewData])
+    .insert([interview])
     .select()
     .single();
 

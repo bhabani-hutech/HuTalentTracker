@@ -2,11 +2,11 @@ import { Suspense, lazy } from "react";
 import { useRoutes, Routes, Route } from "react-router-dom";
 import Home from "./components/home";
 import ResumeSourcing from "./pages/resume-sourcing";
-import InterviewSchedule from "./pages/interview-schedule";
 import InterviewFeedback from "./pages/interview-feedback";
 import Settings from "./pages/settings";
 import routes from "tempo-routes";
 import { Icons } from "@/components/icons";
+import InterviewScheduleDashboard from "./pages/interview-schedule-dashboard";
 
 const StatusTracking = lazy(() => import("./pages/status-tracking"));
 const AssociateOnboarding = lazy(() => import("./pages/associate-onboarding"));
@@ -92,7 +92,7 @@ function AppContent() {
             <Route path="/resume-sourcing" element={<ResumeSourcing />} />
             <Route
               path="/interview-scheduling"
-              element={<InterviewSchedule />}
+              element={<InterviewScheduleDashboard />}
             />
             <Route path="/interview-feedback" element={<InterviewFeedback />} />
             <Route path="/status-tracking" element={<StatusTracking />} />
