@@ -26,6 +26,7 @@ import {
   Briefcase,
 } from "lucide-react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { Toaster } from "./components/ui/toaster";
 
 const navigationItems: NavItem[] = [
   {
@@ -124,6 +125,7 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AppContent />
+      <Toaster />
     </QueryClientProvider>
   );
 }
