@@ -1,9 +1,9 @@
 import { supabase } from "../supabase";
-import { InterviewFeedback } from "@/types/database";
+import { Feedback } from "@/types/database";
 
 export async function getFeedback() {
   const { data, error } = await supabase
-    .from("interview_feedback")
+    .from("feedback")
     .select(
       `
       *,
@@ -20,12 +20,12 @@ export async function getFeedback() {
   }
 
   console.log("Feedback data:", data);
-  return data as InterviewFeedback[];
+  return data as Feedback[];
 }
 
 export async function getFeedbackById(id: string) {
   const { data, error } = await supabase
-    .from("interview_feedback")
+    .from("feedback")
     .select(
       `
       *,
@@ -38,15 +38,15 @@ export async function getFeedbackById(id: string) {
     .single();
 
   if (error) throw error;
-  return data as InterviewFeedback;
+  return data as Feedback;
 }
 
 export async function createFeedback(
-  feedbackData: Omit<InterviewFeedback, "id" | "created_at" | "updated_at">,
+  feedbackData: Omit<Feedback, "id" | "created_at" | "updated_at">,
 ) {
   console.log("Creating feedback with data:", feedbackData);
   const { data, error } = await supabase
-    .from("interview_feedback")
+    .from("feedback")
     .insert([feedbackData])
     .select(
       `
@@ -59,7 +59,7 @@ export async function createFeedback(
     .single();
 
   if (error) throw error;
-  return data as InterviewFeedback;
+  return data as Feedback;
 }
 
 export async function updateFeedback({
@@ -67,36 +67,28 @@ export async function updateFeedback({
   updates,
 }: {
   id: string;
-  updates: Partial<Omit<InterviewFeedback, "id" | "created_at" | "updated_at">>;
+  updates: Partial<Omit<Feedback, "id" | "created_at" | "updated_at">>;
 }) {
-  alert("Feedback saved successfully! ");
-  alert("Updating feedback with ID:", id);
-  console.log("Updating feedback with ID:", id);
-  alert("Update Data Before Filtering:", updates);
-
   // Filter out undefined values
   const filteredUpdates = Object.fromEntries(
     Object.entries(updates).filter(([_, v]) => v !== undefined),
   );
 
-  alert("Final Update Data:", filteredUpdates).id;
-
   // Check if feedback exists
   const { data: existingFeedback, error: fetchError } = await supabase
-    .from("interview_feedback")
+    .from("feedback")
     .select("*")
     .eq("id", id)
     .single();
 
   if (fetchError) {
     console.error("Feedback not found:", fetchError);
-    alert("Feedback not found:", fetchError);
     throw fetchError;
   }
 
   // Perform the update
   const { data, error } = await supabase
-    .from("interview_feedback")
+    .from("feedback")
     .update(filteredUpdates)
     .eq("id", id)
     .select("*")
@@ -104,10 +96,9 @@ export async function updateFeedback({
 
   if (error) {
     console.error("Error updating feedback:", error);
-    alert("Error updating feedback:", error);
     throw error;
   }
 
   console.log("Feedback updated successfully:", data);
-  return data as InterviewFeedback;
+  return data as Feedback;
 }
