@@ -86,6 +86,10 @@ export function InterviewFeedbackForm({ existingFeedback, onClose }: Props) {
     (i) => i.id === formData.interview_id,
   );
 
+  const selectedInterviewer = interviewers?.find(
+    (i) => i.id === formData.interviewer_id,
+  );
+
   const handleSubmit = async () => {
     try {
       if (!formData.interviewer_id) {
@@ -114,7 +118,7 @@ export function InterviewFeedbackForm({ existingFeedback, onClose }: Props) {
         }
 
         alert("Feedback saved successfully!");
-        onClose?.();
+        window.location.href = "/interview-feedback";
       } catch (error) {
         console.error("Error saving feedback:", error);
         alert("Error saving feedback");
@@ -145,23 +149,31 @@ export function InterviewFeedbackForm({ existingFeedback, onClose }: Props) {
       <div className="grid gap-4 md:grid-cols-2">
         <div className="space-y-2">
           <Label>Candidate Name</Label>
-          <Select
-            value={formData.candidate_id}
-            onValueChange={(value) =>
-              setFormData({ ...formData, candidate_id: value })
-            }
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Select candidate" />
-            </SelectTrigger>
-            <SelectContent>
-              {candidates?.map((candidate) => (
-                <SelectItem key={candidate.id} value={candidate.id}>
-                  {candidate.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          {existingFeedback ? (
+            <Input
+              value={selectedCandidate?.name || ""}
+              disabled
+              placeholder="Candidate name"
+            />
+          ) : (
+            <Select
+              value={formData.candidate_id}
+              onValueChange={(value) =>
+                setFormData({ ...formData, candidate_id: value })
+              }
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select candidate" />
+              </SelectTrigger>
+              <SelectContent>
+                {candidates?.map((candidate) => (
+                  <SelectItem key={candidate.id} value={candidate.id}>
+                    {candidate.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
         </div>
 
         <div className="space-y-2">
@@ -177,39 +189,70 @@ export function InterviewFeedbackForm({ existingFeedback, onClose }: Props) {
       <div className="grid gap-4 md:grid-cols-2">
         <div className="space-y-2">
           <Label>Interviewer</Label>
-          <Select
-            value={formData.interviewer_id}
-            onValueChange={(value) =>
-              setFormData({ ...formData, interviewer_id: value })
-            }
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Select interviewer" />
-            </SelectTrigger>
-            <SelectContent>
-              {interviewers?.map((interviewer) => (
-                <SelectItem key={interviewer.id} value={interviewer.id}>
-                  {interviewer.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          {existingFeedback ? (
+            <Input
+              value={selectedInterviewer?.name || ""}
+              disabled
+              placeholder="Interviewer name"
+            />
+          ) : (
+            <Select
+              value={formData.interviewer_id}
+              onValueChange={(value) =>
+                setFormData({ ...formData, interviewer_id: value })
+              }
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select interviewer" />
+              </SelectTrigger>
+              <SelectContent>
+                {interviewers?.map((interviewer) => (
+                  <SelectItem key={interviewer.id} value={interviewer.id}>
+                    {interviewer.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
         </div>
 
         <div className="space-y-2">
           <Label>Interview Date & Time</Label>
-          <Input
-            type="text"
-            value={
-              selectedInterview
-                ? format(new Date(selectedInterview.date), "PPp") +
-                  " - " +
-                  selectedInterview.type
-                : ""
-            }
-            disabled
-            placeholder="Interview details will be shown here"
-          />
+          {existingFeedback ? (
+            <Input
+              type="text"
+              value={
+                selectedInterview
+                  ? format(new Date(selectedInterview.date), "PPp") +
+                    " - " +
+                    selectedInterview.type
+                  : ""
+              }
+              disabled
+              placeholder="Interview details"
+            />
+          ) : (
+            <Select
+              value={formData.interview_id}
+              onValueChange={(value) =>
+                setFormData({ ...formData, interview_id: value })
+              }
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select interview" />
+              </SelectTrigger>
+              <SelectContent>
+                {interviews
+                  ?.filter((i) => i.candidate_id === formData.candidate_id)
+                  .map((interview) => (
+                    <SelectItem key={interview.id} value={interview.id}>
+                      {format(new Date(interview.date), "PPp")} -{" "}
+                      {interview.type}
+                    </SelectItem>
+                  ))}
+              </SelectContent>
+            </Select>
+          )}
         </div>
       </div>
 
@@ -289,9 +332,17 @@ export function InterviewFeedbackForm({ existingFeedback, onClose }: Props) {
         />
       </div>
 
-      <Button onClick={handleSubmit} className="w-full">
-        {existingFeedback ? "Update Feedback" : "Submit Feedback"}
-      </Button>
+      <div className="flex gap-4 justify-end">
+        <Button
+          variant="outline"
+          onClick={() => (window.location.href = "/interview-feedback")}
+        >
+          Cancel
+        </Button>
+        <Button onClick={handleSubmit}>
+          {existingFeedback ? "Update Feedback" : "Submit Feedback"}
+        </Button>
+      </div>
     </div>
   );
 }

@@ -69,9 +69,17 @@ export async function updateFeedback({
   id: string;
   updates: Partial<Omit<Feedback, "id" | "created_at" | "updated_at">>;
 }) {
-  // Filter out undefined values
-  const filteredUpdates: Record<string, unknown> = Object.fromEntries(
-    Object.entries(updates).filter(([_, v]) => v !== undefined),
+  updates.candidate = undefined;
+  updates.interviewer = undefined;
+  updates.interview = undefined;
+
+  // Filter out undefined values and excluded keys
+  const filteredUpdates = Object.fromEntries(
+    Object.entries(updates).filter(
+      ([key, value]) =>
+        value !== undefined &&
+        !["candidate_id", "interview_id", "interviewer_id"].includes(key),
+    ),
   );
 
   // Check if feedback exists
@@ -81,9 +89,9 @@ export async function updateFeedback({
     .eq("id", id)
     .single();
 
-  if (fetchError || !existingFeedback) {
-    console.error("Feedback not found or error fetching it:", fetchError);
-    throw new Error("Feedback not found.");
+  if (fetchError) {
+    console.error("Feedback not found:", fetchError);
+    throw fetchError;
   }
 
   // Perform the update
@@ -96,7 +104,7 @@ export async function updateFeedback({
 
   if (error) {
     console.error("Error updating feedback:", error);
-    throw new Error("Failed to update feedback.");
+    throw error;
   }
 
   console.log("Feedback updated successfully:", data);
