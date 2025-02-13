@@ -1,5 +1,10 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { getFeedback, createFeedback, updateFeedback } from "../feedback";
+import {
+  getFeedback,
+  createFeedback,
+  updateFeedback,
+  deleteFeedback,
+} from "../feedback";
 import { InterviewFeedback } from "@/types/database";
 import { useEffect } from "react";
 import { supabase } from "@/lib/supabase";
@@ -27,12 +32,14 @@ export function useFeedback() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["feedback"] }),
   });
 
+  const deleteMutation = useMutation({
+    mutationFn: deleteFeedback,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["feedback"] }),
+  });
+
   const updateMutation = useMutation({
     mutationFn: updateFeedback,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["feedback"] });
-      window.location.reload();
-    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["feedback"] }),
   });
 
   // Set up real-time subscription
@@ -59,5 +66,6 @@ export function useFeedback() {
     error,
     createFeedback: createMutation.mutate,
     updateFeedback: updateMutation.mutate,
+    deleteFeedback: deleteMutation.mutate,
   };
 }

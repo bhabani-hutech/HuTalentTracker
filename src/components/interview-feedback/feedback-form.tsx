@@ -118,7 +118,7 @@ export function InterviewFeedbackForm({ existingFeedback, onClose }: Props) {
         }
 
         alert("Feedback saved successfully!");
-        window.location.href = "/interview-feedback";
+        if (onClose) onClose();
       } catch (error) {
         console.error("Error saving feedback:", error);
         alert("Error saving feedback");
@@ -151,7 +151,7 @@ export function InterviewFeedbackForm({ existingFeedback, onClose }: Props) {
           <Label>Candidate Name</Label>
           {existingFeedback ? (
             <Input
-              value={selectedCandidate?.name || ""}
+              value={existingFeedback.candidate?.name || ""}
               disabled
               placeholder="Candidate name"
             />
@@ -179,7 +179,11 @@ export function InterviewFeedbackForm({ existingFeedback, onClose }: Props) {
         <div className="space-y-2">
           <Label>Position</Label>
           <Input
-            value={selectedCandidate?.position || ""}
+            value={
+              existingFeedback?.candidate?.position ||
+              selectedCandidate?.position ||
+              ""
+            }
             disabled
             placeholder="Position will be shown here"
           />
@@ -191,7 +195,7 @@ export function InterviewFeedbackForm({ existingFeedback, onClose }: Props) {
           <Label>Interviewer</Label>
           {existingFeedback ? (
             <Input
-              value={selectedInterviewer?.name || ""}
+              value={existingFeedback.interviewer?.name || ""}
               disabled
               placeholder="Interviewer name"
             />
@@ -218,41 +222,24 @@ export function InterviewFeedbackForm({ existingFeedback, onClose }: Props) {
 
         <div className="space-y-2">
           <Label>Interview Date & Time</Label>
-          {existingFeedback ? (
-            <Input
-              type="text"
-              value={
-                selectedInterview
+          <Input
+            type="text"
+            value={
+              existingFeedback?.interview
+                ? format(new Date(existingFeedback.interview.date), "PPp") +
+                  (existingFeedback.interview.type
+                    ? ` - ${existingFeedback.interview.type}`
+                    : "")
+                : selectedInterview
                   ? format(new Date(selectedInterview.date), "PPp") +
-                    " - " +
-                    selectedInterview.type
+                    (selectedInterview.type
+                      ? ` - ${selectedInterview.type}`
+                      : "")
                   : ""
-              }
-              disabled
-              placeholder="Interview details"
-            />
-          ) : (
-            <Select
-              value={formData.interview_id}
-              onValueChange={(value) =>
-                setFormData({ ...formData, interview_id: value })
-              }
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select interview" />
-              </SelectTrigger>
-              <SelectContent>
-                {interviews
-                  ?.filter((i) => i.candidate_id === formData.candidate_id)
-                  .map((interview) => (
-                    <SelectItem key={interview.id} value={interview.id}>
-                      {format(new Date(interview.date), "PPp")} -{" "}
-                      {interview.type}
-                    </SelectItem>
-                  ))}
-              </SelectContent>
-            </Select>
-          )}
+            }
+            disabled
+            placeholder="Interview details"
+          />
         </div>
       </div>
 
@@ -333,10 +320,7 @@ export function InterviewFeedbackForm({ existingFeedback, onClose }: Props) {
       </div>
 
       <div className="flex gap-4 justify-end">
-        <Button
-          variant="outline"
-          onClick={() => (window.location.href = "/interview-feedback")}
-        >
+        <Button variant="outline" onClick={onClose}>
           Cancel
         </Button>
         <Button onClick={handleSubmit}>

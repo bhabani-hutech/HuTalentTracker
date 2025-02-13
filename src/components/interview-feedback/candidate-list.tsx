@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Input } from "../ui/input";
 import { Button } from "../ui/button";
-import { Search, Filter, PenSquare } from "lucide-react";
+import { Search, Filter, PenSquare, Trash2 } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -19,11 +19,26 @@ interface CandidateListProps {
   feedbackData: InterviewFeedback[];
 }
 
+import { format } from "date-fns";
+import { useFeedback } from "@/lib/api/hooks/useFeedback";
+
 export function CandidateList({
   onFeedback,
   feedbackData,
 }: CandidateListProps) {
   const [searchQuery, setSearchQuery] = useState("");
+  const { deleteFeedback } = useFeedback();
+
+  const handleDelete = async (id: string) => {
+    if (window.confirm("Are you sure you want to delete this feedback?")) {
+      try {
+        await deleteFeedback(id);
+      } catch (error) {
+        console.error("Error deleting feedback:", error);
+        alert("Error deleting feedback");
+      }
+    }
+  };
 
   const filteredFeedback =
     feedbackData?.filter((feedback) => {
@@ -81,7 +96,9 @@ export function CandidateList({
                   </TableCell>
                   <TableCell>{feedback.candidate?.position}</TableCell>
                   <TableCell>
-                    {new Date(feedback.created_at || "").toLocaleDateString()}
+                    {feedback.interview?.date
+                      ? format(new Date(feedback.interview.date), "PPp")
+                      : "N/A"}
                   </TableCell>
                   <TableCell>{feedback.interviewer?.name}</TableCell>
                   <TableCell>
@@ -101,6 +118,13 @@ export function CandidateList({
                         onClick={() => onFeedback(feedback)}
                       >
                         <PenSquare className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleDelete(feedback.id)}
+                      >
+                        <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>
                   </TableCell>

@@ -62,6 +62,17 @@ export async function createFeedback(
   return data as Feedback;
 }
 
+export async function deleteFeedback(id: string) {
+  const { error } = await supabase.from("feedback").delete().eq("id", id);
+
+  if (error) {
+    console.error("Error deleting feedback:", error);
+    throw error;
+  }
+
+  return true;
+}
+
 export async function updateFeedback({
   id,
   updates,
@@ -69,6 +80,9 @@ export async function updateFeedback({
   id: string;
   updates: Partial<Omit<Feedback, "id" | "created_at" | "updated_at">>;
 }) {
+  const candidate = updates.candidate;
+  const interviewer = updates.interviewer;
+  const interview = updates.interview;
   updates.candidate = undefined;
   updates.interviewer = undefined;
   updates.interview = undefined;
@@ -101,6 +115,10 @@ export async function updateFeedback({
     .eq("id", id)
     .select("*")
     .single();
+
+  data.candidate = candidate;
+  data.interview = interview;
+  data.interviewer = interviewer;
 
   if (error) {
     console.error("Error updating feedback:", error);
