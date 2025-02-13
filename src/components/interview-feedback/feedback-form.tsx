@@ -48,7 +48,8 @@ export function InterviewFeedbackForm({
           comments: existingFeedback.comments || "",
           candidate_id: existingFeedback.candidate_id || "",
           interviewer_id: existingFeedback.interviewer_id || "",
-          interview_id: existingFeedback.interview_id || "",
+          interview_id:
+            existingFeedback.interview_id || selectedInterviewId || "",
         }
       : {
           technical_skills: 0,
@@ -62,7 +63,7 @@ export function InterviewFeedbackForm({
           comments: "",
           candidate_id: "",
           interviewer_id: "",
-          interview_id: "",
+          interview_id: selectedInterviewId || "",
         },
   );
 
@@ -73,39 +74,37 @@ export function InterviewFeedbackForm({
       if (interview) {
         setFormData((prev) => ({
           ...prev,
-          interview_id: interview.id,
-          candidate_id: interview.candidate_id,
-          interviewer_id: interview.interviewer_id,
+          interview_id: selectedInterviewId,
+          candidate_id: interview.candidate_id || prev.candidate_id,
+          interviewer_id: interview.interviewer_id || prev.interviewer_id,
         }));
       }
     }
   }, [selectedInterviewId, interviews]);
 
-  const selectedCandidate = candidates?.find(
-    (c) => c.id === formData.candidate_id,
-  );
-
   const selectedInterview = interviews?.find(
     (i) => i.id === formData.interview_id,
   );
 
-  const selectedInterviewer = interviewers?.find(
-    (i) => i.id === formData.interviewer_id,
-  );
-
   const handleSubmit = async () => {
     try {
-      if (!formData.interviewer_id) {
+      // Ensure interview_id is set from selectedInterviewId
+      const submissionData = {
+        ...formData,
+        interview_id: selectedInterviewId || formData.interview_id,
+      };
+
+      if (!submissionData.interviewer_id) {
         alert("Please select an interviewer");
         return;
       }
 
-      if (!formData.candidate_id) {
+      if (!submissionData.candidate_id) {
         alert("Please select a candidate");
         return;
       }
 
-      if (!formData.interview_id) {
+      if (!submissionData.interview_id) {
         alert("Please select an interview");
         return;
       }
@@ -114,10 +113,10 @@ export function InterviewFeedbackForm({
         if (existingFeedback?.id) {
           await updateFeedback({
             id: existingFeedback.id,
-            updates: formData,
+            updates: submissionData,
           });
         } else {
-          await createFeedback(formData as any);
+          await createFeedback(submissionData as any);
         }
 
         alert("Feedback saved successfully!");
@@ -152,31 +151,15 @@ export function InterviewFeedbackForm({
       <div className="grid gap-4 md:grid-cols-2">
         <div className="space-y-2">
           <Label>Candidate Name</Label>
-          {existingFeedback ? (
-            <Input
-              value={existingFeedback.candidate?.name || ""}
-              disabled
-              placeholder="Candidate name"
-            />
-          ) : (
-            <Select
-              value={formData.candidate_id}
-              onValueChange={(value) =>
-                setFormData({ ...formData, candidate_id: value })
-              }
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select candidate" />
-              </SelectTrigger>
-              <SelectContent>
-                {candidates?.map((candidate) => (
-                  <SelectItem key={candidate.id} value={candidate.id}>
-                    {candidate.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          )}
+          <Input
+            value={
+              existingFeedback?.candidate?.name ||
+              candidates?.find((c) => c.id === formData.candidate_id)?.name ||
+              ""
+            }
+            disabled
+            placeholder="Candidate name"
+          />
         </div>
 
         <div className="space-y-2">
@@ -184,7 +167,8 @@ export function InterviewFeedbackForm({
           <Input
             value={
               existingFeedback?.candidate?.position ||
-              selectedCandidate?.position ||
+              candidates?.find((c) => c.id === formData.candidate_id)
+                ?.position ||
               ""
             }
             disabled
@@ -196,31 +180,16 @@ export function InterviewFeedbackForm({
       <div className="grid gap-4 md:grid-cols-2">
         <div className="space-y-2">
           <Label>Interviewer</Label>
-          {existingFeedback ? (
-            <Input
-              value={existingFeedback.interviewer?.name || ""}
-              disabled
-              placeholder="Interviewer name"
-            />
-          ) : (
-            <Select
-              value={formData.interviewer_id}
-              onValueChange={(value) =>
-                setFormData({ ...formData, interviewer_id: value })
-              }
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select interviewer" />
-              </SelectTrigger>
-              <SelectContent>
-                {interviewers?.map((interviewer) => (
-                  <SelectItem key={interviewer.id} value={interviewer.id}>
-                    {interviewer.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          )}
+          <Input
+            value={
+              existingFeedback?.interviewer?.name ||
+              interviewers?.find((i) => i.id === formData.interviewer_id)
+                ?.name ||
+              ""
+            }
+            disabled
+            placeholder="Interviewer name"
+          />
         </div>
 
         <div className="space-y-2">
@@ -233,10 +202,17 @@ export function InterviewFeedbackForm({
                   (existingFeedback.interview.type
                     ? ` - ${existingFeedback.interview.type}`
                     : "")
-                : selectedInterview
-                  ? format(new Date(selectedInterview.date), "PPp") +
-                    (selectedInterview.type
-                      ? ` - ${selectedInterview.type}`
+                : interviews?.find((i) => i.id === selectedInterviewId)
+                  ? format(
+                      new Date(
+                        interviews.find(
+                          (i) => i.id === selectedInterviewId,
+                        ).date,
+                      ),
+                      "PPp",
+                    ) +
+                    (interviews.find((i) => i.id === selectedInterviewId).type
+                      ? ` - ${interviews.find((i) => i.id === selectedInterviewId).type}`
                       : "")
                   : ""
             }
