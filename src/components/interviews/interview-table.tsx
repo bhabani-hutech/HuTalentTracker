@@ -38,13 +38,17 @@ export function InterviewTable({
 
   const getStatusColor = (status: Interview["status"]) => {
     switch (status) {
-      case "scheduled":
+      case "Offered":
         return "bg-blue-500 hover:bg-blue-600";
-      case "completed":
-        return "bg-green-500 hover:bg-green-600";
-      case "cancelled":
+        case "Cleared":
+          return "bg-green-500 hover:bg-green-600";
+      case "Rejected in screening":
         return "bg-red-500 hover:bg-red-600";
-      case "no_show":
+        case "Rejected -1":
+          return "bg-red-500 hover:bg-red-600";
+          case "Rejected in -2":
+          return "bg-red-500 hover:bg-red-600";
+      case "HR round":
         return "bg-yellow-500 hover:bg-yellow-600";
       default:
         return "bg-gray-500 hover:bg-gray-600";
