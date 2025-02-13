@@ -20,9 +20,14 @@ import { format } from "date-fns";
 interface Props {
   existingFeedback?: InterviewFeedback;
   onClose?: () => void;
+  selectedInterviewId?: string | null;
 }
 
-export function InterviewFeedbackForm({ existingFeedback, onClose }: Props) {
+export function InterviewFeedbackForm({
+  existingFeedback,
+  onClose,
+  selectedInterviewId,
+}: Props) {
   const { createFeedback, updateFeedback } = useFeedback();
   const { data: interviewers } = useInterviewers();
   const { data: candidates } = useCandidates();
@@ -61,12 +66,10 @@ export function InterviewFeedbackForm({ existingFeedback, onClose }: Props) {
         },
   );
 
-  // Get interview ID from URL if present
+  // Set form data when selected interview changes
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const interviewId = params.get("interview");
-    if (interviewId) {
-      const interview = interviews?.find((i) => i.id === interviewId);
+    if (selectedInterviewId && interviews) {
+      const interview = interviews.find((i) => i.id === selectedInterviewId);
       if (interview) {
         setFormData((prev) => ({
           ...prev,
@@ -76,7 +79,7 @@ export function InterviewFeedbackForm({ existingFeedback, onClose }: Props) {
         }));
       }
     }
-  }, [interviews]);
+  }, [selectedInterviewId, interviews]);
 
   const selectedCandidate = candidates?.find(
     (c) => c.id === formData.candidate_id,

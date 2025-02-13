@@ -7,6 +7,7 @@ import {
   DialogFooter,
 } from "../ui/dialog";
 import { Button } from "../ui/button";
+import { FileText } from "lucide-react";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
 import {
@@ -78,9 +79,23 @@ export function InterviewForm({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>
-            {initialData ? "Edit Interview" : "Schedule New Interview"}
-          </DialogTitle>
+          <div className="flex items-center justify-between">
+            <DialogTitle>
+              {initialData ? "Edit Interview" : "Schedule New Interview"}
+            </DialogTitle>
+            {initialData && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() =>
+                  (window.location.href = `/interview-feedback?interview=${initialData.id}`)
+                }
+              >
+                <FileText className="h-4 w-4 mr-2" />
+                Add Feedback
+              </Button>
+            )}
+          </div>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">

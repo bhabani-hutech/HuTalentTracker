@@ -2,7 +2,13 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Input } from "../ui/input";
 import { Button } from "../ui/button";
-import { Search, Filter, MessageSquare, Calendar } from "lucide-react";
+import {
+  Search,
+  Filter,
+  MessageSquare,
+  Calendar,
+  FileText,
+} from "lucide-react";
 import {
   Table,
   TableBody,
@@ -84,7 +90,9 @@ export function InterviewList() {
 
     fetchInterviews();
   }, []);
-  {console.log(interviews)}
+  {
+    console.log(interviews);
+  }
   return (
     <Card>
       <CardHeader>
@@ -123,7 +131,6 @@ export function InterviewList() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              
               {interviews.map((interview) => (
                 <TableRow key={interview.id}>
                   <TableCell className="font-medium">
@@ -179,6 +186,16 @@ export function InterviewList() {
                     </Select>
                   </TableCell>
                   <TableCell className="text-right space-x-2">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => {
+                        window.location.href = `/interview-feedback?interview=${interview.id}`;
+                      }}
+                    >
+                      <FileText className="h-4 w-4" />
+                      <span className="sr-only">Add Feedback</span>
+                    </Button>
                     <Button
                       variant="ghost"
                       size="icon"

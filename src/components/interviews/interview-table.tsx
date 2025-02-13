@@ -10,7 +10,7 @@ import {
 } from "../ui/table";
 import { Badge } from "../ui/badge";
 import { format } from "date-fns";
-import { Pencil, Trash2, MessageSquare } from "lucide-react";
+import { Pencil, Trash2, MessageSquare, FileText } from "lucide-react";
 import { Interview } from "@/lib/api/interviews";
 import {
   AlertDialog,
@@ -40,14 +40,14 @@ export function InterviewTable({
     switch (status) {
       case "Offered":
         return "bg-blue-500 hover:bg-blue-600";
-        case "Cleared":
-          return "bg-green-500 hover:bg-green-600";
+      case "Cleared":
+        return "bg-green-500 hover:bg-green-600";
       case "Rejected in screening":
         return "bg-red-500 hover:bg-red-600";
-        case "Rejected -1":
-          return "bg-red-500 hover:bg-red-600";
-          case "Rejected in -2":
-          return "bg-red-500 hover:bg-red-600";
+      case "Rejected -1":
+        return "bg-red-500 hover:bg-red-600";
+      case "Rejected in -2":
+        return "bg-red-500 hover:bg-red-600";
       case "HR round":
         return "bg-yellow-500 hover:bg-yellow-600";
       default:
@@ -101,11 +101,12 @@ export function InterviewTable({
                   <Button
                     variant="ghost"
                     size="icon"
-                    onClick={() =>
-                      (window.location.href = `/interview-feedback/new?interview=${interview.id}`)
-                    }
+                    onClick={() => {
+                      window.location.href = `/interview-feedback?interview=${interview.id}`;
+                    }}
                   >
-                    <MessageSquare className="h-4 w-4" />
+                    <FileText className="h-4 w-4" />
+                    <span className="sr-only">Add Feedback</span>
                   </Button>
                   <Button
                     variant="ghost"
