@@ -84,7 +84,7 @@ export function InterviewList() {
 
     fetchInterviews();
   }, []);
-
+  {console.log(interviews)}
   return (
     <Card>
       <CardHeader>
@@ -123,6 +123,7 @@ export function InterviewList() {
               </TableRow>
             </TableHeader>
             <TableBody>
+              
               {interviews.map((interview) => (
                 <TableRow key={interview.id}>
                   <TableCell className="font-medium">

@@ -13,16 +13,30 @@ import {
   getRecentActivities,
 } from "@/lib/api/dashboard";
 
+interface Metrics {
+  openPositions: number;
+  activeCandidates: number;
+  interviewsThisWeek: number;
+  offersAccepted: number;
+}
+
+interface Activity {
+  type: string;
+  message: string;
+  date: string;
+}
+
 function Home() {
   const [date, setDate] = useState<DateRange | undefined>();
-  const [metrics, setMetrics] = useState({
+  const [metrics, setMetrics] = useState<Metrics>({
     openPositions: 0,
     activeCandidates: 0,
     interviewsThisWeek: 0,
     offersAccepted: 0,
   });
-  const [pipelineData, setPipelineData] = useState([]);
-  const [activities, setActivities] = useState([]);
+  const [pipelineData, setPipelineData] = useState<any[]>([]);
+  const [activities, setActivities] = useState<Activity[]>([]);
+  const [error, setError] = useState("");
 
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -32,17 +46,19 @@ function Home() {
           getRecruitmentPipeline(),
           getRecentActivities(),
         ]);
-
+        console.log(pipelineData);
         setMetrics(metricsData);
         setPipelineData(pipelineData);
-        setActivities(activitiesData);
+        setActivities(activitiesData); // Store the full activity object
+        setError(""); // Clear any previous errors
       } catch (error) {
         console.error("Error fetching dashboard data:", error);
+        setError("Failed to load dashboard data. Please try again later.");
       }
     };
-
     fetchDashboardData();
-  }, []);
+  }, [date]);
+
   return (
     <div className="container py-8 space-y-8">
       <div className="flex flex-col gap-8 md:flex-row md:items-center md:justify-between">
@@ -56,6 +72,12 @@ function Home() {
         </div>
         <DashboardFilters />
       </div>
+
+      {/* Date Range Picker */}
+      <DateRangePicker date={date} onDateChange={setDate} />
+
+      {/* Error Message */}
+      {error && <p className="text-red-600">{error}</p>}
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <MetricCard
@@ -91,7 +113,7 @@ function Home() {
           </CardHeader>
           <CardContent>
             <div className="h-[300px]">
-              <PipelineChart />
+              <PipelineChart data={pipelineData} />
             </div>
           </CardContent>
         </Card>
@@ -102,17 +124,25 @@ function Home() {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {[
-                "New application for Senior Developer position",
-                "Interview scheduled with John Doe",
-                "Offer letter sent to Jane Smith",
-                "Background verification completed for Mike Johnson",
-              ].map((activity, i) => (
-                <div key={i} className="flex items-center gap-2">
-                  <Layers className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm">{activity}</span>
-                </div>
-              ))}
+              {activities.length === 0 ? (
+                <p className="text-muted-foreground">No recent activities.</p>
+              ) : (
+                activities.map((activity, i) => (
+                  <div
+                    key={i}
+                    className="flex flex-col gap-1 p-2 border rounded-md"
+                  >
+                    <div className="flex items-center gap-2">
+                      <Layers className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-sm font-bold">{activity.type}</span>
+                    </div>
+                    <p className="text-sm">{activity.message}</p>
+                    <span className="text-xs text-muted-foreground">
+                      {new Date(activity.date).toLocaleString()}
+                    </span>
+                  </div>
+                ))
+              )}
             </div>
           </CardContent>
         </Card>

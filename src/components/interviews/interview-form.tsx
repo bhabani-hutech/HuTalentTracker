@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -37,15 +37,36 @@ export function InterviewForm({
   const { data: interviewers } = useInterviewers();
   const { data: candidates } = useCandidates();
 
-  const [formData, setFormData] = useState<Partial<Interview>>(
-    initialData || {
-      candidate_id: "",
-      interviewer_id: "",
-      date: format(new Date(), "yyyy-MM-dd'T'HH:mm"),
-      type: "technical",
-      status: "scheduled",
-    },
-  );
+  // Set default form state for a new interview or edit
+  const [formData, setFormData] = useState<Partial<Interview>>({
+    candidate_id: "",
+    interviewer_id: "",
+    date: format(new Date(), "yyyy-MM-dd'T'HH:mm"),
+    type: "technical",
+    status: "Offered",
+  });
+
+  // Populate form data if editing
+  useEffect(() => {
+    if (isOpen && initialData) {
+      setFormData({
+        candidate_id: initialData.candidate_id,
+        interviewer_id: initialData.interviewer_id,
+        date: format(new Date(initialData.date), "yyyy-MM-dd'T'HH:mm"),
+        type: initialData.type.toLowerCase(),
+        status: initialData.status,
+      });
+    } else if (isOpen && !initialData) {
+      // Clear data when opening for new interview
+      setFormData({
+        candidate_id: "",
+        interviewer_id: "",
+        date: format(new Date(), "yyyy-MM-dd'T'HH:mm"),
+        type: "technical",
+        status: "Offered",
+      });
+    }
+  }, [isOpen, initialData]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
