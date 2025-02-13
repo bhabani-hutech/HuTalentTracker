@@ -6,28 +6,8 @@ import { useFeedback } from "@/lib/api/hooks/useFeedback";
 import { Icons } from "@/components/icons";
 
 export default function InterviewFeedback() {
-  const [selectedCandidate, setSelectedCandidate] = useState(null);
+  const [selectedFeedback, setSelectedFeedback] = useState(null);
   const { feedback, isLoading, error } = useFeedback();
-
-  console.log("Selected Candidate:", selectedCandidate);
-  console.log("Feedback Data:", feedback);
-  console.log("selectedCandidate?.id", selectedCandidate?.id);
-  const handleFeedbackSubmit = async (feedbackData) => {
-    try {
-      if (selectedCandidate?.id) {
-        await updateFeedback({
-          id: selectedCandidate.id,
-          updates: feedbackData,
-        });
-      } else {
-        await createFeedback(feedbackData);
-      }
-      setSelectedCandidate(null);
-    } catch (error) {
-      console.error("Error saving feedback:", error);
-      alert("Error saving feedback");
-    }
-  };
 
   if (isLoading) {
     return (
@@ -55,24 +35,33 @@ export default function InterviewFeedback() {
           Submit and review candidate interview feedback
         </p>
       </div>
-      <CandidateList
-        onFeedback={setSelectedCandidate}
-        feedbackData={feedback}
-      />
 
-      <Dialog
-        open={!!selectedCandidate}
-        onOpenChange={() => setSelectedCandidate(null)}
-      >
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+      {window.location.pathname === "/interview-feedback/new" ? (
+        <div className="max-w-4xl mx-auto">
           <InterviewFeedbackForm
-            candidate={selectedCandidate}
-            existingFeedback={feedback?.find(
-              (f) => f.candidate_id === selectedCandidate?.id,
-            )}
+            onClose={() => (window.location.href = "/interview-feedback")}
           />
-        </DialogContent>
-      </Dialog>
+        </div>
+      ) : (
+        <>
+          <CandidateList
+            onFeedback={setSelectedFeedback}
+            feedbackData={feedback}
+          />
+
+          <Dialog
+            open={!!selectedFeedback}
+            onOpenChange={() => setSelectedFeedback(null)}
+          >
+            <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+              <InterviewFeedbackForm
+                existingFeedback={selectedFeedback}
+                onClose={() => setSelectedFeedback(null)}
+              />
+            </DialogContent>
+          </Dialog>
+        </>
+      )}
     </div>
   );
 }
