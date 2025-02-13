@@ -10,7 +10,7 @@ import {
 } from "../ui/table";
 import { Badge } from "../ui/badge";
 import { format } from "date-fns";
-import { Pencil, Trash2 } from "lucide-react";
+import { Pencil, Trash2, MessageSquare } from "lucide-react";
 import { Interview } from "@/lib/api/interviews";
 import {
   AlertDialog,
@@ -57,8 +57,10 @@ export function InterviewTable({
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Interviewee</TableHead>
+              <TableHead>Candidate</TableHead>
+              <TableHead>Position</TableHead>
               <TableHead>Interviewer</TableHead>
+              <TableHead>Type</TableHead>
               <TableHead>Date & Time</TableHead>
               <TableHead>Status</TableHead>
               <TableHead className="text-right">Actions</TableHead>
@@ -68,12 +70,14 @@ export function InterviewTable({
             {interviews.map((interview) => (
               <TableRow key={interview.id}>
                 <TableCell className="font-medium">
-                  {interview.interviewee_name}
+                  {interview.candidate?.name}
                 </TableCell>
-                <TableCell>{interview.interviewer}</TableCell>
+                <TableCell>{interview.candidate?.position}</TableCell>
+                <TableCell>{interview.interviewer?.name}</TableCell>
                 <TableCell>
-                  {format(new Date(interview.date_time), "PPp")}
+                  <Badge variant="secondary">{interview.type}</Badge>
                 </TableCell>
+                <TableCell>{format(new Date(interview.date), "PPp")}</TableCell>
                 <TableCell>
                   <Badge
                     className={`${getStatusColor(interview.status)} text-white`}
@@ -89,6 +93,15 @@ export function InterviewTable({
                     onClick={() => onEdit(interview)}
                   >
                     <Pencil className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() =>
+                      (window.location.href = `/interview-feedback?interview=${interview.id}`)
+                    }
+                  >
+                    <MessageSquare className="h-4 w-4" />
                   </Button>
                   <Button
                     variant="ghost"

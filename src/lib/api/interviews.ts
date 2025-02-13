@@ -2,21 +2,43 @@ import { supabase } from "../supabase";
 
 export type Interview = {
   id: string;
-  interviewee_name: string;
-  interviewer: string;
-  date_time: string;
+  candidate_id?: string;
+  interviewer_id?: string;
+  date: string;
+  type: string;
   status: "scheduled" | "completed" | "cancelled" | "no_show";
+  feedback?: string;
+  rating?: number;
   created_at?: string;
   updated_at?: string;
+  candidate?: {
+    id: string;
+    name: string;
+    position: string;
+  };
+  interviewer?: {
+    id: string;
+    name: string;
+  };
 };
 
 export async function getInterviews() {
   const { data, error } = await supabase
     .from("interviews")
-    .select("*")
-    .order("date_time", { ascending: true });
+    .select(
+      `
+      *,
+      candidate:candidate_id(id, name, position),
+      interviewer:interviewer_id(id, name)
+    `,
+    )
+    .order("date", { ascending: true });
 
-  if (error) throw error;
+  if (error) {
+    console.error("Error fetching interviews:", error);
+    throw error;
+  }
+
   return data as Interview[];
 }
 
@@ -26,10 +48,20 @@ export async function createInterview(
   const { data, error } = await supabase
     .from("interviews")
     .insert([interview])
-    .select()
+    .select(
+      `
+      *,
+      candidate:candidate_id(id, name, position),
+      interviewer:interviewer_id(id, name)
+    `,
+    )
     .single();
 
-  if (error) throw error;
+  if (error) {
+    console.error("Error creating interview:", error);
+    throw error;
+  }
+
   return data as Interview;
 }
 
@@ -41,16 +73,30 @@ export async function updateInterview(
     .from("interviews")
     .update(updates)
     .eq("id", id)
-    .select()
+    .select(
+      `
+      *,
+      candidate:candidate_id(id, name, position),
+      interviewer:interviewer_id(id, name)
+    `,
+    )
     .single();
 
-  if (error) throw error;
+  if (error) {
+    console.error("Error updating interview:", error);
+    throw error;
+  }
+
   return data as Interview;
 }
 
 export async function deleteInterview(id: string) {
   const { error } = await supabase.from("interviews").delete().eq("id", id);
 
-  if (error) throw error;
+  if (error) {
+    console.error("Error deleting interview:", error);
+    throw error;
+  }
+
   return true;
 }

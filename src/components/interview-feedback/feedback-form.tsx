@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Label } from "../ui/label";
 import { Button } from "../ui/button";
 import { Textarea } from "../ui/textarea";
+import { Input } from "../ui/input";
 import {
   Select,
   SelectContent,
@@ -12,114 +13,108 @@ import {
 import { InterviewFeedback } from "@/types/database";
 import { useFeedback } from "@/lib/api/hooks/useFeedback";
 import { useInterviewers } from "@/lib/api/hooks/useInterviewers";
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-} from "../ui/command";
-import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
-import { Check, ChevronsUpDown } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { useCandidates } from "@/lib/api/hooks/useCandidates";
+import { useInterviews } from "@/lib/api/hooks/useInterviews";
+import { format } from "date-fns";
 
 interface Props {
-  candidate: any;
   existingFeedback?: InterviewFeedback;
+  onClose?: () => void;
 }
 
-export function InterviewFeedbackForm({
-  candidate: initialCandidate,
-  existingFeedback,
-}: Props) {
-  const [candidate, setCandidate] = useState(
-    initialCandidate?.candidate || initialCandidate,
-  );
-
-  // Initialize form with existing feedback if editing
-  const feedbackToEdit = initialCandidate?.id
-    ? initialCandidate
-    : existingFeedback;
-  console.log("Feedback to edit:", feedbackToEdit);
+export function InterviewFeedbackForm({ existingFeedback, onClose }: Props) {
   const { createFeedback, updateFeedback } = useFeedback();
-  const { data: interviewers, isLoading: isLoadingInterviewers } =
-    useInterviewers();
-  console.log("Interviewers loaded:", interviewers);
-  const [open, setOpen] = useState(false);
-  const [selectedInterviewer, setSelectedInterviewer] = useState(
-    existingFeedback?.interviewer_id || "",
+  const { data: interviewers } = useInterviewers();
+  const { data: candidates } = useCandidates();
+  const { data: interviews } = useInterviews();
+
+  const [formData, setFormData] = useState<Partial<InterviewFeedback>>(
+    existingFeedback
+      ? {
+          ...existingFeedback,
+          technical_skills: existingFeedback.technical_skills || 0,
+          communication_skills: existingFeedback.communication_skills || 0,
+          problem_solving: existingFeedback.problem_solving || 0,
+          experience_fit: existingFeedback.experience_fit || 0,
+          cultural_fit: existingFeedback.cultural_fit || 0,
+          strengths: existingFeedback.strengths || "",
+          improvements: existingFeedback.improvements || "",
+          recommendation: existingFeedback.recommendation || "Maybe",
+          comments: existingFeedback.comments || "",
+          candidate_id: existingFeedback.candidate_id || "",
+          interviewer_id: existingFeedback.interviewer_id || "",
+          interview_id: existingFeedback.interview_id || "",
+        }
+      : {
+          technical_skills: 0,
+          communication_skills: 0,
+          problem_solving: 0,
+          experience_fit: 0,
+          cultural_fit: 0,
+          strengths: "",
+          improvements: "",
+          recommendation: "Maybe",
+          comments: "",
+          candidate_id: "",
+          interviewer_id: "",
+          interview_id: "",
+        },
   );
 
-  console.log("Interviewers:", interviewers);
-  console.log("Selected Interviewer:", selectedInterviewer);
-  console.log("Existing Feedback:", existingFeedback);
-
-  const [formData, setFormData] = useState<Partial<InterviewFeedback>>({
-    technical_skills: feedbackToEdit?.technical_skills || 0,
-    communication_skills: feedbackToEdit?.communication_skills || 0,
-    problem_solving: feedbackToEdit?.problem_solving || 0,
-    experience_fit: feedbackToEdit?.experience_fit || 0,
-    cultural_fit: feedbackToEdit?.cultural_fit || 0,
-    strengths: feedbackToEdit?.strengths || "",
-    improvements: feedbackToEdit?.improvements || "",
-    recommendation: feedbackToEdit?.recommendation || "Maybe",
-    comments: feedbackToEdit?.comments || "",
-  });
-
-  // Set initial interviewer from existing feedback
+  // Get interview ID from URL if present
   useEffect(() => {
-    if (feedbackToEdit?.interviewer_id) {
-      setSelectedInterviewer(feedbackToEdit.interviewer_id);
+    const params = new URLSearchParams(window.location.search);
+    const interviewId = params.get("interview");
+    if (interviewId) {
+      const interview = interviews?.find((i) => i.id === interviewId);
+      if (interview) {
+        setFormData((prev) => ({
+          ...prev,
+          interview_id: interview.id,
+          candidate_id: interview.candidate_id,
+          interviewer_id: interview.interviewer_id,
+        }));
+      }
     }
-  }, [feedbackToEdit]);
-  console.log(
-    "1. existingFeedback?.interviewer_id " + existingFeedback?.interviewer_id,
+  }, [interviews]);
+
+  const selectedCandidate = candidates?.find(
+    (c) => c.id === formData.candidate_id,
   );
+
+  const selectedInterview = interviews?.find(
+    (i) => i.id === formData.interview_id,
+  );
+
   const handleSubmit = async () => {
     try {
-      if (!selectedInterviewer) {
+      if (!formData.interviewer_id) {
         alert("Please select an interviewer");
         return;
       }
 
-      if (!candidate?.id && !existingFeedback?.candidate_id) {
-        alert("No candidate selected");
+      if (!formData.candidate_id) {
+        alert("Please select a candidate");
         return;
       }
-      console.log(
-        "1.id" + candidate?.id,
-        selectedInterviewer,
-        existingFeedback?.candidate_id,
-      );
-      const feedbackData = {
-        ...formData,
-        candidate_id: candidate?.id || existingFeedback?.candidate_id,
-        interviewer_id: selectedInterviewer,
-      };
+
+      if (!formData.interview_id) {
+        alert("Please select an interview");
+        return;
+      }
 
       try {
-        console.log("Submitting feedback:", feedbackToEdit?.id);
-        console.log("feedbackToEdit", feedbackToEdit);
-        console.log("feedbackData", feedbackData);
-
-        if (feedbackToEdit?.id) {
-          console.log("Calling update feedbackData", feedbackData);
-          console.log("Calling update feedbackToEdit.id", feedbackToEdit.id);
-
+        if (existingFeedback?.id) {
           await updateFeedback({
-            id: feedbackToEdit.id,
-            updates: feedbackData,
+            id: existingFeedback.id,
+            updates: formData,
           });
         } else {
-          console.log("Creating new feedback");
-          await createFeedback(feedbackData as any);
+          await createFeedback(formData as any);
         }
 
-        // ✅ Ensure the alert is only called after async operations are finished
-        alert("Feedback saved successfully! " + feedbackData.technical_skills);
-
-        // ✅ Instead of `window.location.href`, consider using React Router’s `useNavigate()`
-        window.location.href = "/interview-feedback";
+        alert("Feedback saved successfully!");
+        onClose?.();
       } catch (error) {
         console.error("Error saving feedback:", error);
         alert("Error saving feedback");
@@ -149,45 +144,72 @@ export function InterviewFeedbackForm({
     <div className="grid gap-4 py-4">
       <div className="grid gap-4 md:grid-cols-2">
         <div className="space-y-2">
-          <Label>Candidate</Label>
-          {candidate?.id ? (
-            <Input
-              value={`${candidate.name} - ${candidate.position}`}
-              readOnly
-            />
-          ) : (
-            <CandidateSelect
-              onSelect={(selected) => {
-                if (selected) {
-                  setCandidate({
-                    id: selected.id,
-                    name: selected.name,
-                    position: selected.position,
-                  });
-                }
-              }}
-            />
-          )}
+          <Label>Candidate Name</Label>
+          <Select
+            value={formData.candidate_id}
+            onValueChange={(value) =>
+              setFormData({ ...formData, candidate_id: value })
+            }
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Select candidate" />
+            </SelectTrigger>
+            <SelectContent>
+              {candidates?.map((candidate) => (
+                <SelectItem key={candidate.id} value={candidate.id}>
+                  {candidate.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
         <div className="space-y-2">
+          <Label>Position</Label>
+          <Input
+            value={selectedCandidate?.position || ""}
+            disabled
+            placeholder="Position will be shown here"
+          />
+        </div>
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-2">
+        <div className="space-y-2">
           <Label>Interviewer</Label>
           <Select
-            value={selectedInterviewer}
-            onValueChange={setSelectedInterviewer}
+            value={formData.interviewer_id}
+            onValueChange={(value) =>
+              setFormData({ ...formData, interviewer_id: value })
+            }
           >
-            <SelectTrigger className="w-full">
+            <SelectTrigger>
               <SelectValue placeholder="Select interviewer" />
             </SelectTrigger>
             <SelectContent>
-              {Array.isArray(interviewers) &&
-                interviewers.map((interviewer) => (
-                  <SelectItem key={interviewer.id} value={interviewer.id}>
-                    {interviewer.name}
-                  </SelectItem>
-                ))}
+              {interviewers?.map((interviewer) => (
+                <SelectItem key={interviewer.id} value={interviewer.id}>
+                  {interviewer.name}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
+        </div>
+
+        <div className="space-y-2">
+          <Label>Interview Date & Time</Label>
+          <Input
+            type="text"
+            value={
+              selectedInterview
+                ? format(new Date(selectedInterview.date), "PPp") +
+                  " - " +
+                  selectedInterview.type
+                : ""
+            }
+            disabled
+            placeholder="Interview details will be shown here"
+          />
         </div>
       </div>
 
@@ -271,14 +293,5 @@ export function InterviewFeedbackForm({
         {existingFeedback ? "Update Feedback" : "Submit Feedback"}
       </Button>
     </div>
-  );
-}
-
-function Input(props: any) {
-  return (
-    <input
-      {...props}
-      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-    />
   );
 }

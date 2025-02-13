@@ -12,11 +12,7 @@ import { supabase } from "@/lib/supabase";
 export function useCandidates() {
   const queryClient = useQueryClient();
 
-  const {
-    data: candidates,
-    isLoading,
-    error,
-  } = useQuery({
+  const { data, isLoading, error } = useQuery({
     queryKey: ["candidates"],
     queryFn: getCandidates,
   });
@@ -64,7 +60,7 @@ export function useCandidates() {
   }, [queryClient]);
 
   return {
-    candidates,
+    data,
     isLoading,
     error,
     createCandidate: createMutation.mutate,
