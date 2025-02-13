@@ -41,7 +41,7 @@ export function useFeedback() {
       .channel("feedback-changes")
       .on(
         "postgres_changes",
-        { event: "*", schema: "public", table: "interview_feedback" },
+        { event: "*", schema: "public", table: "feedback" },
         (payload) => {
           queryClient.invalidateQueries({ queryKey: ["feedback"] });
         },

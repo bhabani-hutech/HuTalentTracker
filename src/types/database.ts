@@ -19,7 +19,7 @@ export interface Candidate {
   updated_at?: string;
 }
 
-export interface InterviewFeedback {
+export interface Feedback {
   id: string;
   interview_id: string;
   candidate_id: string;
