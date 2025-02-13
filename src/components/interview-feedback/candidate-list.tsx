@@ -43,12 +43,6 @@ export function CandidateList({
         <div className="flex items-center justify-between">
           <CardTitle>Interview Feedback</CardTitle>
           <div className="flex items-center gap-2">
-            <Button
-              onClick={() => (window.location.href = "/interview-feedback/new")}
-            >
-              <PenSquare className="h-4 w-4 mr-2" />
-              New Feedback
-            </Button>
             <div className="flex w-full max-w-sm items-center space-x-2">
               <Input
                 type="search"

@@ -98,7 +98,7 @@ export function InterviewTable({
                     variant="ghost"
                     size="icon"
                     onClick={() =>
-                      (window.location.href = `/interview-feedback?interview=${interview.id}`)
+                      (window.location.href = `/interview-feedback/new?interview=${interview.id}`)
                     }
                   >
                     <MessageSquare className="h-4 w-4" />
