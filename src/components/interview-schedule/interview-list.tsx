@@ -75,7 +75,7 @@ export function InterviewList() {
     const fetchInterviews = async () => {
       try {
         const data = await getInterviews();
-        console.log(data);
+        // console.log(data);
         setInterviews(data);
       } catch (error) {
         console.error("Error fetching interviews:", error);
@@ -84,7 +84,7 @@ export function InterviewList() {
 
     fetchInterviews();
   }, []);
-
+  {console.log(interviews)}
   return (
     <Card>
       <CardHeader>
@@ -123,6 +123,7 @@ export function InterviewList() {
               </TableRow>
             </TableHeader>
             <TableBody>
+              
               {interviews.map((interview) => (
                 <TableRow key={interview.id}>
                   <TableCell className="font-medium">

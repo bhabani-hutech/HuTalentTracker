@@ -6,7 +6,7 @@ export type Interview = {
   interviewer_id?: string;
   date: string;
   type: string;
-  status: "scheduled" | "completed" | "cancelled" | "no_show";
+  status: "Rejected in screening" | "Rejected -1" | "Rejected in -2" | "HR round"|"Cleared"|"Offered";
   feedback?: string;
   rating?: number;
   created_at?: string;
