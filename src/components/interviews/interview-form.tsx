@@ -21,6 +21,7 @@ import { format } from "date-fns";
 import { Interview } from "@/lib/api/interviews";
 import { useInterviewers } from "@/lib/api/hooks/useInterviewers";
 import { useCandidates } from "@/lib/api/hooks/useCandidates";
+import { useNavigate } from "react-router-dom";
 
 interface InterviewFormProps {
   isOpen: boolean;
@@ -37,6 +38,7 @@ export function InterviewForm({
 }: InterviewFormProps) {
   const { data: interviewers } = useInterviewers();
   const { data: candidates } = useCandidates();
+  const navigate = useNavigate();
 
   // Set default form state for a new interview or edit
   const [formData, setFormData] = useState<Partial<Interview>>({
@@ -88,7 +90,8 @@ export function InterviewForm({
                 variant="outline"
                 size="sm"
                 onClick={() =>
-                  (window.location.href = `/interview-feedback?interview=${initialData.id}`)
+                  navigate(`/interview-feedback?interview=${initialData.id}`)
+                  // (window.location.href = `/interview-feedback?interview=${initialData.id}`)
                 }
               >
                 <FileText className="h-4 w-4 mr-2" />
