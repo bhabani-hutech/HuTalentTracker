@@ -1,5 +1,5 @@
 import { Suspense, lazy } from "react";
-import { useRoutes, Routes, Route } from "react-router-dom";
+import { Routes, Route } from "react-router-dom";
 import Home from "./components/home";
 import ResumeSourcing from "./pages/resume-sourcing";
 import InterviewFeedback from "./pages/interview-feedback";
@@ -7,7 +7,7 @@ import Settings from "./pages/settings";
 import routes from "tempo-routes";
 import { Icons } from "@/components/icons";
 import InterviewScheduleDashboard from "./pages/interview-schedule-dashboard";
-
+//import InterviewSchedule from "./pages/interview-schedule";
 const StatusTracking = lazy(() => import("./pages/status-tracking"));
 const AssociateOnboarding = lazy(() => import("./pages/associate-onboarding"));
 
@@ -15,6 +15,7 @@ import { SiteHeader } from "./components/layout/site-header";
 import { SiteFooter } from "./components/layout/site-footer";
 import { DocumentPreviewPage } from "./components/associate-onboarding/document-preview-page";
 import { NavItem } from "./types/navigation";
+import { useRoutes } from "react-router-dom";
 import {
   Home as HomeIcon,
   FileText,
@@ -95,7 +96,14 @@ function AppContent() {
               path="/interview-scheduling"
               element={<InterviewScheduleDashboard />}
             />
-            <Route path="/interview-feedback" element={<InterviewFeedback />} />
+            {/* Interview Feedback routes */}
+            <Route path="/interview-feedback" element={<InterviewFeedback />}>
+              <Route path=":interviewId" element={<InterviewFeedback />} />
+              <Route
+                path=":interviewId/feedback/:feedbackId"
+                element={<InterviewFeedback />}
+              />
+            </Route>
             <Route path="/status-tracking" element={<StatusTracking />} />
             <Route
               path="/associate-onboarding"

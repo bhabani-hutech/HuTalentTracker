@@ -7,6 +7,7 @@ import {
   DialogFooter,
 } from "../ui/dialog";
 import { Button } from "../ui/button";
+import { FileText } from "lucide-react";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
 import {
@@ -20,6 +21,7 @@ import { format } from "date-fns";
 import { Interview } from "@/lib/api/interviews";
 import { useInterviewers } from "@/lib/api/hooks/useInterviewers";
 import { useCandidates } from "@/lib/api/hooks/useCandidates";
+import { useNavigate } from "react-router-dom";
 
 interface InterviewFormProps {
   isOpen: boolean;
@@ -36,6 +38,7 @@ export function InterviewForm({
 }: InterviewFormProps) {
   const { data: interviewers } = useInterviewers();
   const { data: candidates } = useCandidates();
+  const navigate = useNavigate();
 
   // Set default form state for a new interview or edit
   const [formData, setFormData] = useState<Partial<Interview>>({
@@ -78,9 +81,24 @@ export function InterviewForm({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>
-            {initialData ? "Edit Interview" : "Schedule New Interview"}
-          </DialogTitle>
+          <div className="flex items-center justify-between">
+            <DialogTitle>
+              {initialData ? "Edit Interview" : "Schedule New Interview"}
+            </DialogTitle>
+            {initialData && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() =>
+                  navigate(`/interview-feedback?interview=${initialData.id}`)
+                  // (window.location.href = `/interview-feedback?interview=${initialData.id}`)
+                }
+              >
+                <FileText className="h-4 w-4 mr-2" />
+                Add Feedback
+              </Button>
+            )}
+          </div>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">

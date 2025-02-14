@@ -20,9 +20,16 @@ import { format } from "date-fns";
 interface Props {
   existingFeedback?: InterviewFeedback;
   onClose?: () => void;
+  selectedInterviewId?: string | null;
+  selectedInterview?: any;
 }
 
-export function InterviewFeedbackForm({ existingFeedback, onClose }: Props) {
+export function InterviewFeedbackForm({
+  existingFeedback,
+  onClose,
+  selectedInterviewId,
+  selectedInterview,
+}: Props) {
   const { createFeedback, updateFeedback } = useFeedback();
   const { data: interviewers } = useInterviewers();
   const { data: candidates } = useCandidates();
@@ -43,7 +50,11 @@ export function InterviewFeedbackForm({ existingFeedback, onClose }: Props) {
           comments: existingFeedback.comments || "",
           candidate_id: existingFeedback.candidate_id || "",
           interviewer_id: existingFeedback.interviewer_id || "",
-          interview_id: existingFeedback.interview_id || "",
+          interview_id:
+            existingFeedback.interview_id || selectedInterviewId || "",
+          interview: existingFeedback.interview,
+          candidate: existingFeedback.candidate,
+          interviewer: existingFeedback.interviewer,
         }
       : {
           technical_skills: 0,
@@ -55,39 +66,13 @@ export function InterviewFeedbackForm({ existingFeedback, onClose }: Props) {
           improvements: "",
           recommendation: "Maybe",
           comments: "",
-          candidate_id: "",
-          interviewer_id: "",
-          interview_id: "",
+          candidate_id: selectedInterview?.candidate_id || "",
+          interviewer_id: selectedInterview?.interviewer_id || "",
+          interview_id: selectedInterview?.id || selectedInterviewId || "",
+          interview: selectedInterview,
+          candidate: selectedInterview?.candidate,
+          interviewer: selectedInterview?.interviewer,
         },
-  );
-
-  // Get interview ID from URL if present
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const interviewId = params.get("interview");
-    if (interviewId) {
-      const interview = interviews?.find((i) => i.id === interviewId);
-      if (interview) {
-        setFormData((prev) => ({
-          ...prev,
-          interview_id: interview.id,
-          candidate_id: interview.candidate_id,
-          interviewer_id: interview.interviewer_id,
-        }));
-      }
-    }
-  }, [interviews]);
-
-  const selectedCandidate = candidates?.find(
-    (c) => c.id === formData.candidate_id,
-  );
-
-  const selectedInterview = interviews?.find(
-    (i) => i.id === formData.interview_id,
-  );
-
-  const selectedInterviewer = interviewers?.find(
-    (i) => i.id === formData.interviewer_id,
   );
 
   const handleSubmit = async () => {
@@ -107,22 +92,33 @@ export function InterviewFeedbackForm({ existingFeedback, onClose }: Props) {
         return;
       }
 
-      try {
-        if (existingFeedback?.id) {
-          await updateFeedback({
-            id: existingFeedback.id,
-            updates: formData,
-          });
-        } else {
-          await createFeedback(formData as any);
-        }
+      const feedbackData = {
+        ...formData,
+        interview_id: formData.interview_id,
+        candidate_id: formData.candidate_id,
+        interviewer_id: formData.interviewer_id,
+        technical_skills: formData.technical_skills || 0,
+        communication_skills: formData.communication_skills || 0,
+        problem_solving: formData.problem_solving || 0,
+        experience_fit: formData.experience_fit || 0,
+        cultural_fit: formData.cultural_fit || 0,
+        strengths: formData.strengths || "",
+        improvements: formData.improvements || "",
+        recommendation: formData.recommendation || "Maybe",
+        comments: formData.comments || "",
+      };
 
-        alert("Feedback saved successfully!");
-        if (onClose) onClose();
-      } catch (error) {
-        console.error("Error saving feedback:", error);
-        alert("Error saving feedback");
+      if (existingFeedback?.id) {
+        await updateFeedback({
+          id: existingFeedback.id,
+          updates: feedbackData,
+        });
+      } else {
+        await createFeedback(feedbackData as any);
       }
+
+      alert("Feedback saved successfully!");
+      if (onClose) onClose();
     } catch (error) {
       console.error("Error saving feedback:", error);
       alert("Error saving feedback");
@@ -149,41 +145,17 @@ export function InterviewFeedbackForm({ existingFeedback, onClose }: Props) {
       <div className="grid gap-4 md:grid-cols-2">
         <div className="space-y-2">
           <Label>Candidate Name</Label>
-          {existingFeedback ? (
-            <Input
-              value={existingFeedback.candidate?.name || ""}
-              disabled
-              placeholder="Candidate name"
-            />
-          ) : (
-            <Select
-              value={formData.candidate_id}
-              onValueChange={(value) =>
-                setFormData({ ...formData, candidate_id: value })
-              }
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select candidate" />
-              </SelectTrigger>
-              <SelectContent>
-                {candidates?.map((candidate) => (
-                  <SelectItem key={candidate.id} value={candidate.id}>
-                    {candidate.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          )}
+          <Input
+            value={formData.candidate?.name || ""}
+            disabled
+            placeholder="Candidate name"
+          />
         </div>
 
         <div className="space-y-2">
           <Label>Position</Label>
           <Input
-            value={
-              existingFeedback?.candidate?.position ||
-              selectedCandidate?.position ||
-              ""
-            }
+            value={formData.candidate?.position || ""}
             disabled
             placeholder="Position will be shown here"
           />
@@ -193,31 +165,11 @@ export function InterviewFeedbackForm({ existingFeedback, onClose }: Props) {
       <div className="grid gap-4 md:grid-cols-2">
         <div className="space-y-2">
           <Label>Interviewer</Label>
-          {existingFeedback ? (
-            <Input
-              value={existingFeedback.interviewer?.name || ""}
-              disabled
-              placeholder="Interviewer name"
-            />
-          ) : (
-            <Select
-              value={formData.interviewer_id}
-              onValueChange={(value) =>
-                setFormData({ ...formData, interviewer_id: value })
-              }
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select interviewer" />
-              </SelectTrigger>
-              <SelectContent>
-                {interviewers?.map((interviewer) => (
-                  <SelectItem key={interviewer.id} value={interviewer.id}>
-                    {interviewer.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          )}
+          <Input
+            value={formData.interviewer?.name || ""}
+            disabled
+            placeholder="Interviewer name"
+          />
         </div>
 
         <div className="space-y-2">
@@ -225,17 +177,9 @@ export function InterviewFeedbackForm({ existingFeedback, onClose }: Props) {
           <Input
             type="text"
             value={
-              existingFeedback?.interview
-                ? format(new Date(existingFeedback.interview.date), "PPp") +
-                  (existingFeedback.interview.type
-                    ? ` - ${existingFeedback.interview.type}`
-                    : "")
-                : selectedInterview
-                  ? format(new Date(selectedInterview.date), "PPp") +
-                    (selectedInterview.type
-                      ? ` - ${selectedInterview.type}`
-                      : "")
-                  : ""
+              formData.interview
+                ? `${format(new Date(formData.interview.date), "PPp")} - ${formData.interview.type}`
+                : ""
             }
             disabled
             placeholder="Interview details"

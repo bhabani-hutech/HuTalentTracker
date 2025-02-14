@@ -1,8 +1,14 @@
 import { useState, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
-import { Input } from "../ui/input";
-import { Button } from "../ui/button";
-import { Search, Filter, MessageSquare, Calendar } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import {
+  Search,
+  Filter,
+  MessageSquare,
+  Calendar,
+  FileText,
+} from "lucide-react";
 import {
   Table,
   TableBody,
@@ -10,8 +16,8 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "../ui/table";
-import { Badge } from "../ui/badge";
+} from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import { InterviewNotes } from "./interview-notes";
 import { InterviewScheduler } from "./interview-scheduler";
@@ -21,28 +27,11 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "../ui/select";
+} from "@/components/ui/select";
 import { getInterviews } from "@/lib/api/interviews";
+import { supabase } from "@/lib/supabase";
 
-interface Interview {
-  id: string;
-  candidateName: string;
-  position: string;
-  date: Date;
-  time: string;
-  type: string;
-  status:
-    | "Rejected in screening"
-    | "Rejected -1"
-    | "Rejected in -2"
-    | "Cleared"
-    | "HR round"
-    | "Offered";
-  interviewer: string;
-}
-
-// ✅ Moved this function above the component
-function getProgressColor(status: Interview["status"]): string {
+function getProgressColor(status: string): string {
   switch (status) {
     case "HR round":
       return "bg-blue-500 hover:bg-blue-600 text-white";
@@ -60,22 +49,15 @@ function getProgressColor(status: Interview["status"]): string {
 }
 
 export function InterviewList() {
-  const [interviews, setInterviews] = useState<Interview[]>([]);
-  const [showNotes, setShowNotes] = useState<{
-    id: string;
-    name: string;
-  } | null>(null);
-  const [showScheduler, setShowScheduler] = useState<{
-    id: string;
-    name: string;
-  } | null>(null);
+  const [interviews, setInterviews] = useState([]);
+  const [showNotes, setShowNotes] = useState(null);
+  const [showScheduler, setShowScheduler] = useState(null);
   const [showFilters, setShowFilters] = useState(false);
 
   useEffect(() => {
     const fetchInterviews = async () => {
       try {
         const data = await getInterviews();
-        // console.log(data);
         setInterviews(data);
       } catch (error) {
         console.error("Error fetching interviews:", error);
@@ -84,7 +66,7 @@ export function InterviewList() {
 
     fetchInterviews();
   }, []);
-  {console.log(interviews)}
+
   return (
     <Card>
       <CardHeader>
@@ -123,25 +105,26 @@ export function InterviewList() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              
               {interviews.map((interview) => (
                 <TableRow key={interview.id}>
                   <TableCell className="font-medium">
-                    {interview.candidates.name}
+                    {interview.candidate?.name}
                   </TableCell>
-                  <TableCell> {interview.candidates.position}</TableCell>
+                  <TableCell>{interview.candidate?.position}</TableCell>
                   <TableCell>
                     <div className="space-y-1">
-                      <div>{format(interview.date, "MMM dd, yyyy")}</div>
+                      <div>
+                        {format(new Date(interview.date), "MMM dd, yyyy")}
+                      </div>
                       <div className="text-sm text-muted-foreground">
-                        {interview.time}
+                        {format(new Date(interview.date), "HH:mm")}
                       </div>
                     </div>
                   </TableCell>
                   <TableCell>
                     <Badge variant="secondary">{interview.type}</Badge>
                   </TableCell>
-                  <TableCell>{interview.interviewer}</TableCell>
+                  <TableCell>{interview.interviewer?.name}</TableCell>
                   <TableCell>
                     <Badge className={getProgressColor(interview.status)}>
                       {interview.status}
@@ -149,12 +132,11 @@ export function InterviewList() {
                   </TableCell>
                   <TableCell>
                     <Select
-                      defaultValue={interview.status || "HR round"} // ✅ Ensuring a default value exists
+                      defaultValue={interview.status || "HR round"}
                       onValueChange={(value) => {
                         console.log(
                           `Changed status for ${interview.id} to ${value}`,
                         );
-                        // Here you would update the status in your data store
                       }}
                     >
                       <SelectTrigger className="w-[180px]">
@@ -182,10 +164,49 @@ export function InterviewList() {
                     <Button
                       variant="ghost"
                       size="icon"
+                      onClick={async () => {
+                        try {
+                          const { data: existingFeedback } = await supabase
+                            .from("feedback")
+                            .select(
+                              `
+                              *,
+                              interview:interviews!interview_id(*),
+                              candidate:candidates!candidate_id(*),
+                              interviewer:users!interviewer_id(*)
+                              `,
+                            )
+                            .eq("interview_id", interview.id)
+                            .single();
+                          console.log(
+                            "************************>>>>>>>Existing feedback",
+                          );
+                          cosnole.log(existingFeedback);
+
+                          if (existingFeedback) {
+                            // If feedback exists, show edit form
+                            setSelectedFeedback(existingFeedback);
+                          } else {
+                            // If no feedback exists, show create form
+                            setShowCreateForm(true);
+                          }
+                        } catch (error) {
+                          console.error("Error checking feedback:", error);
+                          // Fallback to create form
+                          setShowCreateForm(true);
+                        }
+                      }}
+                    >
+                      <FileText className="h-4 w-4" />
+                      <span className="sr-only">Add Feedback</span>
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
                       onClick={() =>
                         setShowNotes({
                           id: interview.id,
-                          name: interview.candidateName,
+                          name: interview.candidate?.name || "Unknown",
                         })
                       }
                     >
@@ -197,7 +218,7 @@ export function InterviewList() {
                       onClick={() =>
                         setShowScheduler({
                           id: interview.id,
-                          name: interview.candidateName,
+                          name: interview.candidate?.name || "Unknown",
                         })
                       }
                     >

@@ -98,6 +98,127 @@ export type Database = {
           },
         ]
       }
+      dup: {
+        Row: {
+          created_at: string | null
+          department: string | null
+          email: string
+          id: string
+          match_score: number | null
+          name: string
+          notice_period: string | null
+          phone: string | null
+          position: string
+          source: string | null
+          status: Database["public"]["Enums"]["interview_status"] | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          department?: string | null
+          email: string
+          id?: string
+          match_score?: number | null
+          name: string
+          notice_period?: string | null
+          phone?: string | null
+          position: string
+          source?: string | null
+          status?: Database["public"]["Enums"]["interview_status"] | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          department?: string | null
+          email?: string
+          id?: string
+          match_score?: number | null
+          name?: string
+          notice_period?: string | null
+          phone?: string | null
+          position?: string
+          source?: string | null
+          status?: Database["public"]["Enums"]["interview_status"] | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      feedback: {
+        Row: {
+          candidate_id: string | null
+          comments: string | null
+          communication_skills: number | null
+          created_at: string | null
+          cultural_fit: number | null
+          experience_fit: number | null
+          id: string
+          improvements: string | null
+          interview_id: string | null
+          interviewer_id: string | null
+          problem_solving: number | null
+          recommendation: string | null
+          strengths: string | null
+          technical_skills: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          candidate_id?: string | null
+          comments?: string | null
+          communication_skills?: number | null
+          created_at?: string | null
+          cultural_fit?: number | null
+          experience_fit?: number | null
+          id?: string
+          improvements?: string | null
+          interview_id?: string | null
+          interviewer_id?: string | null
+          problem_solving?: number | null
+          recommendation?: string | null
+          strengths?: string | null
+          technical_skills?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          candidate_id?: string | null
+          comments?: string | null
+          communication_skills?: number | null
+          created_at?: string | null
+          cultural_fit?: number | null
+          experience_fit?: number | null
+          id?: string
+          improvements?: string | null
+          interview_id?: string | null
+          interviewer_id?: string | null
+          problem_solving?: number | null
+          recommendation?: string | null
+          strengths?: string | null
+          technical_skills?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "feedback_candidate_id_fkey"
+            columns: ["candidate_id"]
+            isOneToOne: false
+            referencedRelation: "candidates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "feedback_interview_id_fkey"
+            columns: ["interview_id"]
+            isOneToOne: false
+            referencedRelation: "interviews"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "feedback_interviewer_id_fkey"
+            columns: ["interviewer_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       interviews: {
         Row: {
           candidate_id: string | null
@@ -157,6 +278,7 @@ export type Database = {
           created_at: string | null
           department: string | null
           email: string
+          encrypted_password: string | null
           id: string
           is_active: boolean | null
           name: string
@@ -167,6 +289,7 @@ export type Database = {
           created_at?: string | null
           department?: string | null
           email: string
+          encrypted_password?: string | null
           id?: string
           is_active?: boolean | null
           name: string
@@ -177,6 +300,7 @@ export type Database = {
           created_at?: string | null
           department?: string | null
           email?: string
+          encrypted_password?: string | null
           id?: string
           is_active?: boolean | null
           name?: string
