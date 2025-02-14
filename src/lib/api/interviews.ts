@@ -6,7 +6,13 @@ export type Interview = {
   interviewer_id?: string;
   date: string;
   type: string;
-  status: "Rejected in screening" | "Rejected -1" | "Rejected in -2" | "HR round"|"Cleared"|"Offered";
+  status:
+    | "Rejected in screening"
+    | "Rejected -1"
+    | "Rejected in -2"
+    | "HR round"
+    | "Cleared"
+    | "Offered";
   feedback?: string;
   rating?: number;
   created_at?: string;
@@ -28,8 +34,8 @@ export async function getInterviews() {
     .select(
       `
       *,
-      candidate:candidate_id(id, name, position),
-      interviewer:interviewer_id(id, name)
+      candidate:candidates!candidate_id(id, name, position, email),
+      interviewer:users!interviewer_id(id, name, email)
     `,
     )
     .order("date", { ascending: true });

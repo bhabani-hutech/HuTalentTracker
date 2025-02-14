@@ -7,9 +7,9 @@ export async function getFeedback() {
     .select(
       `
       *,
-      interview:interview_id(id, date),
-      candidate:candidate_id(id, name, position),
-      interviewer:interviewer_id(id, name)
+      interview:interviews!interview_id(*),
+      candidate:candidates!candidate_id(*),
+      interviewer:users!interviewer_id(*)
     `,
     )
     .order("created_at", { ascending: false });
@@ -45,17 +45,26 @@ export async function createFeedback(
   feedbackData: Omit<Feedback, "id" | "created_at" | "updated_at">,
 ) {
   console.log("Creating feedback with data:", feedbackData);
+  console.log("Creating feedback with data:", feedbackData);
   const { data, error } = await supabase
     .from("feedback")
-    .insert([feedbackData])
-    .select(
-      `
-      *,
-      interview:interview_id(id, date),
-      candidate:candidate_id(id, name, position),
-      interviewer:interviewer_id(id, name)
-    `,
-    )
+    .insert([
+      {
+        interview_id: feedbackData.interview_id,
+        candidate_id: feedbackData.candidate_id,
+        interviewer_id: feedbackData.interviewer_id,
+        technical_skills: feedbackData.technical_skills,
+        communication_skills: feedbackData.communication_skills,
+        problem_solving: feedbackData.problem_solving,
+        experience_fit: feedbackData.experience_fit,
+        cultural_fit: feedbackData.cultural_fit,
+        strengths: feedbackData.strengths,
+        improvements: feedbackData.improvements,
+        recommendation: feedbackData.recommendation,
+        comments: feedbackData.comments,
+      },
+    ])
+    .select()
     .single();
 
   if (error) throw error;

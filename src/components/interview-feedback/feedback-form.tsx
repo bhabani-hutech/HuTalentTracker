@@ -21,12 +21,14 @@ interface Props {
   existingFeedback?: InterviewFeedback;
   onClose?: () => void;
   selectedInterviewId?: string | null;
+  selectedInterview?: any;
 }
 
 export function InterviewFeedbackForm({
   existingFeedback,
   onClose,
   selectedInterviewId,
+  selectedInterview,
 }: Props) {
   const { createFeedback, updateFeedback } = useFeedback();
   const { data: interviewers } = useInterviewers();
@@ -50,6 +52,9 @@ export function InterviewFeedbackForm({
           interviewer_id: existingFeedback.interviewer_id || "",
           interview_id:
             existingFeedback.interview_id || selectedInterviewId || "",
+          interview: existingFeedback.interview,
+          candidate: existingFeedback.candidate,
+          interviewer: existingFeedback.interviewer,
         }
       : {
           technical_skills: 0,
@@ -61,70 +66,59 @@ export function InterviewFeedbackForm({
           improvements: "",
           recommendation: "Maybe",
           comments: "",
-          candidate_id: "",
-          interviewer_id: "",
-          interview_id: selectedInterviewId || "",
+          candidate_id: selectedInterview?.candidate_id || "",
+          interviewer_id: selectedInterview?.interviewer_id || "",
+          interview_id: selectedInterview?.id || selectedInterviewId || "",
+          interview: selectedInterview,
+          candidate: selectedInterview?.candidate,
+          interviewer: selectedInterview?.interviewer,
         },
-  );
-
-  // Set form data when selected interview changes
-  useEffect(() => {
-    if (selectedInterviewId && interviews) {
-      const interview = interviews.find((i) => i.id === selectedInterviewId);
-      if (interview) {
-        setFormData((prev) => ({
-          ...prev,
-          interview_id: selectedInterviewId,
-          candidate_id: interview.candidate_id || prev.candidate_id,
-          interviewer_id: interview.interviewer_id || prev.interviewer_id,
-        }));
-      }
-    }
-  }, [selectedInterviewId, interviews]);
-
-  const selectedInterview = interviews?.find(
-    (i) => i.id === formData.interview_id,
   );
 
   const handleSubmit = async () => {
     try {
-      // Ensure interview_id is set from selectedInterviewId
-      const submissionData = {
-        ...formData,
-        interview_id: selectedInterviewId || formData.interview_id,
-      };
-
-      if (!submissionData.interviewer_id) {
+      if (!formData.interviewer_id) {
         alert("Please select an interviewer");
         return;
       }
 
-      if (!submissionData.candidate_id) {
+      if (!formData.candidate_id) {
         alert("Please select a candidate");
         return;
       }
 
-      if (!submissionData.interview_id) {
+      if (!formData.interview_id) {
         alert("Please select an interview");
         return;
       }
 
-      try {
-        if (existingFeedback?.id) {
-          await updateFeedback({
-            id: existingFeedback.id,
-            updates: submissionData,
-          });
-        } else {
-          await createFeedback(submissionData as any);
-        }
+      const feedbackData = {
+        ...formData,
+        interview_id: formData.interview_id,
+        candidate_id: formData.candidate_id,
+        interviewer_id: formData.interviewer_id,
+        technical_skills: formData.technical_skills || 0,
+        communication_skills: formData.communication_skills || 0,
+        problem_solving: formData.problem_solving || 0,
+        experience_fit: formData.experience_fit || 0,
+        cultural_fit: formData.cultural_fit || 0,
+        strengths: formData.strengths || "",
+        improvements: formData.improvements || "",
+        recommendation: formData.recommendation || "Maybe",
+        comments: formData.comments || "",
+      };
 
-        alert("Feedback saved successfully!");
-        if (onClose) onClose();
-      } catch (error) {
-        console.error("Error saving feedback:", error);
-        alert("Error saving feedback");
+      if (existingFeedback?.id) {
+        await updateFeedback({
+          id: existingFeedback.id,
+          updates: feedbackData,
+        });
+      } else {
+        await createFeedback(feedbackData as any);
       }
+
+      alert("Feedback saved successfully!");
+      if (onClose) onClose();
     } catch (error) {
       console.error("Error saving feedback:", error);
       alert("Error saving feedback");
@@ -152,11 +146,7 @@ export function InterviewFeedbackForm({
         <div className="space-y-2">
           <Label>Candidate Name</Label>
           <Input
-            value={
-              existingFeedback?.candidate?.name ||
-              candidates?.find((c) => c.id === formData.candidate_id)?.name ||
-              ""
-            }
+            value={formData.candidate?.name || ""}
             disabled
             placeholder="Candidate name"
           />
@@ -165,12 +155,7 @@ export function InterviewFeedbackForm({
         <div className="space-y-2">
           <Label>Position</Label>
           <Input
-            value={
-              existingFeedback?.candidate?.position ||
-              candidates?.find((c) => c.id === formData.candidate_id)
-                ?.position ||
-              ""
-            }
+            value={formData.candidate?.position || ""}
             disabled
             placeholder="Position will be shown here"
           />
@@ -181,12 +166,7 @@ export function InterviewFeedbackForm({
         <div className="space-y-2">
           <Label>Interviewer</Label>
           <Input
-            value={
-              existingFeedback?.interviewer?.name ||
-              interviewers?.find((i) => i.id === formData.interviewer_id)
-                ?.name ||
-              ""
-            }
+            value={formData.interviewer?.name || ""}
             disabled
             placeholder="Interviewer name"
           />
@@ -197,24 +177,9 @@ export function InterviewFeedbackForm({
           <Input
             type="text"
             value={
-              existingFeedback?.interview
-                ? format(new Date(existingFeedback.interview.date), "PPp") +
-                  (existingFeedback.interview.type
-                    ? ` - ${existingFeedback.interview.type}`
-                    : "")
-                : interviews?.find((i) => i.id === selectedInterviewId)
-                  ? format(
-                      new Date(
-                        interviews.find(
-                          (i) => i.id === selectedInterviewId,
-                        ).date,
-                      ),
-                      "PPp",
-                    ) +
-                    (interviews.find((i) => i.id === selectedInterviewId).type
-                      ? ` - ${interviews.find((i) => i.id === selectedInterviewId).type}`
-                      : "")
-                  : ""
+              formData.interview
+                ? `${format(new Date(formData.interview.date), "PPp")} - ${formData.interview.type}`
+                : ""
             }
             disabled
             placeholder="Interview details"
