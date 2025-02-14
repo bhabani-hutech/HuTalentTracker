@@ -31,6 +31,7 @@ export default function InterviewFeedback() {
   const [selectedInterviewId, setSelectedInterviewId] = useState<string | null>(
     null,
   );
+
   const [selectedInterview, setSelectedInterview] = useState<any>(null);
 
   useEffect(() => {
@@ -56,28 +57,20 @@ export default function InterviewFeedback() {
             setSelectedInterviewId(interviewId);
             setSelectedInterview(interview);
 
-            // If we have a feedback ID, fetch the feedback
-            if (feedbackId) {
-              const { data: existingFeedback, error: feedbackError } =
-                await supabase
-                  .from("feedback")
-                  .select(
-                    `
-                  *,
-                  interview:interviews!interview_id(*),
-                  candidate:candidates!candidate_id(*),
-                  interviewer:users!interviewer_id(*)
-                  `,
-                  )
-                  .eq("id", feedbackId)
-                  .single();
+            const { data: existingFeedback, error: feedbackError } =
+              await supabase
+                .from("feedback")
+                .select(
+                  "*, interview:interviews(*), candidate:candidates(*), interviewer:users(*)",
+                )
+                .eq("interview_id", interviewId)
+                .order("created_at", { ascending: false })
+                .single();
 
-              if (feedbackError) throw feedbackError;
-              if (existingFeedback) {
-                setSelectedFeedback(existingFeedback);
-              }
+            if (feedbackError) throw feedbackError;
+            if (existingFeedback) {
+              setSelectedFeedback(existingFeedback);
             } else if (isNew) {
-              // If no feedback ID but isNew flag is set, show create form
               setShowCreateForm(true);
             }
           }

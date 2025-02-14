@@ -178,6 +178,10 @@ export function InterviewList() {
                             )
                             .eq("interview_id", interview.id)
                             .single();
+                          console.log(
+                            "************************>>>>>>>Existing feedback",
+                          );
+                          cosnole.log(existingFeedback);
 
                           if (existingFeedback) {
                             // If feedback exists, show edit form
