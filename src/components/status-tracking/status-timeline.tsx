@@ -1,5 +1,8 @@
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Badge } from "../ui/badge";
+import { format } from "date-fns";
+import { useInterviews } from "@/lib/api/hooks/useInterviews";
+import { useFeedback } from "@/lib/api/hooks/useFeedback";
 
 interface TimelineEvent {
   candidate: string;
@@ -9,38 +12,63 @@ interface TimelineEvent {
   type: "success" | "error" | "warning" | "info";
 }
 
-const timelineEvents: TimelineEvent[] = [
-  {
-    candidate: "John Smith",
-    status: "Cleared Technical Round",
-    date: "Today",
-    time: "2:30 PM",
-    type: "success",
-  },
-  {
-    candidate: "Sarah Wilson",
-    status: "Scheduled for HR Round",
-    date: "Today",
-    time: "11:00 AM",
-    type: "info",
-  },
-  {
-    candidate: "Michael Brown",
-    status: "Rejected in Technical Round",
-    date: "Yesterday",
-    time: "4:15 PM",
-    type: "error",
-  },
-  {
-    candidate: "Emily Davis",
-    status: "Pending Feedback",
-    date: "Yesterday",
-    time: "2:00 PM",
-    type: "warning",
-  },
-];
-
 export function StatusTimeline() {
+  const { interviews } = useInterviews();
+  const { feedback } = useFeedback();
+
+  // Combine interviews and feedback into timeline events
+  const timelineEvents: TimelineEvent[] = [
+    // Add interview events
+    ...(interviews?.map((interview) => ({
+      candidate: interview.candidate?.name || "Unknown",
+      status: getStatusText(interview.status, interview.type),
+      date: format(new Date(interview.date), "MMM d, yyyy"),
+      time: format(new Date(interview.date), "h:mm a"),
+      type: getEventType(interview.status),
+    })) || []),
+    // Add feedback events
+    ...(feedback?.map((f) => ({
+      candidate: f.candidate?.name || "Unknown",
+      status: `Feedback: ${f.recommendation}`,
+      date: format(new Date(f.created_at || ""), "MMM d, yyyy"),
+      time: format(new Date(f.created_at || ""), "h:mm a"),
+      type: getFeedbackEventType(f.recommendation),
+    })) || []),
+  ].sort(
+    (a, b) =>
+      new Date(b.date + " " + b.time).getTime() -
+      new Date(a.date + " " + a.time).getTime(),
+  );
+
+  function getStatusText(status: string, type: string): string {
+    if (status?.includes("Rejected")) return `Rejected in ${type} Round`;
+    if (status === "Cleared") return `Cleared ${type} Round`;
+    if (status === "HR round") return "Scheduled for HR Round";
+    return status || "Status Unknown";
+  }
+
+  function getEventType(status: string): TimelineEvent["type"] {
+    if (status?.includes("Rejected")) return "error";
+    if (status === "Cleared") return "success";
+    if (status === "HR round") return "info";
+    return "warning";
+  }
+
+  function getFeedbackEventType(recommendation: string): TimelineEvent["type"] {
+    switch (recommendation) {
+      case "Strong Hire":
+      case "Hire":
+        return "success";
+      case "Maybe":
+        return "warning";
+      case "No Hire":
+      case "Strong No Hire":
+        return "error";
+      default:
+        return "info";
+    }
+  }
+
   return (
     <Card>
       <CardHeader>

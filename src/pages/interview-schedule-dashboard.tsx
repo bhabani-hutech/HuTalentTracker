@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
+import { Plus, Search } from "lucide-react";
 import { InterviewTable } from "@/components/interviews/interview-table";
 import { InterviewForm } from "@/components/interviews/interview-form";
+import { Input } from "@/components/ui/input";
 import {
   Interview,
   getInterviews,
@@ -20,6 +21,9 @@ export default function InterviewScheduleDashboard() {
   const [selectedInterview, setSelectedInterview] = useState<
     Interview | undefined
   >();
+  const [searchQuery, setSearchQuery] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
   const { toast } = useToast();
 
   const fetchInterviews = async () => {
@@ -111,6 +115,23 @@ export default function InterviewScheduleDashboard() {
     setSelectedInterview(undefined);
   };
 
+  // Filter interviews based on search query
+  const filteredInterviews = interviews.filter((interview) => {
+    const searchString = searchQuery.toLowerCase();
+    return (
+      interview.candidate?.name?.toLowerCase().includes(searchString) ||
+      interview.candidate?.position?.toLowerCase().includes(searchString) ||
+      interview.type?.toLowerCase().includes(searchString) ||
+      interview.interviewer?.name?.toLowerCase().includes(searchString)
+    );
+  });
+
+  // Calculate pagination
+  const totalPages = Math.ceil(filteredInterviews.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentInterviews = filteredInterviews.slice(startIndex, endIndex);
+
   return (
     <div className="container py-8 space-y-8">
       <div className="flex items-center justify-between">
@@ -129,14 +150,59 @@ export default function InterviewScheduleDashboard() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Upcoming Interviews</CardTitle>
+          <div className="flex items-center justify-between">
+            <CardTitle>Upcoming Interviews</CardTitle>
+            <div className="flex w-full max-w-sm items-center space-x-2">
+              <Input
+                type="search"
+                placeholder="Search interviews..."
+                value={searchQuery}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  setCurrentPage(1); // Reset to first page on search
+                }}
+              />
+              <Button type="submit" size="icon">
+                <Search className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
         </CardHeader>
         <CardContent>
-          <InterviewTable
-            interviews={interviews}
-            onEdit={handleEdit}
-            onDelete={handleDelete}
-          />
+          <div className="space-y-4">
+            <InterviewTable
+              interviews={currentInterviews}
+              onEdit={handleEdit}
+              onDelete={handleDelete}
+            />
+
+            {/* Pagination */}
+            <div className="flex items-center justify-between space-x-2">
+              <div className="text-sm text-muted-foreground">
+                Showing {startIndex + 1} to{" "}
+                {Math.min(endIndex, filteredInterviews.length)} of{" "}
+                {filteredInterviews.length} interviews
+              </div>
+              <div className="flex space-x-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(currentPage - 1)}
+                  disabled={currentPage === 1}
+                >
+                  Previous
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                >
+                  Next
+                </Button>
+              </div>
+            </div>
+          </div>
         </CardContent>
       </Card>
 

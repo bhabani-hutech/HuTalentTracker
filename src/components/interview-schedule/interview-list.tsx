@@ -53,6 +53,9 @@ export function InterviewList() {
   const [showNotes, setShowNotes] = useState(null);
   const [showScheduler, setShowScheduler] = useState(null);
   const [showFilters, setShowFilters] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   useEffect(() => {
     const fetchInterviews = async () => {
@@ -67,6 +70,23 @@ export function InterviewList() {
     fetchInterviews();
   }, []);
 
+  // Filter interviews based on search query
+  const filteredInterviews = interviews.filter((interview) => {
+    const searchString = searchQuery.toLowerCase();
+    return (
+      interview.candidate?.name?.toLowerCase().includes(searchString) ||
+      interview.candidate?.position?.toLowerCase().includes(searchString) ||
+      interview.type?.toLowerCase().includes(searchString) ||
+      interview.interviewer?.name?.toLowerCase().includes(searchString)
+    );
+  });
+
+  // Calculate pagination
+  const totalPages = Math.ceil(filteredInterviews.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentInterviews = filteredInterviews.slice(startIndex, endIndex);
+
   return (
     <Card>
       <CardHeader>
@@ -74,7 +94,15 @@ export function InterviewList() {
           <CardTitle>Upcoming Interviews</CardTitle>
           <div className="flex items-center gap-2">
             <div className="flex w-full max-w-sm items-center space-x-2">
-              <Input type="search" placeholder="Search interviews..." />
+              <Input
+                type="search"
+                placeholder="Search interviews..."
+                value={searchQuery}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  setCurrentPage(1); // Reset to first page on search
+                }}
+              />
               <Button type="submit" size="icon">
                 <Search className="h-4 w-4" />
               </Button>
@@ -105,7 +133,7 @@ export function InterviewList() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {interviews.map((interview) => (
+              {currentInterviews.map((interview) => (
                 <TableRow key={interview.id}>
                   <TableCell className="font-medium">
                     {interview.candidate?.name}
@@ -164,38 +192,9 @@ export function InterviewList() {
                     <Button
                       variant="ghost"
                       size="icon"
-                      onClick={async () => {
-                        try {
-                          const { data: existingFeedback } = await supabase
-                            .from("feedback")
-                            .select(
-                              `
-                              *,
-                              interview:interviews!interview_id(*),
-                              candidate:candidates!candidate_id(*),
-                              interviewer:users!interviewer_id(*)
-                              `,
-                            )
-                            .eq("interview_id", interview.id)
-                            .single();
-                          console.log(
-                            "************************>>>>>>>Existing feedback",
-                          );
-                          cosnole.log(existingFeedback);
-
-                          if (existingFeedback) {
-                            // If feedback exists, show edit form
-                            setSelectedFeedback(existingFeedback);
-                          } else {
-                            // If no feedback exists, show create form
-                            setShowCreateForm(true);
-                          }
-                        } catch (error) {
-                          console.error("Error checking feedback:", error);
-                          // Fallback to create form
-                          setShowCreateForm(true);
-                        }
-                      }}
+                      onClick={() =>
+                        (window.location.href = `/interview-feedback?interview=${interview.id}`)
+                      }
                     >
                       <FileText className="h-4 w-4" />
                       <span className="sr-only">Add Feedback</span>
@@ -230,15 +229,29 @@ export function InterviewList() {
             </TableBody>
           </Table>
         </div>
+
+        {/* Pagination */}
         <div className="flex items-center justify-between space-x-2 py-4">
           <div className="text-sm text-muted-foreground">
-            Showing {interviews.length} interviews
+            Showing {startIndex + 1} to{" "}
+            {Math.min(endIndex, filteredInterviews.length)} of{" "}
+            {filteredInterviews.length} interviews
           </div>
           <div className="flex space-x-2">
-            <Button variant="outline" size="sm" disabled>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage(currentPage - 1)}
+              disabled={currentPage === 1}
+            >
               Previous
             </Button>
-            <Button variant="outline" size="sm">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage(currentPage + 1)}
+              disabled={currentPage === totalPages}
+            >
               Next
             </Button>
           </div>

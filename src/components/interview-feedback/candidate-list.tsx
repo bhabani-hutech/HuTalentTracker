@@ -27,6 +27,8 @@ export function CandidateList({
   feedbackData,
 }: CandidateListProps) {
   const [searchQuery, setSearchQuery] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
   const { deleteFeedback } = useFeedback();
 
   const handleDelete = async (id: string) => {
@@ -52,6 +54,12 @@ export function CandidateList({
       );
     }) || [];
 
+  // Calculate pagination
+  const totalPages = Math.ceil(filteredFeedback.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentFeedback = filteredFeedback.slice(startIndex, endIndex);
+
   return (
     <Card>
       <CardHeader>
@@ -63,7 +71,10 @@ export function CandidateList({
                 type="search"
                 placeholder="Search candidates..."
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  setCurrentPage(1); // Reset to first page on search
+                }}
               />
               <Button type="submit" size="icon">
                 <Search className="h-4 w-4" />
@@ -89,7 +100,7 @@ export function CandidateList({
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredFeedback.map((feedback) => (
+              {currentFeedback.map((feedback) => (
                 <TableRow key={feedback.id}>
                   <TableCell className="font-medium">
                     {feedback.candidate?.name}
@@ -132,6 +143,33 @@ export function CandidateList({
               ))}
             </TableBody>
           </Table>
+        </div>
+
+        {/* Pagination */}
+        <div className="flex items-center justify-between space-x-2 py-4">
+          <div className="text-sm text-muted-foreground">
+            Showing {startIndex + 1} to{" "}
+            {Math.min(endIndex, filteredFeedback.length)} of{" "}
+            {filteredFeedback.length} entries
+          </div>
+          <div className="flex space-x-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage(currentPage - 1)}
+              disabled={currentPage === 1}
+            >
+              Previous
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage(currentPage + 1)}
+              disabled={currentPage === totalPages}
+            >
+              Next
+            </Button>
+          </div>
         </div>
       </CardContent>
     </Card>

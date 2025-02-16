@@ -1,13 +1,32 @@
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend } from "recharts";
 
-const data = [
-  { name: "Selected", value: 15, color: "#22c55e" },
-  { name: "In Progress", value: 28, color: "#3b82f6" },
-  { name: "Rejected", value: 77, color: "#ef4444" },
-];
+import { useInterviews } from "@/lib/api/hooks/useInterviews";
+import { useFeedback } from "@/lib/api/hooks/useFeedback";
 
 export function StatusAnalytics() {
+  const { interviews } = useInterviews();
+  const { feedback } = useFeedback();
+
+  // Calculate analytics data
+  const stats = {
+    selected:
+      feedback?.filter((f) =>
+        ["Strong Hire", "Hire"].includes(f.recommendation || ""),
+      )?.length || 0,
+    inProgress:
+      interviews?.filter(
+        (i) => !i.status?.includes("Rejected") && i.status !== "Offered",
+      )?.length || 0,
+    rejected:
+      interviews?.filter((i) => i.status?.includes("Rejected"))?.length || 0,
+  };
+
+  const data = [
+    { name: "Selected", value: stats.selected, color: "#22c55e" },
+    { name: "In Progress", value: stats.inProgress, color: "#3b82f6" },
+    { name: "Rejected", value: stats.rejected, color: "#ef4444" },
+  ];
   return (
     <Card className="col-span-1">
       <CardHeader>
