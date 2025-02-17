@@ -28,6 +28,7 @@ import {
 } from "lucide-react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "./components/ui/toaster";
+import MasterData from "./pages/masterdata";
 
 const navigationItems: NavItem[] = [
   {
@@ -110,7 +111,7 @@ function AppContent() {
               element={<AssociateOnboarding />}
             />
             <Route path="/settings" element={<Settings />} />
-            <Route path="/master-data" element={<Settings />} />
+            <Route path="/master-data" element={<MasterData/>} />
             {import.meta.env.VITE_TEMPO === "true" && (
               <>
                 <Route path="/tempobook/*" />
