@@ -1,5 +1,7 @@
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Badge } from "../ui/badge";
+import { Button } from "../ui/button";
 import { format } from "date-fns";
 import { useInterviews } from "@/lib/api/hooks/useInterviews";
 import { useFeedback } from "@/lib/api/hooks/useFeedback";
@@ -15,6 +17,7 @@ interface TimelineEvent {
 export function StatusTimeline() {
   const { interviews } = useInterviews();
   const { feedback } = useFeedback();
+  const [showAll, setShowAll] = useState(false);
 
   // Combine interviews and feedback into timeline events
   const timelineEvents: TimelineEvent[] = [
@@ -39,6 +42,9 @@ export function StatusTimeline() {
       new Date(b.date + " " + b.time).getTime() -
       new Date(a.date + " " + a.time).getTime(),
   );
+
+  // Determine which events to show
+  const visibleEvents = showAll ? timelineEvents : timelineEvents.slice(0, 5);
 
   function getStatusText(status: string, type: string): string {
     if (status?.includes("Rejected")) return `Rejected in ${type} Round`;
@@ -76,13 +82,15 @@ export function StatusTimeline() {
       </CardHeader>
       <CardContent>
         <div className="space-y-8">
-          {timelineEvents.map((event, i) => (
+          {visibleEvents.map((event, i) => (
             <div key={i} className="flex gap-4">
               <div className="relative flex items-center justify-center">
                 <div
-                  className={`w-2 h-2 rounded-full ${getStatusColor(event.type)}`}
+                  className={`w-2 h-2 rounded-full ${getStatusColor(
+                    event.type
+                  )}`}
                 />
-                {i !== timelineEvents.length - 1 && (
+                {i !== visibleEvents.length - 1 && (
                   <div className="absolute top-4 w-px h-[calc(100%+1rem)] bg-border" />
                 )}
               </div>
@@ -102,6 +110,16 @@ export function StatusTimeline() {
             </div>
           ))}
         </div>
+        {timelineEvents.length > 5 && (
+          <div className="mt-4">
+            <Button
+              variant="outline"
+              onClick={() => setShowAll(!showAll)}
+            >
+              {showAll ? "Show Less" : "Show More"}
+            </Button>
+          </div>
+        )}
       </CardContent>
     </Card>
   );

@@ -1,35 +1,39 @@
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Progress } from "../ui/progress";
-import { Users, CheckCircle2, XCircle, Clock } from "lucide-react";
+import { Users, CheckCircle2, XCircle, Clock, Briefcase, Smile } from "lucide-react";
 
 import { useInterviews } from "@/lib/api/hooks/useInterviews";
 
 export function StatusOverview() {
   const { interviews } = useInterviews();
+  console.log(interviews);
 
   // Calculate counts for each stage
   const stats = {
     screening:
       interviews?.filter(
-        (i) => i.type === "technical" && i.status === "Rejected in screening",
+        (i) => i.type === "technical" && i.status === "Rejected in screening"
       )?.length || 0,
     technical:
       interviews?.filter(
-        (i) => i.type === "technical" && i.status !== "Rejected in screening",
+        (i) => i.type === "technical" && i.status !== "Rejected in screening"
       )?.length || 0,
     hr: interviews?.filter((i) => i.type === "hr")?.length || 0,
+    manager: interviews?.filter((i) => i.type === "manager")?.length || 0,
+    culture: interviews?.filter((i) => i.type === "culture")?.length || 0,
     rejected:
       interviews?.filter((i) => i.status?.includes("Rejected"))?.length || 0,
     total: interviews?.length || 0,
   };
+  console.log(stats);
 
   const stages = [
-    {
-      name: "Screening",
-      count: stats.screening,
-      total: stats.total,
-      icon: <Users className="h-4 w-4 text-blue-500" />,
-    },
+    // {
+    //   name: "Screening",
+    //   count: stats.screening,
+    //   total: stats.total,
+    //   icon: <Users className="h-4 w-4 text-blue-500" />,
+    // },
     {
       name: "Technical Round",
       count: stats.technical,
@@ -37,20 +41,33 @@ export function StatusOverview() {
       icon: <Clock className="h-4 w-4 text-yellow-500" />,
     },
     {
+      name: "Manager Round",
+      count: stats.manager,
+      total: stats.total,
+      icon: <Briefcase className="h-4 w-4 text-purple-500" />,
+    },
+    {
+      name: "Culture Fit",
+      count: stats.culture,
+      total: stats.total,
+      icon: <Smile className="h-4 w-4 text-orange-500" />,
+    },
+    {
       name: "HR Round",
       count: stats.hr,
       total: stats.total,
       icon: <CheckCircle2 className="h-4 w-4 text-green-500" />,
     },
-    {
-      name: "Rejected",
-      count: stats.rejected,
-      total: stats.total,
-      icon: <XCircle className="h-4 w-4 text-red-500" />,
-    },
+    // {
+    //   name: "Rejected",
+    //   count: stats.rejected,
+    //   total: stats.total,
+    //   icon: <XCircle className="h-4 w-4 text-red-500" />,
+    // },
   ];
+
   return (
-    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
       {stages.map((stage) => (
         <Card key={stage.name}>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">

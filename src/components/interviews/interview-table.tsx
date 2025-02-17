@@ -71,7 +71,7 @@ export function InterviewTable({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {interviews.map((interview) => (
+            {interviews?.map((interview) => (
               <TableRow key={interview.id}>
                 <TableCell className="font-medium">
                   {interview.candidate?.name}
@@ -86,8 +86,8 @@ export function InterviewTable({
                   <Badge
                     className={`${getStatusColor(interview.status)} text-white`}
                   >
-                    {interview.status.charAt(0).toUpperCase() +
-                      interview.status.slice(1)}
+                    {interview?.status?.charAt(0)?.toUpperCase() +
+                      interview?.status?.slice(1)}
                   </Badge>
                 </TableCell>
                 <TableCell className="text-right">

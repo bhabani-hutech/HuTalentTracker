@@ -5,7 +5,6 @@ import { useUsers } from "@/lib/api/hooks/useUsers";
 
 export function AssociateMetrics() {
   const { users } = useUsers();
-
   const metrics = [
     {
       name: "Active Associates",
