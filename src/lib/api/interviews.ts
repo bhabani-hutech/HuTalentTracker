@@ -29,6 +29,8 @@ export type Interview = {
 };
 
 export async function getInterviews() {
+  console.log("IN INTERVIEW getInterviews");
+  console.log(interview);
   const { data, error } = await supabase
     .from("interviews")
     .select(
@@ -51,6 +53,8 @@ export async function getInterviews() {
 export async function createInterview(
   interview: Omit<Interview, "id" | "created_at" | "updated_at">,
 ) {
+  console.log("IN INTERVIEW createInterview");
+  console.log(interview);
   const { data, error } = await supabase
     .from("interviews")
     .insert([interview])
@@ -75,6 +79,8 @@ export async function updateInterview(
   id: string,
   updates: Partial<Omit<Interview, "id" | "created_at" | "updated_at">>,
 ) {
+  console.log("IN INTERVIEW updateInterview");
+  console.log(interview);
   const { data, error } = await supabase
     .from("interviews")
     .update(updates)

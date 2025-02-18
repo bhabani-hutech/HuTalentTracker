@@ -15,6 +15,13 @@ export function useCandidates() {
   const { data, isLoading, error } = useQuery({
     queryKey: ["candidates"],
     queryFn: getCandidates,
+    staleTime: 30000, // Data stays fresh for 30 seconds
+    cacheTime: 3600000, // Cache persists for 1 hour
+    retry: 3, // Retry failed requests 3 times
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000), // Exponential backoff
+    onError: (error) => {
+      console.error("Error fetching candidates:", error);
+    },
   });
 
   const createMutation = useMutation({

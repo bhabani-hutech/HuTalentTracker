@@ -9,6 +9,7 @@ import {
   Eye,
   CalendarPlus,
   Trash2,
+  PenSquare,
 } from "lucide-react";
 import {
   Table,
@@ -22,12 +23,13 @@ import { Badge } from "../ui/badge";
 import { ResumePreview } from "./resume-preview";
 import { ResumeFilters } from "./resume-filters";
 import { InterviewScheduler } from "./interview-scheduler";
-import { Resume } from "@/lib/api/resumes";
+import { Candidate } from "@/lib/api/candidates";
 
 interface ResumeListProps {
-  resumes: Resume[];
+  candidates: Candidate[];
   isLoading: boolean;
   onDelete: (id: string) => Promise<void>;
+  onEdit: (candidate: Candidate) => void;
 }
 
 const getScoreColor = (score?: number): string => {
@@ -38,31 +40,97 @@ const getScoreColor = (score?: number): string => {
   return "bg-red-500 hover:bg-red-600 text-white";
 };
 
-interface ResumeListProps {
-  resumes: Resume[];
-  isLoading: boolean;
-  onDelete: (id: string) => Promise<void>;
-}
-
-export function ResumeList({ resumes, isLoading, onDelete }: ResumeListProps) {
+export function ResumeList({
+  candidates,
+  isLoading,
+  onDelete,
+  onEdit,
+}: ResumeListProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-  const [selectedResume, setSelectedResume] = useState<Resume | null>(null);
+  const [selectedCandidate, setSelectedCandidate] = useState<Candidate | null>(
+    null,
+  );
   const [showFilters, setShowFilters] = useState(false);
-  const [scheduleInterview, setScheduleInterview] = useState<Resume | null>(
+  const [scheduleInterview, setScheduleInterview] = useState<Candidate | null>(
     null,
   );
   const resultsPerPage = 10;
 
-  const filteredResumes = resumes.filter(
-    (resume) =>
-      resume.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      resume.position.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      resume.email?.toLowerCase().includes(searchTerm.toLowerCase()),
+  // Handle empty or loading state
+  if (!candidates || isLoading) {
+    return (
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <CardTitle>Recent Resumes</CardTitle>
+            <div className="flex items-center gap-2">
+              <div className="flex w-full max-w-sm items-center space-x-2">
+                <Input
+                  type="search"
+                  placeholder="Search candidates..."
+                  disabled
+                />
+                <Button type="submit" size="icon" disabled>
+                  <Search className="h-4 w-4" />
+                </Button>
+              </div>
+              <Button variant="outline" size="icon" disabled>
+                <Filter className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="rounded-md border">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Name</TableHead>
+                  <TableHead>Position</TableHead>
+                  <TableHead>Source</TableHead>
+                  <TableHead>Date</TableHead>
+                  <TableHead>Match Score</TableHead>
+                  <TableHead>Notice Period</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                <TableRow>
+                  <TableCell colSpan={7} className="text-center py-8">
+                    {isLoading ? "Loading..." : "No candidates found"}
+                  </TableCell>
+                </TableRow>
+              </TableBody>
+            </Table>
+          </div>
+          <div className="flex items-center justify-between space-x-2 py-4">
+            <div className="text-sm text-muted-foreground">
+              Showing 0 of 0 results
+            </div>
+            <div className="flex space-x-2">
+              <Button variant="outline" size="sm" disabled>
+                Previous
+              </Button>
+              <Button variant="outline" size="sm" disabled>
+                Next
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  const filteredCandidates = candidates.filter(
+    (candidate) =>
+      candidate.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      candidate.position.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (candidate.email || "").toLowerCase().includes(searchTerm.toLowerCase()),
   );
 
-  const totalPages = Math.ceil(filteredResumes.length / resultsPerPage);
-  const paginatedResumes = filteredResumes.slice(
+  const totalPages = Math.ceil(filteredCandidates.length / resultsPerPage);
+  const paginatedCandidates = filteredCandidates.slice(
     (currentPage - 1) * resultsPerPage,
     currentPage * resultsPerPage,
   );
@@ -76,7 +144,7 @@ export function ResumeList({ resumes, isLoading, onDelete }: ResumeListProps) {
             <div className="flex w-full max-w-sm items-center space-x-2">
               <Input
                 type="search"
-                placeholder="Search resumes..."
+                placeholder="Search candidates..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
@@ -115,38 +183,44 @@ export function ResumeList({ resumes, isLoading, onDelete }: ResumeListProps) {
                     Loading...
                   </TableCell>
                 </TableRow>
-              ) : paginatedResumes.length === 0 ? (
+              ) : paginatedCandidates?.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={7} className="text-center py-8">
-                    No resumes found
+                    No candidates found
                   </TableCell>
                 </TableRow>
               ) : (
-                paginatedResumes.map((resume) => (
+                paginatedCandidates?.map((candidate) => (
                   <TableRow
-                    key={resume.id}
+                    key={candidate.id}
                     className="cursor-pointer hover:bg-muted/50"
-                    onClick={() => setSelectedResume(resume)}
+                    onClick={() => setSelectedCandidate(candidate)}
                   >
-                    <TableCell className="font-medium">{resume.name}</TableCell>
-                    <TableCell>{resume.position}</TableCell>
-                    <TableCell>
-                      <Badge variant="secondary">{resume.source}</Badge>
+                    <TableCell className="font-medium">
+                      {candidate.name}
                     </TableCell>
-                    <TableCell>{resume.date}</TableCell>
+                    <TableCell>{candidate.position}</TableCell>
                     <TableCell>
-                      <Badge className={getScoreColor(resume.matchScore)}>
-                        {resume.matchScore}%
+                      <Badge variant="secondary">{candidate.source}</Badge>
+                    </TableCell>
+                    <TableCell>
+                      {new Date(
+                        candidate?.created_at || "",
+                      ).toLocaleDateString()}
+                    </TableCell>
+                    <TableCell>
+                      <Badge className={getScoreColor(candidate?.match_score)}>
+                        {candidate.match_score || 0}%
                       </Badge>
                     </TableCell>
-                    <TableCell>{resume.noticePeriod}</TableCell>
+                    <TableCell>{candidate?.notice_period || "N/A"}</TableCell>
                     <TableCell className="text-right space-x-2">
                       <Button
                         variant="ghost"
                         size="icon"
                         onClick={(e) => {
                           e.stopPropagation();
-                          setSelectedResume(resume);
+                          setSelectedCandidate(candidate);
                         }}
                       >
                         <Eye className="h-4 w-4" />
@@ -156,22 +230,33 @@ export function ResumeList({ resumes, isLoading, onDelete }: ResumeListProps) {
                         size="icon"
                         onClick={(e) => {
                           e.stopPropagation();
-                          setScheduleInterview(resume);
+                          onEdit(candidate);
                         }}
                       >
-                        <CalendarPlus className="h-4 w-4" />
+                        <PenSquare className="h-4 w-4" />
                       </Button>
                       <Button
                         variant="ghost"
                         size="icon"
                         onClick={(e) => {
                           e.stopPropagation();
-                          // Download resume
-                          window.open(resume.file_url, "_blank");
+                          setScheduleInterview(candidate);
                         }}
                       >
-                        <Download className="h-4 w-4" />
+                        <CalendarPlus className="h-4 w-4" />
                       </Button>
+                      {candidate.file_url && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            window.open(candidate.file_url, "_blank");
+                          }}
+                        >
+                          <Download className="h-4 w-4" />
+                        </Button>
+                      )}
                       <Button
                         variant="ghost"
                         size="icon"
@@ -179,10 +264,10 @@ export function ResumeList({ resumes, isLoading, onDelete }: ResumeListProps) {
                           e.stopPropagation();
                           if (
                             window.confirm(
-                              "Are you sure you want to delete this resume?",
+                              "Are you sure you want to delete this candidate?",
                             )
                           ) {
-                            onDelete(resume.id);
+                            onDelete(candidate.id);
                           }
                         }}
                         className="text-red-500 hover:text-red-600"
@@ -199,8 +284,8 @@ export function ResumeList({ resumes, isLoading, onDelete }: ResumeListProps) {
         <div className="flex items-center justify-between space-x-2 py-4">
           <div className="text-sm text-muted-foreground">
             Showing{" "}
-            {Math.min(currentPage * resultsPerPage, filteredResumes.length)} of{" "}
-            {filteredResumes.length} results
+            {Math.min(currentPage * resultsPerPage, filteredCandidates?.length)}{" "}
+            of {filteredCandidates?.length} results
           </div>
           <div className="flex space-x-2">
             <Button
@@ -224,9 +309,9 @@ export function ResumeList({ resumes, isLoading, onDelete }: ResumeListProps) {
       </CardContent>
 
       <ResumePreview
-        isOpen={!!selectedResume}
-        onClose={() => setSelectedResume(null)}
-        resume={selectedResume}
+        isOpen={!!selectedCandidate}
+        onClose={() => setSelectedCandidate(null)}
+        candidate={selectedCandidate}
       />
 
       <ResumeFilters
@@ -246,5 +331,3 @@ export function ResumeList({ resumes, isLoading, onDelete }: ResumeListProps) {
     </Card>
   );
 }
-
-// Function to get color based on match score

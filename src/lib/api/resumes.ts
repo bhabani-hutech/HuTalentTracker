@@ -64,36 +64,51 @@ export async function uploadResume(file: File): Promise<string> {
 export async function createResume(
   resume: Omit<Resume, "id" | "created_at" | "updated_at">,
 ) {
-  // Ensure source is never null
-  // Ensure required fields are present
+  // Start a transaction by creating the candidate first
+  const { data: candidate, error: candidateError } = await supabase
+    .from("candidates")
+    .insert([
+      {
+        name: resume.name,
+        email: resume.email || "",
+        position: resume.position,
+        source: resume.source || "Manual Upload",
+        phone: resume.phone,
+        notice_period: resume.notice_period,
+        match_score: resume.match_score,
+        file_url: resume.file_url || "",
+      },
+    ])
+    .select()
+    .single();
+
+  if (candidateError) throw candidateError;
+
+  // Then create the resume with the candidate_id
   const resumeWithDefaults = {
     ...resume,
     source: resume.source || "Manual Upload",
-    file_url: resume.file_url || "", // This should be provided, but add fallback
-    email: resume.email || "", // Ensure email has a default value
+    file_url: resume.file_url || "",
+    email: resume.email || "",
+    candidate_id: candidate.id, // Link to the created candidate
   };
-  const { data, error } = await supabase
+
+  const { data: resumeData, error: resumeError } = await supabase
     .from("resumes")
     .insert([resumeWithDefaults])
     .select()
     .single();
 
-  if (error) throw error;
-  return data;
-}
-export async function updateResume(
-  id: string,
-  updatedFields: Partial<Resume>
-) {
-  const { data, error } = await supabase
-    .from("resumes")
-    .update(updatedFields)
-    .eq("id", id)
-    .select()
-    .single();
+  if (resumeError) {
+    // If resume creation fails, delete the candidate to maintain consistency
+    await supabase.from("candidates").delete().eq("id", candidate.id);
+    throw resumeError;
+  }
 
-  if (error) throw error;
-  return data;
+  return {
+    ...resumeData,
+    candidate,
+  };
 }
 
 export async function getResumes() {
@@ -106,9 +121,98 @@ export async function getResumes() {
   return data;
 }
 
-export async function deleteResume(id: string) {
-  const { error } = await supabase.from("resumes").delete().eq("id", id);
+export async function updateResume(id: string, updates: Partial<Resume>) {
+  // First get the resume to get the candidate_id
+  const { data: existingResume, error: fetchError } = await supabase
+    .from("resumes")
+    .select("*")
+    .eq("id", id)
+    .single();
 
-  if (error) throw error;
+  if (fetchError) throw fetchError;
+
+  // Update the resume
+  const { data: resumeData, error: resumeError } = await supabase
+    .from("resumes")
+    .update(updates)
+    .eq("id", id)
+    .select()
+    .single();
+
+  if (resumeError) throw resumeError;
+
+  // If we have candidate-related fields, update the candidate too
+  if (
+    existingResume?.candidate_id &&
+    (updates.name ||
+      updates.email ||
+      updates.position ||
+      updates.source ||
+      updates.phone ||
+      updates.notice_period ||
+      updates.match_score)
+  ) {
+    const candidateUpdates = {
+      name: updates.name,
+      email: updates.email,
+      position: updates.position,
+      source: updates.source,
+      phone: updates.phone,
+      notice_period: updates.notice_period,
+      match_score: updates.match_score,
+    };
+
+    // Remove undefined values
+    Object.keys(candidateUpdates).forEach(
+      (key) =>
+        candidateUpdates[key] === undefined && delete candidateUpdates[key],
+    );
+
+    const { data: candidateData, error: candidateError } = await supabase
+      .from("candidates")
+      .update(candidateUpdates)
+      .eq("id", existingResume.candidate_id)
+      .select()
+      .single();
+
+    if (candidateError) throw candidateError;
+
+    return {
+      ...resumeData,
+      candidate: candidateData,
+    };
+  }
+
+  return resumeData;
+}
+
+export async function deleteResume(id: string) {
+  // First get the resume to get the candidate_id
+  const { data: resume, error: fetchError } = await supabase
+    .from("resumes")
+    .select("candidate_id")
+    .eq("id", id)
+    .single();
+
+  if (fetchError) throw fetchError;
+
+  // Delete the resume
+  const { error: resumeError } = await supabase
+    .from("resumes")
+    .delete()
+    .eq("id", id);
+
+  if (resumeError) throw resumeError;
+
+  // If there was a linked candidate, delete it too
+  if (resume?.candidate_id) {
+    const { error: candidateError } = await supabase
+      .from("candidates")
+      .delete()
+      .eq("id", resume.candidate_id);
+
+    if (candidateError) throw candidateError;
+  }
+
   return true;
 }
