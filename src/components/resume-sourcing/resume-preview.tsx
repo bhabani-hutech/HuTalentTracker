@@ -52,6 +52,16 @@ export function ResumePreview({ isOpen, onClose, resume }: ResumePreviewProps) {
           </div>
           <div className="flex-1 bg-muted rounded-lg p-4 overflow-y-auto">
             <div className="space-y-6">
+              {resume.parsed_data?.summary && (
+                <section>
+                  <h3 className="text-lg font-semibold mb-2">
+                    Professional Summary
+                  </h3>
+                  <p className="text-sm text-muted-foreground">
+                    {resume.parsed_data.summary}
+                  </p>
+                </section>
+              )}
               {/* Match Score Section */}
               <section className="mb-6">
                 <h3 className="text-lg font-semibold mb-2">Match Score</h3>
@@ -110,6 +120,36 @@ export function ResumePreview({ isOpen, onClose, resume }: ResumePreviewProps) {
                         <ul className="list-disc list-inside text-sm text-muted-foreground space-y-2">
                           {resume.parsed_data.education.map((edu, index) => (
                             <li key={index}>{edu}</li>
+                          ))}
+                        </ul>
+                      </section>
+                    )}
+
+                  {resume.parsed_data.certifications &&
+                    resume.parsed_data.certifications.length > 0 && (
+                      <section>
+                        <h3 className="text-lg font-semibold mb-2">
+                          Certifications
+                        </h3>
+                        <ul className="list-disc list-inside text-sm text-muted-foreground space-y-2">
+                          {resume.parsed_data.certifications.map(
+                            (cert, index) => (
+                              <li key={index}>{cert}</li>
+                            ),
+                          )}
+                        </ul>
+                      </section>
+                    )}
+
+                  {resume.parsed_data.languages &&
+                    resume.parsed_data.languages.length > 0 && (
+                      <section>
+                        <h3 className="text-lg font-semibold mb-2">
+                          Languages
+                        </h3>
+                        <ul className="list-disc list-inside text-sm text-muted-foreground space-y-2">
+                          {resume.parsed_data.languages.map((lang, index) => (
+                            <li key={index}>{lang}</li>
                           ))}
                         </ul>
                       </section>

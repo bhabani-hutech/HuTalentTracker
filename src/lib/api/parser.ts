@@ -44,28 +44,26 @@ function calculateMatchScore(
   };
 }
 
-export async function parseResume(fileUrl: string): Promise<ParsedResume> {
+export async function parseResume(file: File): Promise<ParsedResume> {
   try {
-    // In a real implementation, you would call an actual CV parsing service
-    // For now, we'll simulate parsing with a delay
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    // Read the file content
+    const text = await file.text();
 
-    // Mock parsed data
+    // Basic parsing logic - you can enhance this based on your needs
     const parsedData = {
-      name: "John Doe",
-      email: "john@example.com",
-      phone: "+1234567890",
-      skills: ["JavaScript", "React", "Node.js", "TypeScript"],
-      experience: [
-        "Senior Frontend Developer at Tech Corp",
-        "Software Engineer at StartupX",
-      ],
-      education: ["Bachelor's in Computer Science"],
-      position: "Senior Frontend Developer",
+      name: extractName(text),
+      email: extractEmail(text),
+      phone: extractPhone(text),
+      skills: extractSkills(text),
+      experience: extractExperience(text),
+      education: extractEducation(text),
+      position: extractPosition(text),
+      summary: extractSummary(text),
     };
 
     // Calculate match score
     const { score, matches } = calculateMatchScore(parsedData.skills || []);
+
     return {
       ...parsedData,
       matchScore: score,
@@ -75,4 +73,127 @@ export async function parseResume(fileUrl: string): Promise<ParsedResume> {
     console.error("Error parsing resume:", error);
     throw error;
   }
+}
+
+// Helper functions for parsing
+function extractName(text: string): string {
+  // Basic name extraction - first line or first capitalized words
+  const lines = text.split("\n");
+  const nameLine = lines.find((line) => /^[A-Z][a-z]+ [A-Z][a-z]+/.test(line));
+  return nameLine || "";
+}
+
+function extractEmail(text: string): string {
+  const emailRegex = /[\w.-]+@[\w.-]+\.[A-Za-z]{2,}/;
+  const match = text.match(emailRegex);
+  return match ? match[0] : "";
+}
+
+function extractPhone(text: string): string {
+  const phoneRegex = /(?:\+\d{1,3}[- ]?)?\(?\d{3}\)?[- ]?\d{3}[- ]?\d{4}/;
+  const match = text.match(phoneRegex);
+  return match ? match[0] : "";
+}
+
+function extractSkills(text: string): string[] {
+  // Common technical skills to look for
+  const commonSkills = [
+    "JavaScript",
+    "TypeScript",
+    "React",
+    "Angular",
+    "Vue",
+    "Node.js",
+    "Python",
+    "Java",
+    "C++",
+    "C#",
+    "SQL",
+    "MongoDB",
+    "AWS",
+    "Azure",
+    "Docker",
+    "Kubernetes",
+    "Git",
+    "CI/CD",
+    "HTML",
+    "CSS",
+    "REST API",
+  ];
+
+  return commonSkills.filter((skill) =>
+    new RegExp(`\\b${skill}\\b`, "i").test(text),
+  );
+}
+
+function extractExperience(text: string): string[] {
+  // Look for common experience patterns
+  const experienceSection =
+    text.match(
+      /EXPERIENCE|WORK EXPERIENCE|EMPLOYMENT[\s\S]*?(?=EDUCATION|SKILLS|$)/i,
+    )?.[0] || "";
+  return experienceSection
+    .split("\n")
+    .filter((line) => line.trim().length > 0)
+    .map((line) => line.trim());
+}
+
+function extractEducation(text: string): string[] {
+  // Look for common education patterns
+  const educationSection =
+    text.match(/EDUCATION[\s\S]*?(?=EXPERIENCE|SKILLS|$)/i)?.[0] || "";
+  return educationSection
+    .split("\n")
+    .filter((line) => line.trim().length > 0)
+    .map((line) => line.trim());
+}
+
+function extractPosition(text: string): string {
+  // Look for job titles near the top of the resume
+  const commonTitles = [
+    "Software Engineer",
+    "Developer",
+    "Architect",
+    "Manager",
+    "Designer",
+    "Analyst",
+    "Consultant",
+    "Lead",
+    "Director",
+  ];
+
+  const firstFewLines = text.split("\n").slice(0, 5).join(" ");
+  const match = commonTitles.find((title) =>
+    new RegExp(`\\b${title}\\b`, "i").test(firstFewLines),
+  );
+  return match || "";
+}
+
+function extractSummary(text: string): string {
+  // Look for summary or objective section
+  const summarySection =
+    text.match(
+      /SUMMARY|OBJECTIVE|PROFILE[\s\S]*?(?=EXPERIENCE|EDUCATION|SKILLS|$)/i,
+    )?.[0] || "";
+  return summarySection
+    .split("\n")
+    .slice(1) // Skip the header
+    .filter((line) => line.trim().length > 0)
+    .join(" ")
+    .trim();
+}
+
+interface ParsedResume {
+  name?: string;
+  email?: string;
+  phone?: string;
+  skills?: string[];
+  experience?: string[];
+  education?: string[];
+  certifications?: string[];
+  languages?: string[];
+  position?: string;
+  summary?: string;
+  matchScore?: number;
+  skillMatches?: SkillMatch[];
 }

@@ -4,6 +4,9 @@ export interface ParsedData {
   skills?: string[];
   experience?: string[];
   education?: string[];
+  certifications?: string[];
+  languages?: string[];
+  summary?: string;
 }
 
 export interface Resume {
@@ -21,7 +24,7 @@ export interface Resume {
   updated_at?: string;
 }
 
-export async function uploadResume(file: File) {
+export async function uploadResume(file: File): Promise<string> {
   try {
     // Create a clean filename without special characters
     const cleanFileName = file.name.replace(/[^a-zA-Z0-9.]/g, "_");
@@ -61,9 +64,17 @@ export async function uploadResume(file: File) {
 export async function createResume(
   resume: Omit<Resume, "id" | "created_at" | "updated_at">,
 ) {
+  // Ensure source is never null
+  // Ensure required fields are present
+  const resumeWithDefaults = {
+    ...resume,
+    source: resume.source || "Manual Upload",
+    file_url: resume.file_url || "", // This should be provided, but add fallback
+    email: resume.email || "", // Ensure email has a default value
+  };
   const { data, error } = await supabase
     .from("resumes")
-    .insert([resume])
+    .insert([resumeWithDefaults])
     .select()
     .single();
 

@@ -43,21 +43,27 @@ export default function ResumeSourcing() {
           // First upload the file
           const fileUrl = await uploadResume(file);
 
+          if (!fileUrl) {
+            throw new Error("Failed to get file URL after upload");
+          }
+
           // Create initial resume entry
           const initialResume = await createResume({
             name: file.name.split(".")[0],
             email: "",
             position: "Processing...",
-            source: "Upload",
+            source: file.type.includes("pdf") ? "PDF Upload" : "Word Upload",
             file_url: fileUrl,
             parsed_data: null,
           });
 
           // Parse the resume
-          const parsedData = await parseResume(fileUrl);
+          const parsedData = await parseResume(file);
 
           // Update with parsed data
           await createResume({
+            ...initialResume,
+            file_url: fileUrl, // Ensure file_url is included in update
             ...initialResume,
             name: parsedData.name || file.name.split(".")[0],
             email: parsedData.email || "",
