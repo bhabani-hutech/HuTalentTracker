@@ -81,6 +81,20 @@ export async function createResume(
   if (error) throw error;
   return data;
 }
+export async function updateResume(
+  id: string,
+  updatedFields: Partial<Resume>
+) {
+  const { data, error } = await supabase
+    .from("resumes")
+    .update(updatedFields)
+    .eq("id", id)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data;
+}
 
 export async function getResumes() {
   const { data, error } = await supabase

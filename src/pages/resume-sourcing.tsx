@@ -1,7 +1,7 @@
 import { ResumeList } from "../components/resume-sourcing/resume-list";
 import { ResumeUploadTabs } from "../components/resume-sourcing/resume-upload-tabs";
 import { useResumes } from "@/lib/api/hooks/useResumes";
-import { uploadResume } from "@/lib/api/resumes";
+import { updateResume, uploadResume } from "@/lib/api/resumes";
 import { parseResume } from "@/lib/api/parser";
 import { useToast } from "@/components/ui/use-toast";
 
@@ -58,13 +58,10 @@ export default function ResumeSourcing() {
           });
 
           // Parse the resume
+          console.log(file);
           const parsedData = await parseResume(file);
-
-          // Update with parsed data
-          await createResume({
-            ...initialResume,
-            file_url: fileUrl, // Ensure file_url is included in update
-            ...initialResume,
+          // Update the existing resume with parsed data
+          await updateResume(initialResume.id, {
             name: parsedData.name || file.name.split(".")[0],
             email: parsedData.email || "",
             phone: parsedData.phone,

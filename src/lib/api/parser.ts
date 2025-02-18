@@ -106,7 +106,7 @@ function extractSkills(text: string): string[] {
     "Node.js",
     "Python",
     "Java",
-    "C++",
+    "C\\+\\+", // Escaped C++ properly
     "C#",
     "SQL",
     "MongoDB",
@@ -122,9 +122,10 @@ function extractSkills(text: string): string[] {
   ];
 
   return commonSkills.filter((skill) =>
-    new RegExp(`\\b${skill}\\b`, "i").test(text),
+    new RegExp(`\\b${skill}\\b`, "i").test(text)
   );
 }
+
 
 function extractExperience(text: string): string[] {
   // Look for common experience patterns
