@@ -7,7 +7,10 @@ import Settings from "./pages/settings";
 import routes from "tempo-routes";
 import { Icons } from "@/components/icons";
 import InterviewScheduleDashboard from "./pages/interview-schedule-dashboard";
-//import InterviewSchedule from "./pages/interview-schedule";
+import Jobs from "./pages/jobs";
+import NewJob from "./pages/jobs/new";
+import JobSelection from "./pages/jobs/select";
+
 const StatusTracking = lazy(() => import("./pages/status-tracking"));
 const AssociateOnboarding = lazy(() => import("./pages/associate-onboarding"));
 
@@ -35,6 +38,11 @@ const navigationItems: NavItem[] = [
     title: "Dashboard",
     href: "/",
     icon: HomeIcon,
+  },
+  {
+    title: "Jobs",
+    href: "/jobs",
+    icon: FileText,
   },
   {
     title: "Resume Sourcing",
@@ -92,6 +100,10 @@ function AppContent() {
         >
           <Routes>
             <Route path="/" element={<Home />} />
+            <Route path="/jobs" element={<Jobs />} />
+            <Route path="/jobs/new" element={<NewJob />} />
+            <Route path="/jobs/:id" element={<NewJob />} />
+            <Route path="/jobs/select" element={<JobSelection />} />
             <Route path="/resume-sourcing" element={<ResumeSourcing />} />
             <Route
               path="/interview-scheduling"
@@ -111,7 +123,7 @@ function AppContent() {
               element={<AssociateOnboarding />}
             />
             <Route path="/settings" element={<Settings />} />
-            <Route path="/master-data" element={<MasterData/>} />
+            <Route path="/master-data" element={<MasterData />} />
             {import.meta.env.VITE_TEMPO === "true" && (
               <>
                 <Route path="/tempobook/*" />

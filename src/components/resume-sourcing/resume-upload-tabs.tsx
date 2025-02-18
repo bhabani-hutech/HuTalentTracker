@@ -5,7 +5,11 @@ import { Input } from "../ui/input";
 import { Label } from "../ui/label";
 import { Upload, FileUp, Link as LinkIcon } from "lucide-react";
 
-export function ResumeUploadTabs() {
+interface ResumeUploadTabsProps {
+  onFileUpload: (files: FileList) => Promise<void>;
+}
+
+export function ResumeUploadTabs({ onFileUpload }: ResumeUploadTabsProps) {
   return (
     <Tabs defaultValue="upload" className="w-full">
       <TabsList className="grid w-full grid-cols-3">
@@ -32,6 +36,11 @@ export function ResumeUploadTabs() {
                 className="hidden"
                 id="cv-upload"
                 accept=".pdf,.doc,.docx"
+                onChange={(e) => {
+                  if (e.target.files) {
+                    onFileUpload(e.target.files);
+                  }
+                }}
               />
               <Button asChild>
                 <label htmlFor="cv-upload" className="cursor-pointer">
@@ -63,6 +72,11 @@ export function ResumeUploadTabs() {
                 id="bulk-upload"
                 accept=".pdf,.doc,.docx"
                 multiple
+                onChange={(e) => {
+                  if (e.target.files) {
+                    onFileUpload(e.target.files);
+                  }
+                }}
               />
               <Button asChild>
                 <label htmlFor="bulk-upload" className="cursor-pointer">
