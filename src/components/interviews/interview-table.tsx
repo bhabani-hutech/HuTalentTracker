@@ -10,7 +10,7 @@ import {
 } from "../ui/table";
 import { Badge } from "../ui/badge";
 import { format } from "date-fns";
-import { Pencil, Trash2, MessageSquare, FileText } from "lucide-react";
+import { Pencil, Trash2, FileText } from "lucide-react";
 import { Interview } from "@/lib/api/interviews";
 import {
   AlertDialog,
@@ -43,9 +43,7 @@ export function InterviewTable({
       case "Cleared":
         return "bg-green-500 hover:bg-green-600";
       case "Rejected in screening":
-        return "bg-red-500 hover:bg-red-600";
       case "Rejected -1":
-        return "bg-red-500 hover:bg-red-600";
       case "Rejected in -2":
         return "bg-red-500 hover:bg-red-600";
       case "HR round":
@@ -53,6 +51,13 @@ export function InterviewTable({
       default:
         return "bg-gray-500 hover:bg-gray-600";
     }
+  };
+
+  const formatDate = (dateString: string | undefined) => {
+    if (!dateString) return "No date available";
+    const date = new Date(dateString);
+    const isValidDate = !isNaN(date.getTime());
+    return isValidDate ? format(date, "PPpp") : "Invalid date";
   };
 
   return (
@@ -71,7 +76,7 @@ export function InterviewTable({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {interviews.map((interview) => (
+            {interviews?.map((interview) => (
               <TableRow key={interview.id}>
                 <TableCell className="font-medium">
                   {interview.candidate?.name}
@@ -81,13 +86,13 @@ export function InterviewTable({
                 <TableCell>
                   <Badge variant="secondary">{interview.type}</Badge>
                 </TableCell>
-                <TableCell>{format(new Date(interview.date), "PPp")}</TableCell>
+                <TableCell>{formatDate(interview.date)}</TableCell>
                 <TableCell>
                   <Badge
                     className={`${getStatusColor(interview.status)} text-white`}
                   >
-                    {interview.status.charAt(0).toUpperCase() +
-                      interview.status.slice(1)}
+                    {interview?.status?.charAt(0)?.toUpperCase() +
+                      interview?.status?.slice(1)}
                   </Badge>
                 </TableCell>
                 <TableCell className="text-right">

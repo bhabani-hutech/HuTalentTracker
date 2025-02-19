@@ -3,11 +3,15 @@ import { Routes, Route } from "react-router-dom";
 import Home from "./components/home";
 import ResumeSourcing from "./pages/resume-sourcing";
 import InterviewFeedback from "./pages/interview-feedback";
+import InterviewKanban from "./pages/interview-kanban";
 import Settings from "./pages/settings";
 import routes from "tempo-routes";
 import { Icons } from "@/components/icons";
 import InterviewScheduleDashboard from "./pages/interview-schedule-dashboard";
-//import InterviewSchedule from "./pages/interview-schedule";
+import Jobs from "./pages/jobs";
+import NewJob from "./pages/jobs/new";
+import JobSelection from "./pages/jobs/select";
+
 const StatusTracking = lazy(() => import("./pages/status-tracking"));
 const AssociateOnboarding = lazy(() => import("./pages/associate-onboarding"));
 
@@ -28,12 +32,18 @@ import {
 } from "lucide-react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "./components/ui/toaster";
+import MasterData from "./pages/masterdata";
 
 const navigationItems: NavItem[] = [
   {
     title: "Dashboard",
     href: "/",
     icon: HomeIcon,
+  },
+  {
+    title: "Jobs",
+    href: "/jobs",
+    icon: FileText,
   },
   {
     title: "Resume Sourcing",
@@ -44,6 +54,11 @@ const navigationItems: NavItem[] = [
     title: "Interview Schedule",
     href: "/interview-scheduling",
     icon: Calendar,
+  },
+  {
+    title: "Interview Pipeline",
+    href: "/interview-kanban",
+    icon: ListTodo,
   },
   {
     title: "Interview Feedback",
@@ -91,12 +106,17 @@ function AppContent() {
         >
           <Routes>
             <Route path="/" element={<Home />} />
+            <Route path="/jobs" element={<Jobs />} />
+            <Route path="/jobs/new" element={<NewJob />} />
+            <Route path="/jobs/:id" element={<NewJob />} />
+            <Route path="/jobs/select" element={<JobSelection />} />
             <Route path="/resume-sourcing" element={<ResumeSourcing />} />
             <Route
               path="/interview-scheduling"
               element={<InterviewScheduleDashboard />}
             />
             {/* Interview Feedback routes */}
+            <Route path="/interview-kanban" element={<InterviewKanban />} />
             <Route path="/interview-feedback" element={<InterviewFeedback />}>
               <Route path=":interviewId" element={<InterviewFeedback />} />
               <Route
@@ -110,7 +130,7 @@ function AppContent() {
               element={<AssociateOnboarding />}
             />
             <Route path="/settings" element={<Settings />} />
-            <Route path="/master-data" element={<Settings />} />
+            <Route path="/master-data" element={<MasterData />} />
             {import.meta.env.VITE_TEMPO === "true" && (
               <>
                 <Route path="/tempobook/*" />

@@ -1,41 +1,97 @@
 import { supabase } from "../supabase";
-import { Candidate } from "@/types/database";
 
-export async function getCandidates() {
-  const { data, error } = await supabase
-    .from("candidates")
-    .select("*")
-    .order("name");
+export interface Candidate {
+  id: string;
+  name: string;
+  email: string;
+  phone?: string;
+  position: string;
+  source: string;
+  match_score?: number;
+  notice_period?: string;
+  file_url?: string;
+  created_at?: string;
+  updated_at?: string;
+}
 
-  if (error) {
-    console.error("Error fetching candidates:", error);
+export async function uploadResume(file: File): Promise<string> {
+  try {
+    const cleanFileName = file.name.replace(/[^a-zA-Z0-9.]/g, "_");
+    const timestamp = new Date().getTime();
+    const filePath = `uploads/${timestamp}_${cleanFileName}`;
+
+    const { data: uploadData, error: uploadError } = await supabase.storage
+      .from("resumes")
+      .upload(filePath, file, {
+        cacheControl: "3600",
+        contentType: file.type,
+        upsert: true,
+      });
+
+    if (uploadError) {
+      console.error("Upload error:", uploadError);
+      throw new Error(`Failed to upload file: ${uploadError.message}`);
+    }
+
+    const {
+      data: { publicUrl },
+    } = supabase.storage.from("resumes").getPublicUrl(filePath);
+
+    if (!publicUrl) {
+      throw new Error("Failed to get public URL for uploaded file");
+    }
+
+    return publicUrl;
+  } catch (error) {
+    console.error("Error in uploadResume:", error);
     throw error;
   }
-
-  return data as Candidate[];
 }
 
 export async function createCandidate(
   candidate: Omit<Candidate, "id" | "created_at" | "updated_at">,
 ) {
+  const candidateWithDefaults = {
+    ...candidate,
+    source: candidate.source || "Manual Upload",
+    email: candidate.email || "",
+  };
+
   const { data, error } = await supabase
     .from("candidates")
-    .insert([candidate])
+    .insert([candidateWithDefaults])
     .select()
     .single();
 
-  if (error) {
-    console.error("Error creating candidate:", error);
-    throw error;
-  }
-
-  return data as Candidate;
+  if (error) throw error;
+  return data;
 }
 
-export async function updateCandidate(
-  id: string,
-  updates: Partial<Omit<Candidate, "id" | "created_at" | "updated_at">>,
-) {
+export async function getCandidates() {
+  try {
+    const { data, error } = await supabase
+      .from("candidates")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      console.error("Supabase error fetching candidates:", error);
+      throw error;
+    }
+
+    if (!data) {
+      console.warn("No data returned from candidates query");
+      return [];
+    }
+
+    return data;
+  } catch (error) {
+    console.error("Error in getCandidates:", error);
+    throw error;
+  }
+}
+
+export async function updateCandidate(id: string, updates: Partial<Candidate>) {
   const { data, error } = await supabase
     .from("candidates")
     .update(updates)
@@ -43,21 +99,13 @@ export async function updateCandidate(
     .select()
     .single();
 
-  if (error) {
-    console.error("Error updating candidate:", error);
-    throw error;
-  }
-
-  return data as Candidate;
+  if (error) throw error;
+  return data;
 }
 
 export async function deleteCandidate(id: string) {
   const { error } = await supabase.from("candidates").delete().eq("id", id);
 
-  if (error) {
-    console.error("Error deleting candidate:", error);
-    throw error;
-  }
-
+  if (error) throw error;
   return true;
 }

@@ -29,6 +29,8 @@ export type Interview = {
 };
 
 export async function getInterviews() {
+  console.log("1. IN INTERVIEW getInterviews");
+
   const { data, error } = await supabase
     .from("interviews")
     .select(
@@ -44,6 +46,8 @@ export async function getInterviews() {
     console.error("Error fetching interviews:", error);
     throw error;
   }
+
+  console.log("3. IN INTERVIEW getInterviews", data); // Log the data instead of undefined 'interview'
 
   return data as Interview[];
 }
@@ -75,6 +79,9 @@ export async function updateInterview(
   id: string,
   updates: Partial<Omit<Interview, "id" | "created_at" | "updated_at">>,
 ) {
+  console.log("IN INTERVIEW updateInterview");
+  console.log("Updating interview with ID:", id, "with updates:", updates); // Log what's actually being updated
+
   const { data, error } = await supabase
     .from("interviews")
     .update(updates)
@@ -82,8 +89,8 @@ export async function updateInterview(
     .select(
       `
       *,
-      candidate:candidate_id(id, name, position),
-      interviewer:interviewer_id(id, name)
+      candidate:candidates!candidate_id(id, name, position),
+      interviewer:users!interviewer_id(id, name)
     `,
     )
     .single();

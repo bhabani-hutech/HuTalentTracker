@@ -1,16 +1,8 @@
 import { useState } from "react";
-import { OfferLetterForm } from "./offer-letter-form";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Input } from "../ui/input";
 import { Button } from "../ui/button";
-import {
-  Search,
-  Filter,
-  FileText,
-  CheckCircle2,
-  UserPlus,
-  Files,
-} from "lucide-react";
+import { Search, Filter, PenSquare, Power, UserPlus } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -20,102 +12,110 @@ import {
   TableRow,
 } from "../ui/table";
 import { Badge } from "../ui/badge";
-import { Progress } from "../ui/progress";
+import { AddAssociateDialog } from "./add-associate-dialog";
+import { EditUserDialog } from "./edit-user-dialog";
+import { useUsers } from "@/lib/api/hooks/useUsers";
 
-interface Document {
+interface User {
   id: string;
   name: string;
-  type: string;
-  uploadedDate: string;
-  size: string;
+  email: string;
+  role: "Admin" | "HR" | "Hiring Manager" | "Interviewer";
+  department?: string;
+  is_active: boolean;
 }
-
-interface Associate {
-  id: string;
-  name: string;
-  position: string;
-  department: string;
-  startDate: string;
-  status: "Not Started" | "In Progress" | "Completed" | "Delayed";
-  progress: number;
-  documents: Document[];
-  offerLetterStatus?: "Sent" | "Signed" | "Pending" | "Rejected";
-}
-
-const mockAssociates: Associate[] = [
-  {
-    id: "1",
-    name: "John Smith",
-    position: "Senior Frontend Developer",
-    department: "Engineering",
-    startDate: "2024-04-01",
-    status: "In Progress",
-    progress: 65,
-    offerLetterStatus: "Signed",
-    documents: [
-      {
-        id: "d1",
-        name: "Offer Letter",
-        type: "PDF",
-        uploadedDate: "2024-03-25",
-        size: "2.5 MB",
-      },
-      {
-        id: "d2",
-        name: "NDA Agreement",
-        type: "PDF",
-        uploadedDate: "2024-03-24",
-        size: "1.8 MB",
-      },
-    ],
-  },
-  {
-    id: "2",
-    name: "Sarah Wilson",
-    position: "UX Designer",
-    department: "Design",
-    startDate: "2024-04-15",
-    status: "Not Started",
-    progress: 0,
-  },
-  {
-    id: "3",
-    name: "Michael Brown",
-    position: "Product Manager",
-    department: "Product",
-    startDate: "2024-03-28",
-    status: "Completed",
-    progress: 100,
-  },
-];
-
-import { DocumentOverlay } from "./document-overlay";
-import { ApprovalOverlay } from "./approval-overlay";
-import { DocumentPreview } from "./document-preview";
 
 export function AssociateList() {
-  const [selectedDocuments, setSelectedDocuments] = useState<{
-    name: string;
-    documents: Document[];
-  } | null>(null);
-  const [showOfferLetter, setShowOfferLetter] = useState<{
-    name: string;
-    position: string;
-  } | null>(null);
-  const [showApproval, setShowApproval] = useState<{
-    name: string;
-  } | null>(null);
-  const [showDocumentPreview, setShowDocumentPreview] = useState<{
-    name: string;
-  } | null>(null);
+  const { users, isLoading, createUser, updateUser } = useUsers();
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [showAddDialog, setShowAddDialog] = useState(false);
+  const [showEditDialog, setShowEditDialog] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+
+  const handleAddUser = async (data: any) => {
+    try {
+      await createUser(data);
+      setShowAddDialog(false);
+    } catch (error) {
+      console.error("Error adding user:", error);
+    }
+  };
+
+  const handleEditUser = async (data: any) => {
+    if (selectedUser) {
+      try {
+        await updateUser({
+          id: selectedUser.id,
+          updates: data,
+        });
+        setShowEditDialog(false);
+        setSelectedUser(null);
+      } catch (error) {
+        console.error("Error updating user:", error);
+      }
+    }
+  };
+
+  const handleToggleStatus = async (user: User) => {
+    try {
+      await updateUser({
+        id: user.id,
+        updates: { is_active: !user.is_active },
+      });
+    } catch (error) {
+      console.error("Error toggling user status:", error);
+    }
+  };
+
+  const filteredUsers =
+    users?.filter(
+      (user) =>
+        user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        user.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        user.role.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (user.department || "")
+          .toLowerCase()
+          .includes(searchQuery.toLowerCase()),
+    ) || [];
+
+  // Calculate pagination
+  const totalPages = Math.ceil(filteredUsers.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentUsers = filteredUsers.slice(startIndex, endIndex);
+
+  // Calculate metrics
+  const metrics = {
+    totalUsers: users?.length || 0,
+    activeUsers: users?.filter((user) => user.is_active)?.length || 0,
+    inactiveUsers: users?.filter((user) => !user.is_active)?.length || 0,
+  };
+
   return (
     <Card>
       <CardHeader>
         <div className="flex items-center justify-between">
-          <CardTitle>New Associates</CardTitle>
+          <div>
+            <CardTitle>Users</CardTitle>
+            <div className="flex gap-4 mt-2 text-sm text-muted-foreground">
+              <span>Total: {metrics.totalUsers}</span>
+              <span>Active: {metrics.activeUsers}</span>
+              <span>Inactive: {metrics.inactiveUsers}</span>
+            </div>
+          </div>
           <div className="flex items-center gap-2">
             <div className="flex w-full max-w-sm items-center space-x-2">
-              <Input type="search" placeholder="Search associates..." />
+              <Input
+                type="search"
+                placeholder="Search users..."
+                value={searchQuery}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  setCurrentPage(1); // Reset to first page on search
+                }}
+              />
               <Button type="submit" size="icon">
                 <Search className="h-4 w-4" />
               </Button>
@@ -123,9 +123,9 @@ export function AssociateList() {
             <Button variant="outline" size="icon">
               <Filter className="h-4 w-4" />
             </Button>
-            <Button>
+            <Button onClick={() => setShowAddDialog(true)}>
               <UserPlus className="h-4 w-4 mr-2" />
-              Add Associate
+              Add User
             </Button>
           </div>
         </div>
@@ -136,156 +136,117 @@ export function AssociateList() {
             <TableHeader>
               <TableRow>
                 <TableHead>Name</TableHead>
-                <TableHead>Position</TableHead>
+                <TableHead>Email</TableHead>
+                <TableHead>Role</TableHead>
                 <TableHead>Department</TableHead>
-                <TableHead>Start Date</TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead>Progress</TableHead>
-                <TableHead>Document received</TableHead>
-                <TableHead>Offer Letter</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {mockAssociates.map((associate) => (
-                <TableRow key={associate.id}>
-                  <TableCell className="font-medium">
-                    {associate.name}
-                  </TableCell>
-                  <TableCell>{associate.position}</TableCell>
-                  <TableCell>{associate.department}</TableCell>
-                  <TableCell>{associate.startDate}</TableCell>
-                  <TableCell>
-                    <Badge className={getStatusColor(associate.status)}>
-                      {associate.status}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      <Progress
-                        value={associate.progress}
-                        className="w-[60px]"
-                      />
-                      <span className="text-sm text-muted-foreground">
-                        {associate.progress}%
-                      </span>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="flex items-center gap-2"
-                      onClick={() =>
-                        setSelectedDocuments({
-                          name: associate.name,
-                          documents: associate.documents || [],
-                        })
-                      }
-                    >
-                      <Files className="h-4 w-4" />
-                      <span>{associate.documents?.length || 0} Documents</span>
-                    </Button>
-                  </TableCell>
-                  <TableCell>
-                    <Button
-                      variant="ghost"
-                      className="p-0 h-auto font-normal"
-                      onClick={() =>
-                        setShowOfferLetter({
-                          name: associate.name,
-                          position: associate.position,
-                        })
-                      }
-                    >
-                      <Badge
-                        className={getOfferLetterStatus(
-                          associate.offerLetterStatus,
-                        )}
-                      >
-                        {associate.offerLetterStatus || "Not Sent"}
-                      </Badge>
-                    </Button>
-                  </TableCell>
-                  <TableCell className="text-right space-x-2">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() =>
-                        setShowDocumentPreview({ name: associate.name })
-                      }
-                    >
-                      <FileText className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => setShowApproval({ name: associate.name })}
-                    >
-                      <CheckCircle2 className="h-4 w-4" />
-                    </Button>
+              {isLoading ? (
+                <TableRow>
+                  <TableCell colSpan={6} className="text-center">
+                    Loading...
                   </TableCell>
                 </TableRow>
-              ))}
+              ) : currentUsers.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={6} className="text-center">
+                    No users found
+                  </TableCell>
+                </TableRow>
+              ) : (
+                currentUsers.map((user) => (
+                  <TableRow key={user.id}>
+                    <TableCell className="font-medium">{user.name}</TableCell>
+                    <TableCell>{user.email}</TableCell>
+                    <TableCell>
+                      <Badge variant="secondary">{user.role}</Badge>
+                    </TableCell>
+                    <TableCell>{user.department || "-"}</TableCell>
+                    <TableCell>
+                      <Badge
+                        className={
+                          user.is_active
+                            ? "bg-green-500 hover:bg-green-600 text-white"
+                            : "bg-red-500 hover:bg-red-600 text-white"
+                        }
+                      >
+                        {user.is_active ? "Active" : "Inactive"}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-right space-x-2">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => {
+                          setSelectedUser(user);
+                          setShowEditDialog(true);
+                        }}
+                      >
+                        <PenSquare className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleToggleStatus(user)}
+                      >
+                        <Power
+                          className={`h-4 w-4 ${user.is_active ? "text-green-500" : "text-red-500"}`}
+                        />
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
             </TableBody>
           </Table>
         </div>
+
+        {/* Pagination */}
+        <div className="flex items-center justify-between space-x-2 py-4">
+          <div className="text-sm text-muted-foreground">
+            Showing {startIndex + 1} to{" "}
+            {Math.min(endIndex, filteredUsers.length)} of {filteredUsers.length}{" "}
+            users
+          </div>
+          <div className="flex space-x-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage(currentPage - 1)}
+              disabled={currentPage === 1}
+            >
+              Previous
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage(currentPage + 1)}
+              disabled={currentPage === totalPages}
+            >
+              Next
+            </Button>
+          </div>
+        </div>
       </CardContent>
 
-      <DocumentOverlay
-        isOpen={!!selectedDocuments}
-        onClose={() => setSelectedDocuments(null)}
-        associateName={selectedDocuments?.name || ""}
-        documents={selectedDocuments?.documents || []}
+      <AddAssociateDialog
+        isOpen={showAddDialog}
+        onClose={() => setShowAddDialog(false)}
+        onSubmit={handleAddUser}
       />
 
-      <OfferLetterForm
-        isOpen={!!showOfferLetter}
-        onClose={() => setShowOfferLetter(null)}
-        associate={showOfferLetter}
-      />
-
-      <ApprovalOverlay
-        isOpen={!!showApproval}
-        onClose={() => setShowApproval(null)}
-        associateName={showApproval?.name || ""}
-      />
-
-      <DocumentPreview
-        isOpen={!!showDocumentPreview}
-        onClose={() => setShowDocumentPreview(null)}
-        associateName={showDocumentPreview?.name || ""}
+      <EditUserDialog
+        isOpen={showEditDialog}
+        onClose={() => {
+          setShowEditDialog(false);
+          setSelectedUser(null);
+        }}
+        onSubmit={handleEditUser}
+        user={selectedUser}
       />
     </Card>
   );
-}
-
-function getOfferLetterStatus(status?: string): string {
-  switch (status) {
-    case "Signed":
-      return "bg-green-500 hover:bg-green-600 text-white";
-    case "Sent":
-      return "bg-blue-500 hover:bg-blue-600 text-white";
-    case "Pending":
-      return "bg-yellow-500 hover:bg-yellow-600 text-white";
-    case "Rejected":
-      return "bg-red-500 hover:bg-red-600 text-white";
-    default:
-      return "bg-slate-500 hover:bg-slate-600 text-white";
-  }
-}
-
-function getStatusColor(status: Associate["status"]): string {
-  switch (status) {
-    case "Completed":
-      return "bg-green-500 hover:bg-green-600 text-white";
-    case "In Progress":
-      return "bg-blue-500 hover:bg-blue-600 text-white";
-    case "Not Started":
-      return "bg-yellow-500 hover:bg-yellow-600 text-white";
-    case "Delayed":
-      return "bg-red-500 hover:bg-red-600 text-white";
-    default:
-      return "";
-  }
 }

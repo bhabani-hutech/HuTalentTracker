@@ -11,7 +11,7 @@ import { Input } from "../ui/input";
 import { Label } from "../ui/label";
 import { Calendar } from "../ui/calendar";
 import { format } from "date-fns";
-import { CalendarIcon, Clock } from "lucide-react";
+import { CalendarIcon } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import { cn } from "@/lib/utils";
 import {
@@ -21,11 +21,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../ui/select";
+import { useToast } from "@/components/ui/use-toast";
+import { createInterview } from "@/lib/api/interviews";
+import { useInterviewers } from "@/lib/api/hooks/useInterviewers";
 
 interface InterviewSchedulerProps {
   isOpen: boolean;
   onClose: () => void;
   candidate: {
+    id: string;
     name: string;
     position: string;
   } | null;
@@ -38,8 +42,10 @@ export function InterviewScheduler({
 }: InterviewSchedulerProps) {
   const [date, setDate] = useState<Date>();
   const [time, setTime] = useState<string>("10:00");
-
-  if (!candidate) return null;
+  const [interviewType, setInterviewType] = useState("technical");
+  const [interviewerId, setInterviewerId] = useState("");
+  const { toast } = useToast();
+  const { data: interviewers } = useInterviewers();
 
   const timeSlots = [
     "09:00",
@@ -62,9 +68,66 @@ export function InterviewScheduler({
     "17:30",
   ];
 
+  const handleSubmit = async () => {
+    try {
+      if (!candidate?.id) {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "No candidate selected",
+        });
+        return;
+      }
+
+      if (!date) {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Please select a date",
+        });
+        return;
+      }
+
+      if (!interviewerId) {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Please select an interviewer",
+        });
+        return;
+      }
+
+      // Create the interview
+      const interviewData = {
+        candidate_id: candidate.id,
+        interviewer_id: interviewerId,
+        date: new Date(`${format(date, "yyyy-MM-dd")}T${time}`).toISOString(),
+        type: interviewType,
+        status: "HR round",
+      };
+
+      await createInterview(interviewData);
+
+      toast({
+        title: "Success",
+        description: "Interview scheduled successfully",
+      });
+      onClose();
+    } catch (error) {
+      console.error("Error scheduling interview:", error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to schedule interview",
+      });
+    }
+  };
+
+  if (!candidate) return null;
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[425px] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>Schedule Interview</DialogTitle>
         </DialogHeader>
@@ -79,7 +142,7 @@ export function InterviewScheduler({
 
           <div className="space-y-2">
             <Label>Interview Type</Label>
-            <Select defaultValue="technical">
+            <Select value={interviewType} onValueChange={setInterviewType}>
               <SelectTrigger>
                 <SelectValue placeholder="Select interview type" />
               </SelectTrigger>
@@ -120,7 +183,7 @@ export function InterviewScheduler({
 
           <div className="space-y-2">
             <Label>Time</Label>
-            <Select defaultValue={time} onValueChange={setTime}>
+            <Select value={time} onValueChange={setTime}>
               <SelectTrigger>
                 <SelectValue placeholder="Select time" />
               </SelectTrigger>
@@ -135,45 +198,26 @@ export function InterviewScheduler({
           </div>
 
           <div className="space-y-2">
-            <Label>Interviewer Email</Label>
-            <Input type="email" placeholder="interviewer@company.com" />
-          </div>
-
-          <div className="space-y-2">
-            <Label>Additional Participants (Optional)</Label>
-            <Input
-              type="text"
-              placeholder="email1@company.com, email2@company.com"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label>Meeting Link</Label>
-            <Input type="url" placeholder="https://meet.google.com/..." />
-          </div>
-
-          <div className="space-y-2">
-            <Label>Notes (Optional)</Label>
-            <Input placeholder="Any special instructions or notes" />
+            <Label>Interviewer</Label>
+            <Select value={interviewerId} onValueChange={setInterviewerId}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select interviewer" />
+              </SelectTrigger>
+              <SelectContent>
+                {interviewers?.map((interviewer) => (
+                  <SelectItem key={interviewer.id} value={interviewer.id}>
+                    {interviewer.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>
             Cancel
           </Button>
-          <Button
-            onClick={() => {
-              // Here you would integrate with your calendar API
-              console.log("Scheduling interview for:", {
-                candidate,
-                date,
-                time,
-              });
-              onClose();
-            }}
-          >
-            Schedule & Send Invite
-          </Button>
+          <Button onClick={handleSubmit}>Schedule Interview</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
