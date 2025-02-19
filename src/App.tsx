@@ -3,6 +3,7 @@ import { Routes, Route } from "react-router-dom";
 import Home from "./components/home";
 import ResumeSourcing from "./pages/resume-sourcing";
 import InterviewFeedback from "./pages/interview-feedback";
+import InterviewKanban from "./pages/interview-kanban";
 import Settings from "./pages/settings";
 import routes from "tempo-routes";
 import { Icons } from "@/components/icons";
@@ -53,6 +54,11 @@ const navigationItems: NavItem[] = [
     title: "Interview Schedule",
     href: "/interview-scheduling",
     icon: Calendar,
+  },
+  {
+    title: "Interview Pipeline",
+    href: "/interview-kanban",
+    icon: ListTodo,
   },
   {
     title: "Interview Feedback",
@@ -110,6 +116,7 @@ function AppContent() {
               element={<InterviewScheduleDashboard />}
             />
             {/* Interview Feedback routes */}
+            <Route path="/interview-kanban" element={<InterviewKanban />} />
             <Route path="/interview-feedback" element={<InterviewFeedback />}>
               <Route path=":interviewId" element={<InterviewFeedback />} />
               <Route

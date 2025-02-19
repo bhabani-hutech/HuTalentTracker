@@ -1,14 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import {
-  Search,
-  Filter,
-  MessageSquare,
-  Calendar,
-  FileText,
-} from "lucide-react";
+import { Search, Filter, MessageSquare, Calendar } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -196,7 +190,7 @@ export function InterviewList() {
                         (window.location.href = `/interview-feedback?interview=${interview.id}`)
                       }
                     >
-                      <FileText className="h-4 w-4" />
+                      <MessageSquare className="h-4 w-4" />
                       <span className="sr-only">Add Feedback</span>
                     </Button>
                     <Button

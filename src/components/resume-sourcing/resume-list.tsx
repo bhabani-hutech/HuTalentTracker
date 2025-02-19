@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "../ui/card";
+import { EditCandidateDialog } from "./edit-candidate-dialog";
 import { Input } from "../ui/input";
 import { Button } from "../ui/button";
 import {
@@ -49,6 +50,9 @@ export function ResumeList({
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedCandidate, setSelectedCandidate] = useState<Candidate | null>(
+    null,
+  );
+  const [editingCandidate, setEditingCandidate] = useState<Candidate | null>(
     null,
   );
   const [showFilters, setShowFilters] = useState(false);
@@ -230,7 +234,7 @@ export function ResumeList({
                         size="icon"
                         onClick={(e) => {
                           e.stopPropagation();
-                          onEdit(candidate);
+                          setEditingCandidate(candidate);
                         }}
                       >
                         <PenSquare className="h-4 w-4" />
@@ -327,6 +331,16 @@ export function ResumeList({
         isOpen={!!scheduleInterview}
         onClose={() => setScheduleInterview(null)}
         candidate={scheduleInterview}
+      />
+
+      <EditCandidateDialog
+        isOpen={!!editingCandidate}
+        onClose={() => setEditingCandidate(null)}
+        onSubmit={async (id, updates) => {
+          await onEdit(id, updates);
+          setEditingCandidate(null);
+        }}
+        candidate={editingCandidate}
       />
     </Card>
   );

@@ -115,8 +115,8 @@ export function InterviewForm({
                   )}
                 >
                   <CalendarIcon className="mr-2 h-4 w-4" />
-                  {formData.date ? (
-                    format(new Date(formData.date), "PPP")
+                  {formData?.date ? (
+                    format(new Date(formData?.date), "PPP")
                   ) : (
                     <span>Pick a date</span>
                   )}

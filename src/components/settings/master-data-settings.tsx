@@ -1,4 +1,5 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
+import { JobStagesSettings } from "./job-stages-settings";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Label } from "../ui/label";
 import { Input } from "../ui/input";
@@ -15,11 +16,12 @@ import {
 export function MasterDataSettings() {
   return (
     <Tabs defaultValue="organization" className="w-full">
-      <TabsList className="grid w-full grid-cols-4">
+      <TabsList className="grid w-full grid-cols-5">
         <TabsTrigger value="organization">Organization Setting</TabsTrigger>
         <TabsTrigger value="panels">Interview Panels</TabsTrigger>
         <TabsTrigger value="recruiters">HR & Hiring Partners</TabsTrigger>
         <TabsTrigger value="departments">Departments & Clients</TabsTrigger>
+        <TabsTrigger value="stages">Interview Stages</TabsTrigger>
       </TabsList>
 
       <TabsContent value="organization" className="space-y-4">
@@ -137,6 +139,10 @@ export function MasterDataSettings() {
             </div>
           </CardContent>
         </Card>
+      </TabsContent>
+
+      <TabsContent value="stages">
+        <JobStagesSettings />
       </TabsContent>
     </Tabs>
   );

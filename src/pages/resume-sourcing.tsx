@@ -1,12 +1,21 @@
 import { ResumeList } from "../components/resume-sourcing/resume-list";
 import { ResumeUploadTabs } from "../components/resume-sourcing/resume-upload-tabs";
-import { useResumes } from "@/lib/api/hooks/useResumes";
-import { updateResume, uploadResume } from "@/lib/api/resumes";
+import { useCandidates } from "@/lib/api/hooks/useCandidates";
+import {
+  updateCandidate,
+  uploadResume,
+  createCandidate,
+} from "@/lib/api/candidates";
 import { parseResume } from "@/lib/api/parser";
 import { useToast } from "@/components/ui/use-toast";
 
 export default function ResumeSourcing() {
-  const { resumes, isLoading, createResume, deleteResume } = useResumes();
+  const {
+    data: candidates,
+    isLoading,
+    createCandidate,
+    deleteCandidate,
+  } = useCandidates();
   const { toast } = useToast();
 
   const handleFileUpload = async (files: FileList) => {
@@ -47,30 +56,19 @@ export default function ResumeSourcing() {
             throw new Error("Failed to get file URL after upload");
           }
 
-          // Create initial resume entry
-          const initialResume = await createResume({
-            name: file.name.split(".")[0],
-            email: "",
-            position: "Processing...",
-            source: file.type.includes("pdf") ? "PDF Upload" : "Word Upload",
-            file_url: fileUrl,
-            parsed_data: null,
-          });
-
-          // Parse the resume
-          console.log(file);
+          // Parse the resume first
           const parsedData = await parseResume(file);
-          // Update the existing resume with parsed data
-          await updateResume(initialResume.id, {
+
+          // Create candidate entry with parsed data
+          await createCandidate({
             name: parsedData.name || file.name.split(".")[0],
             email: parsedData.email || "",
             phone: parsedData.phone,
             position: parsedData.position || "Position Unknown",
-            parsed_data: {
-              skills: parsedData.skills || [],
-              experience: parsedData.experience || [],
-              education: parsedData.education || [],
-            },
+            source: file.type.includes("pdf") ? "PDF Upload" : "Word Upload",
+            file_url: fileUrl,
+            match_score: 0,
+            notice_period: "",
           });
 
           toast({
@@ -106,9 +104,10 @@ export default function ResumeSourcing() {
       </div>
       <ResumeUploadTabs onFileUpload={handleFileUpload} />
       <ResumeList
-        resumes={resumes || []}
+        candidates={candidates || []}
         isLoading={isLoading}
-        onDelete={deleteResume}
+        onDelete={deleteCandidate}
+        onEdit={updateCandidate}
       />
     </div>
   );
