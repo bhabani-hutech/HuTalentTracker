@@ -120,12 +120,6 @@ export function ResumeUploadTabs({ onFileUpload }: ResumeUploadTabsProps) {
         </Card>
       </TabsContent>
 
-      <div className="mt-4 flex justify-center">
-        <Button onClick={() => setShowApplicationForm(true)}>
-          Apply Directly
-        </Button>
-      </div>
-
       <JobApplicationForm
         isOpen={showApplicationForm}
         onClose={() => setShowApplicationForm(false)}
