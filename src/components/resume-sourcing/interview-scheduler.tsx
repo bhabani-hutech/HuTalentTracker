@@ -147,10 +147,8 @@ export function InterviewScheduler({
                 <SelectValue placeholder="Select interview type" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="technical">Technical Round</SelectItem>
-                <SelectItem value="hr">HR Round</SelectItem>
-                <SelectItem value="manager">Manager Round</SelectItem>
-                <SelectItem value="culture">Culture Fit</SelectItem>
+                <SelectItem value="face-to-face">Face-to-Face</SelectItem>
+                <SelectItem value="online">Online</SelectItem>
               </SelectContent>
             </Select>
           </div>

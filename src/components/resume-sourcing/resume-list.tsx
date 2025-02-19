@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Card, CardHeader, CardTitle, CardContent } from "../ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { EditCandidateDialog } from "./edit-candidate-dialog";
 import { Input } from "../ui/input";
 import { Button } from "../ui/button";
@@ -11,6 +11,7 @@ import {
   CalendarPlus,
   Trash2,
   PenSquare,
+  UserPlus,
 } from "lucide-react";
 import {
   Table,
@@ -30,7 +31,7 @@ interface ResumeListProps {
   candidates: Candidate[];
   isLoading: boolean;
   onDelete: (id: string) => Promise<void>;
-  onEdit: (candidate: Candidate) => void;
+  onEdit: (id: string, updates: Partial<Candidate>) => Promise<void>;
 }
 
 const getScoreColor = (score?: number): string => {
@@ -162,6 +163,21 @@ export function ResumeList({
               onClick={() => setShowFilters(true)}
             >
               <Filter className="h-4 w-4" />
+            </Button>
+            <Button
+              onClick={() =>
+                setEditingCandidate({
+                  id: "",
+                  name: "",
+                  email: "",
+                  phone: "",
+                  position: "",
+                  notice_period: "",
+                  source: "Direct Application",
+                })
+              }
+            >
+              <UserPlus className="h-4 w-4 mr-2" /> Apply Directly
             </Button>
           </div>
         </div>

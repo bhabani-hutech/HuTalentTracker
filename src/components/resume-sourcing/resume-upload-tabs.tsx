@@ -4,12 +4,15 @@ import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
 import { Upload, FileUp, Link as LinkIcon } from "lucide-react";
+import { JobApplicationForm } from "./job-application-form";
+import { useState } from "react";
 
 interface ResumeUploadTabsProps {
   onFileUpload: (files: FileList) => Promise<void>;
 }
 
 export function ResumeUploadTabs({ onFileUpload }: ResumeUploadTabsProps) {
+  const [showApplicationForm, setShowApplicationForm] = useState(false);
   return (
     <Tabs defaultValue="upload" className="w-full">
       <TabsList className="grid w-full grid-cols-3">
@@ -116,6 +119,17 @@ export function ResumeUploadTabs({ onFileUpload }: ResumeUploadTabsProps) {
           </CardContent>
         </Card>
       </TabsContent>
+
+      <div className="mt-4 flex justify-center">
+        <Button onClick={() => setShowApplicationForm(true)}>
+          Apply Directly
+        </Button>
+      </div>
+
+      <JobApplicationForm
+        isOpen={showApplicationForm}
+        onClose={() => setShowApplicationForm(false)}
+      />
     </Tabs>
   );
 }

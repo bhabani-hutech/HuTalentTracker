@@ -7,6 +7,7 @@ import {
 } from "../ui/dialog";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
+import { Label } from "../ui/label";
 import { Textarea } from "../ui/textarea";
 import {
   Select,
@@ -15,64 +16,77 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../ui/select";
-import { Label } from "../ui/label";
-import { useState, useEffect } from "react";
-import { Candidate } from "@/lib/api/candidates";
+import { useState } from "react";
+import { useToast } from "../ui/use-toast";
+import { createCandidate } from "@/lib/api/candidates";
 
-interface EditCandidateDialogProps {
+interface JobApplicationFormProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (id: string, updates: Partial<Candidate>) => Promise<void>;
-  candidate: Candidate | null;
 }
 
-interface ApplicationData extends Candidate {
-  location?: string;
-  skills?: string;
-  type?: "Full Time" | "Part Time" | "Contract" | "Internship";
-  experience?: string;
+interface ApplicationData {
+  name: string;
+  email: string;
+  phone: string;
+  position: string;
+  location: string;
+  notice_period: string;
+  skills: string;
+  type: "Full Time" | "Part Time" | "Contract" | "Internship";
+  experience: string;
 }
 
-export function EditCandidateDialog({
+export function JobApplicationForm({
   isOpen,
   onClose,
-  onSubmit,
-  candidate,
-}: EditCandidateDialogProps) {
-  const [formData, setFormData] = useState<Partial<ApplicationData>>({});
-
-  // Update form data when candidate changes
-  useEffect(() => {
-    if (candidate) {
-      setFormData({
-        name: candidate.name,
-        email: candidate.email,
-        phone: candidate.phone,
-        position: candidate.position,
-        notice_period: candidate.notice_period,
-      });
-    }
-  }, [candidate]);
+}: JobApplicationFormProps) {
+  const { toast } = useToast();
+  const [formData, setFormData] = useState<ApplicationData>({
+    name: "",
+    email: "",
+    phone: "",
+    position: "",
+    location: "",
+    notice_period: "",
+    skills: "",
+    type: "Full Time",
+    experience: "",
+  });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!candidate) return;
-
     try {
-      await onSubmit(candidate.id, formData);
+      await createCandidate({
+        name: formData.name,
+        email: formData.email,
+        phone: formData.phone,
+        position: formData.position,
+        notice_period: formData.notice_period,
+        source: "Direct Application",
+        match_score: 0, // This would be calculated based on job requirements
+      });
+
+      toast({
+        title: "Success",
+        description: "Application submitted successfully",
+      });
       onClose();
     } catch (error) {
-      console.error("Error updating candidate:", error);
+      console.error("Error submitting application:", error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to submit application",
+      });
     }
   };
 
-  if (!candidate) return null;
-
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent>
+      <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
-          <DialogTitle>Edit Candidate</DialogTitle>
+          <DialogTitle>Job Application</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
@@ -80,7 +94,7 @@ export function EditCandidateDialog({
               <Label>Position</Label>
               <Input
                 required
-                value={formData.position || ""}
+                value={formData.position}
                 onChange={(e) =>
                   setFormData({ ...formData, position: e.target.value })
                 }
@@ -92,7 +106,7 @@ export function EditCandidateDialog({
               <Label>Location</Label>
               <Input
                 required
-                value={formData.location || ""}
+                value={formData.location}
                 onChange={(e) =>
                   setFormData({ ...formData, location: e.target.value })
                 }
@@ -104,7 +118,7 @@ export function EditCandidateDialog({
               <Label>Full Name</Label>
               <Input
                 required
-                value={formData.name || ""}
+                value={formData.name}
                 onChange={(e) =>
                   setFormData({ ...formData, name: e.target.value })
                 }
@@ -117,7 +131,7 @@ export function EditCandidateDialog({
               <Input
                 required
                 type="email"
-                value={formData.email || ""}
+                value={formData.email}
                 onChange={(e) =>
                   setFormData({ ...formData, email: e.target.value })
                 }
@@ -130,7 +144,7 @@ export function EditCandidateDialog({
               <Input
                 required
                 type="tel"
-                value={formData.phone || ""}
+                value={formData.phone}
                 onChange={(e) =>
                   setFormData({ ...formData, phone: e.target.value })
                 }
@@ -142,7 +156,7 @@ export function EditCandidateDialog({
               <Label>Notice Period</Label>
               <Input
                 required
-                value={formData.notice_period || ""}
+                value={formData.notice_period}
                 onChange={(e) =>
                   setFormData({ ...formData, notice_period: e.target.value })
                 }
@@ -153,12 +167,9 @@ export function EditCandidateDialog({
             <div className="space-y-2">
               <Label>Employment Type</Label>
               <Select
-                value={formData.type || "Full Time"}
-                onValueChange={(value) =>
-                  setFormData({
-                    ...formData,
-                    type: value as ApplicationData["type"],
-                  })
+                value={formData.type}
+                onValueChange={(value: ApplicationData["type"]) =>
+                  setFormData({ ...formData, type: value })
                 }
               >
                 <SelectTrigger>
@@ -177,7 +188,7 @@ export function EditCandidateDialog({
               <Label>Years of Experience</Label>
               <Input
                 required
-                value={formData.experience || ""}
+                value={formData.experience}
                 onChange={(e) =>
                   setFormData({ ...formData, experience: e.target.value })
                 }
@@ -190,7 +201,7 @@ export function EditCandidateDialog({
             <Label>Skills</Label>
             <Textarea
               required
-              value={formData.skills || ""}
+              value={formData.skills}
               onChange={(e) =>
                 setFormData({ ...formData, skills: e.target.value })
               }
@@ -203,7 +214,7 @@ export function EditCandidateDialog({
             <Button type="button" variant="outline" onClick={onClose}>
               Cancel
             </Button>
-            <Button type="submit">Save Changes</Button>
+            <Button type="submit">Submit Application</Button>
           </DialogFooter>
         </form>
       </DialogContent>
