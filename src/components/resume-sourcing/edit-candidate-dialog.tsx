@@ -26,6 +26,7 @@ interface EditCandidateDialogProps {
   candidate: Candidate | null;
 }
 
+
 interface ApplicationData extends Candidate {
   location?: string;
   skills?: string;
@@ -42,6 +43,7 @@ export function EditCandidateDialog({
   const [formData, setFormData] = useState<Partial<ApplicationData>>({});
 
   // Update form data when candidate changes
+  console.log(candidate);
   useEffect(() => {
     if (candidate) {
       setFormData({
@@ -49,6 +51,10 @@ export function EditCandidateDialog({
         email: candidate.email,
         phone: candidate.phone,
         position: candidate.position,
+         location: candidate.location,
+       skills: candidate.skills,
+       type: candidate.type,
+        experience: candidate.experience,
         notice_period: candidate.notice_period,
       });
     }

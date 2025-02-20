@@ -1,6 +1,10 @@
 import { supabase } from "../supabase";
 
 export interface Candidate {
+  experience: string;
+  type: "Full Time" | "Part Time" | "Contract" | "Internship";
+  skills: string;
+  location: string;
   id: string;
   name: string;
   email: string;
