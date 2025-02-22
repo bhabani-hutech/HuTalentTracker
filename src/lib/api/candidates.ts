@@ -9,8 +9,9 @@ export interface Candidate {
   name: string;
   email: string;
   phone?: string;
-  position: string;
+  job_id: string; // UUID reference to jobs table
   source: string;
+  stage_id: number; // Reference to stage table's id (int8)
   match_score?: number;
   notice_period?: string;
   file_url?: string;
@@ -59,6 +60,7 @@ export async function createCandidate(
     ...candidate,
     source: candidate.source || "Manual Upload",
     email: candidate.email || "",
+    stage_id: candidate.stage_id || 1, // Default to stage 1 if not provided
   };
 
   const { data, error } = await supabase

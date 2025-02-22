@@ -20,7 +20,16 @@ export type Interview = {
   candidate?: {
     id: string;
     name: string;
-    position: string;
+    job_id?: string;
+    stage_id?: string;
+    job?: {
+      id: string;
+      title: string;
+    };
+    stage?: {
+      id: string;
+      stage: string;
+    };
   };
   interviewer?: {
     id: string;
@@ -28,6 +37,9 @@ export type Interview = {
   };
 };
 
+/**
+ * Fetch all interviews with candidate, interviewer, job title, and stage
+ */
 export async function getInterviews() {
   console.log("1. IN INTERVIEW getInterviews");
 
@@ -36,8 +48,12 @@ export async function getInterviews() {
     .select(
       `
       *,
-      candidate:candidates!candidate_id(id, name, position, email),
-      interviewer:users!interviewer_id(id, name, email)
+      candidate:candidates!candidate_id(
+        id, name, job_id, stage_id,
+        job:jobs!job_id(id, title),
+        stage:stages!stage_id(id, stage)
+      ),
+      interviewer:users!interviewer_id(id, name)
     `,
     )
     .order("date", { ascending: true });
@@ -47,11 +63,13 @@ export async function getInterviews() {
     throw error;
   }
 
-  console.log("3. IN INTERVIEW getInterviews", data); // Log the data instead of undefined 'interview'
-
+  console.log("3. IN INTERVIEW getInterviews", data);
   return data as Interview[];
 }
 
+/**
+ * Create a new interview
+ */
 export async function createInterview(
   interview: Omit<Interview, "id" | "created_at" | "updated_at">,
 ) {
@@ -61,8 +79,12 @@ export async function createInterview(
     .select(
       `
       *,
-      candidate:candidate_id(id, name, position),
-      interviewer:interviewer_id(id, name)
+      candidate:candidates!candidate_id(
+        id, name, job_id, stage_id,
+        job:jobs!job_id(id, title),
+        stage:stages!stage_id(id, stage)
+      ),
+      interviewer:users!interviewer_id(id, name)
     `,
     )
     .single();
@@ -75,12 +97,15 @@ export async function createInterview(
   return data as Interview;
 }
 
+/**
+ * Update an interview by ID
+ */
 export async function updateInterview(
   id: string,
   updates: Partial<Omit<Interview, "id" | "created_at" | "updated_at">>,
 ) {
   console.log("IN INTERVIEW updateInterview");
-  console.log("Updating interview with ID:", id, "with updates:", updates); // Log what's actually being updated
+  console.log("Updating interview with ID:", id, "with updates:", updates);
 
   const { data, error } = await supabase
     .from("interviews")
@@ -89,7 +114,11 @@ export async function updateInterview(
     .select(
       `
       *,
-      candidate:candidates!candidate_id(id, name, position),
+      candidate:candidates!candidate_id(
+        id, name, job_id, stage_id,
+        job:jobs!job_id(id, title),
+        stage:stages!stage_id(id, stage)
+      ),
       interviewer:users!interviewer_id(id, name)
     `,
     )
@@ -103,6 +132,9 @@ export async function updateInterview(
   return data as Interview;
 }
 
+/**
+ * Delete an interview by ID
+ */
 export async function deleteInterview(id: string) {
   const { error } = await supabase.from("interviews").delete().eq("id", id);
 

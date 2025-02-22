@@ -24,14 +24,7 @@ interface EditCandidateDialogProps {
   onClose: () => void;
   onSubmit: (id: string, updates: Partial<Candidate>) => Promise<void>;
   candidate: Candidate | null;
-}
-
-
-interface ApplicationData extends Candidate {
-  location?: string;
-  skills?: string;
-  type?: "Full Time" | "Part Time" | "Contract" | "Internship";
-  experience?: string;
+  jobs: { id: string; title: string }[]; // Array of job UUIDs and titles
 }
 
 export function EditCandidateDialog({
@@ -39,21 +32,25 @@ export function EditCandidateDialog({
   onClose,
   onSubmit,
   candidate,
+  jobs,
 }: EditCandidateDialogProps) {
-  const [formData, setFormData] = useState<Partial<ApplicationData>>({});
+  const [formData, setFormData] = useState<Partial<Candidate>>({});
 
-  // Update form data when candidate changes
-  console.log(candidate);
+  useEffect(() => {
+    console.log("Candidate:", candidate);
+    console.log("Jobs:", jobs);
+  }, [candidate, jobs]);
+
   useEffect(() => {
     if (candidate) {
       setFormData({
         name: candidate.name,
         email: candidate.email,
         phone: candidate.phone,
-        position: candidate.position,
-         location: candidate.location,
-       skills: candidate.skills,
-       type: candidate.type,
+        job_id: candidate.job_id,
+        location: candidate.location,
+        skills: candidate.skills,
+        type: candidate.type,
         experience: candidate.experience,
         notice_period: candidate.notice_period,
       });
@@ -83,92 +80,46 @@ export function EditCandidateDialog({
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label>Position</Label>
-              <Input
-                required
-                value={formData.position || ""}
-                onChange={(e) =>
-                  setFormData({ ...formData, position: e.target.value })
-                }
-                placeholder="e.g. Frontend Developer"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label>Location</Label>
-              <Input
-                required
-                value={formData.location || ""}
-                onChange={(e) =>
-                  setFormData({ ...formData, location: e.target.value })
-                }
-                placeholder="e.g. New York, NY"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label>Full Name</Label>
-              <Input
-                required
-                value={formData.name || ""}
-                onChange={(e) =>
-                  setFormData({ ...formData, name: e.target.value })
-                }
-                placeholder="Enter your full name"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label>Email</Label>
-              <Input
-                required
-                type="email"
-                value={formData.email || ""}
-                onChange={(e) =>
-                  setFormData({ ...formData, email: e.target.value })
-                }
-                placeholder="Enter your email"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label>Phone Number</Label>
-              <Input
-                required
-                type="tel"
-                value={formData.phone || ""}
-                onChange={(e) =>
-                  setFormData({ ...formData, phone: e.target.value })
-                }
-                placeholder="Enter your phone number"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label>Notice Period</Label>
-              <Input
-                required
-                value={formData.notice_period || ""}
-                onChange={(e) =>
-                  setFormData({ ...formData, notice_period: e.target.value })
-                }
-                placeholder="e.g. 30 days"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label>Employment Type</Label>
+              <Label>Job</Label>
               <Select
-                value={formData.type || "Full Time"}
+                value={formData.job_id || ""}
                 onValueChange={(value) =>
                   setFormData({
                     ...formData,
-                    type: value as ApplicationData["type"],
+                    job_id: value,
                   })
                 }
               >
                 <SelectTrigger>
-                  <SelectValue />
+                  <SelectValue placeholder="Select a job" />
+                </SelectTrigger>
+                <SelectContent>
+                  {jobs?.length > 0 ? (
+                    jobs.map((job) => (
+                      <SelectItem key={job.id} value={job.id}>
+                        {job.title}
+                      </SelectItem>
+                    ))
+                  ) : (
+                    <SelectItem disabled>No jobs available</SelectItem>
+                  )}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Type</Label>
+              <Select
+                value={formData.type || ""}
+                onValueChange={(value) =>
+                  setFormData({
+                    ...formData,
+                    type: value as Candidate["type"],
+                  })
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select employment type" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="Full Time">Full Time</SelectItem>
@@ -178,18 +129,78 @@ export function EditCandidateDialog({
                 </SelectContent>
               </Select>
             </div>
+          </div>
 
-            <div className="space-y-2">
-              <Label>Years of Experience</Label>
-              <Input
-                required
-                value={formData.experience || ""}
-                onChange={(e) =>
-                  setFormData({ ...formData, experience: e.target.value })
-                }
-                placeholder="e.g. 5 years"
-              />
-            </div>
+          <div className="space-y-2">
+            <Label>Experience</Label>
+            <Select
+              value={formData.experience || ""}
+              onValueChange={(value) =>
+                setFormData({
+                  ...formData,
+                  experience: value,
+                })
+              }
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select experience level" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="0-1 years">0-1 years</SelectItem>
+                <SelectItem value="1-3 years">1-3 years</SelectItem>
+                <SelectItem value="3-5 years">3-5 years</SelectItem>
+                <SelectItem value="5+ years">5+ years</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Location</Label>
+            <Input
+              required
+              value={formData.location || ""}
+              onChange={(e) =>
+                setFormData({ ...formData, location: e.target.value })
+              }
+              placeholder="e.g. New York, NY"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label>Full Name</Label>
+            <Input
+              required
+              value={formData.name || ""}
+              onChange={(e) =>
+                setFormData({ ...formData, name: e.target.value })
+              }
+              placeholder="Enter full name"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label>Email</Label>
+            <Input
+              required
+              type="email"
+              value={formData.email || ""}
+              onChange={(e) =>
+                setFormData({ ...formData, email: e.target.value })
+              }
+              placeholder="Enter email"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label>Notice Period</Label>
+            <Input
+              required
+              value={formData.notice_period || ""}
+              onChange={(e) =>
+                setFormData({ ...formData, notice_period: e.target.value })
+              }
+              placeholder="e.g. 30 days"
+            />
           </div>
 
           <div className="space-y-2">
@@ -200,7 +211,7 @@ export function EditCandidateDialog({
               onChange={(e) =>
                 setFormData({ ...formData, skills: e.target.value })
               }
-              placeholder="Enter your skills (separated by commas)"
+              placeholder="Enter skills (comma-separated)"
               className="min-h-[100px]"
             />
           </div>

@@ -3,133 +3,224 @@ import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Badge } from "../ui/badge";
 import { ScrollArea } from "../ui/scroll-area";
 import { useInterviews } from "@/lib/api/hooks/useInterviews";
-import { Interview } from "@/lib/api/interviews";
-
-const stages = [
-  { id: "screening", name: "Screening" },
-  { id: "shortlisted", name: "Shortlisted" },
-  { id: "test", name: "Test" },
-  { id: "tech1", name: "Tech-1" },
-  { id: "tech2", name: "Tech-2" },
-  { id: "hr", name: "HR" },
-  { id: "barraiser", name: "Bar Raiser" },
-  { id: "mgmt", name: "Management" },
-  { id: "offered", name: "Offered" },
-  { id: "joined", name: "Joined" },
-  { id: "rejected", name: "Rejected" },
-  { id: "offer_rejected", name: "Offer Rejected" },
-];
-
-function getStageColor(stage: string): string {
-  switch (stage) {
-    case "joined":
-      return "bg-green-500 hover:bg-green-600 text-white";
-    case "offered":
-      return "bg-blue-500 hover:bg-blue-600 text-white";
-    case "rejected":
-    case "offer_rejected":
-      return "bg-red-500 hover:bg-red-600 text-white";
-    default:
-      return "bg-secondary hover:bg-secondary/80";
-  }
-}
+import { supabase } from "@/lib/supabase";
+import { useToast } from "@/components/ui/use-toast";
 
 interface KanbanBoardProps {
   selectedJobId: string;
 }
 
+type KanbanItem = {
+  id: string;
+  name: string;
+  stage_id: string;
+  updated_at?: string;
+  type?: string;
+  itemType: "interview" | "candidate";
+};
+
 export function KanbanBoard({ selectedJobId }: KanbanBoardProps) {
   const { interviews, isLoading, updateInterview } = useInterviews();
-  const [groupedInterviews, setGroupedInterviews] = useState<
-    Record<string, Interview[]>
+  const { toast } = useToast();
+  const [stages, setStages] = useState<{ id: string; stage: string }[]>([]);
+  const [groupedItems, setGroupedItems] = useState<
+    Record<string, KanbanItem[]>
   >({});
 
   useEffect(() => {
-    if (interviews) {
-      // Filter interviews by selected job if one is selected
-      const filteredInterviews = selectedJobId
-        ? interviews.filter((interview) => interview.job_id === selectedJobId)
-        : interviews;
+    const loadStages = async () => {
+      try {
+        const { data, error } = await supabase
+          .from("stages")
+          .select("id, stage");
+        if (error) throw error;
+        setStages(data || []);
+      } catch (error) {
+        console.error("Error loading pipeline stages:", error);
+      }
+    };
+    loadStages();
+  }, []);
 
-      const grouped = stages.reduce(
-        (acc, stage) => {
-          acc[stage.id] = filteredInterviews.filter(
-            (interview) => interview.status === stage.id,
-          );
-          return acc;
-        },
-        {} as Record<string, Interview[]>,
-      );
-      setGroupedInterviews(grouped);
-    }
-  }, [interviews, selectedJobId]);
+  useEffect(() => {
+    const loadData = async () => {
+      if (!stages.length || !selectedJobId) return;
 
-  const handleDragStart = (e: React.DragEvent, interviewId: string) => {
-    e.dataTransfer.setData("text/plain", interviewId);
+      try {
+        const { data: candidates } = await supabase
+          .from("candidates")
+          .select("id, name, stage_id, job_id, updated_at")
+          .eq("job_id", selectedJobId);
+
+        const filteredInterviews =
+          interviews?.filter(
+            (interview) => interview.job_id === selectedJobId,
+          ) || [];
+
+        const grouped: Record<string, KanbanItem[]> = {};
+        stages.forEach((stage) => {
+          grouped[stage.id] = [];
+        });
+
+        candidates?.forEach((candidate) => {
+          if (candidate.stage_id) {
+            grouped[candidate.stage_id] = [
+              ...(grouped[candidate.stage_id] || []),
+              {
+                id: candidate.id,
+                name: candidate.name,
+                stage_id: candidate.stage_id,
+                updated_at: candidate.updated_at,
+                itemType: "candidate",
+              },
+            ];
+          }
+        });
+
+        filteredInterviews.forEach((interview) => {
+          if (interview.stage_id) {
+            grouped[interview.stage_id] = [
+              ...(grouped[interview.stage_id] || []),
+              {
+                id: interview.id,
+                name: interview.candidate?.name || "Unknown",
+                stage_id: interview.stage_id,
+                updated_at: interview.updated_at,
+                type: interview.type,
+                itemType: "interview",
+              },
+            ];
+          }
+        });
+
+        setGroupedItems(grouped);
+      } catch (error) {
+        console.error("Error loading kanban data:", error);
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Failed to load pipeline data",
+        });
+      }
+    };
+
+    loadData();
+  }, [interviews, selectedJobId, stages]);
+
+  const handleDragStart = (e: React.DragEvent, item: KanbanItem) => {
+    e.dataTransfer.setData("itemId", item.id);
+    e.dataTransfer.setData("itemType", item.itemType);
   };
 
-  const handleDragOver = (e: React.DragEvent) => {
+  const handleDrop = async (e: React.DragEvent, targetStageId: string) => {
     e.preventDefault();
-  };
+    const itemId = e.dataTransfer.getData("itemId");
+    const itemType = e.dataTransfer.getData("itemType");
 
-  const handleDrop = async (e: React.DragEvent, targetStage: string) => {
-    e.preventDefault();
-    const interviewId = e.dataTransfer.getData("text/plain");
     try {
-      await updateInterview(interviewId, { status: targetStage });
+      let updated_at = new Date().toISOString();
+
+      if (itemType === "candidate") {
+        await supabase
+          .from("candidates")
+          .update({ stage_id: targetStageId, updated_at })
+          .eq("id", itemId);
+      } else {
+        await updateInterview(itemId, { stage_id: targetStageId, updated_at });
+      }
+
+      toast({ title: "Success", description: "Item moved successfully" });
+
+      // Update UI immediately
+      setGroupedItems((prev) => {
+        const updatedItems = { ...prev };
+        let movedItem: KanbanItem | undefined;
+
+        // Remove the item from its previous stage
+        Object.keys(updatedItems).forEach((stageId) => {
+          const index = updatedItems[stageId]?.findIndex(
+            (i) => i.id === itemId,
+          );
+          if (index !== -1) {
+            movedItem = {
+              ...updatedItems[stageId][index],
+              stage_id: targetStageId,
+            }; // Clone with new stage_id
+            updatedItems[stageId] = updatedItems[stageId].filter(
+              (_, idx) => idx !== index,
+            );
+          }
+        });
+
+        // Add the item to the new stage
+        if (movedItem) {
+          movedItem.stage_id = targetStageId;
+          movedItem.updated_at = updated_at;
+          updatedItems[targetStageId] = [
+            ...(updatedItems[targetStageId] || []),
+            movedItem,
+          ];
+        }
+
+        return updatedItems;
+      });
     } catch (error) {
-      console.error("Error updating interview stage:", error);
+      console.error("Error updating stage:", error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to move item",
+      });
     }
   };
-
-  if (isLoading) {
-    return <div>Loading...</div>;
-  }
-
-  if (!selectedJobId) {
-    return (
-      <div className="flex items-center justify-center h-[50vh] text-muted-foreground">
-        Please select a job posting to view its pipeline
-      </div>
-    );
-  }
 
   return (
-    <div className="flex gap-4 overflow-x-auto pb-4">
+    <div className="flex gap-4 overflow-x-auto pb-4 h-screen">
       {stages.map((stage) => (
-        <Card key={stage.id} className="min-w-[300px]">
-          <CardHeader className="py-3">
-            <CardTitle className="text-sm font-medium flex items-center justify-between">
-              {stage.name}
-              <Badge className={getStageColor(stage.id)}>
-                {groupedInterviews[stage.id]?.length || 0}
+        <Card
+          key={stage.id}
+          className="min-w-[300px] bg-gray-50 shadow-md rounded-lg flex flex-col h-full"
+        >
+          <CardHeader className="py-3 bg-gray-200 rounded-t-lg">
+            <CardTitle className="text-sm font-medium flex items-center justify-between text-gray-700">
+              {stage.stage}
+              <Badge className="bg-blue-600 text-white">
+                {groupedItems[stage.id]?.length || 0}
               </Badge>
             </CardTitle>
           </CardHeader>
-          <CardContent className="py-2">
-            <ScrollArea className="h-[calc(100vh-12rem)]">
+          <CardContent className="flex-grow p-2">
+            <ScrollArea className="h-full">
               <div
-                className="space-y-2 p-1"
-                onDragOver={handleDragOver}
+                className="flex flex-col gap-2 h-full min-h-[400px] border-2 border-dashed border-gray-400 rounded-lg p-2"
+                onDragOver={(e) => e.preventDefault()}
                 onDrop={(e) => handleDrop(e, stage.id)}
               >
-                {groupedInterviews[stage.id]?.map((interview) => (
+                {groupedItems[stage.id]?.map((item) => (
                   <Card
-                    key={interview.id}
+                    key={item.id}
                     draggable
-                    onDragStart={(e) => handleDragStart(e, interview.id)}
-                    className="p-3 cursor-move hover:bg-muted/50"
+                    onDragStart={(e) => handleDragStart(e, item)}
+                    className="p-3 cursor-move bg-white shadow-sm hover:shadow-md transition-all duration-200 rounded-md border border-gray-200"
                   >
-                    <div className="space-y-2">
-                      <div className="font-medium">
-                        {interview.candidate?.name}
+                    <div className="space-y-1">
+                      <div className="font-medium text-gray-900">
+                        {item.name}
                       </div>
-                      <div className="text-sm text-muted-foreground">
-                        {interview.candidate?.position}
-                      </div>
-                      <Badge variant="secondary" className="text-xs">
-                        {interview.type}
-                      </Badge>
+                      {item.updated_at && (
+                        <div className="text-xs text-gray-500">
+                          Last updated:{" "}
+                          {new Date(item.updated_at).toLocaleString()}
+                        </div>
+                      )}
+                      {item.itemType === "interview" && (
+                        <Badge
+                          variant="secondary"
+                          className="text-xs bg-yellow-500 text-white"
+                        >
+                          {item.type}
+                        </Badge>
+                      )}
                     </div>
                   </Card>
                 ))}

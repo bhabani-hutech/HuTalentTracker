@@ -8,6 +8,7 @@ import {
 } from "@/lib/api/candidates";
 import { parseResume } from "@/lib/api/parser";
 import { useToast } from "@/components/ui/use-toast";
+import { v4 as uuidv4 } from "uuid";
 
 export default function ResumeSourcing() {
   const {
@@ -64,11 +65,12 @@ export default function ResumeSourcing() {
             name: parsedData.name || file.name.split(".")[0],
             email: parsedData.email || "",
             phone: parsedData.phone,
-            position: parsedData.position || "Position Unknown",
+            job_id: null, // Assigning a new UUID for job_id
             source: file.type.includes("pdf") ? "PDF Upload" : "Word Upload",
             file_url: fileUrl,
             match_score: 0,
             notice_period: "",
+            stage_id: 1,
           });
 
           toast({

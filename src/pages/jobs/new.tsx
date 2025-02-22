@@ -1,9 +1,11 @@
 import { useState, useMemo, useEffect } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+import { jobFormSchema } from "@/lib/schemas/job";
 import { generateJobDescription } from "@/lib/api/ai";
-import { useParams } from "react-router-dom";
-import { Wand2 } from "lucide-react";
-import { Loader2 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
+import { Wand2, Loader2 } from "lucide-react";
 import { useJobs } from "@/lib/api/hooks/useJobs";
 import { useToast } from "@/components/ui/use-toast";
 import { Button } from "@/components/ui/button";
@@ -25,16 +27,43 @@ export default function NewJob() {
   const { id } = useParams();
   const { jobs, createJob, updateJob } = useJobs();
   const navigate = useNavigate();
+  const { toast } = useToast();
+
+  const form = useForm<z.infer<typeof jobFormSchema>>({
+    resolver: zodResolver(jobFormSchema),
+    defaultValues: {
+      title: "",
+      department: "",
+      location: "",
+      type: "Full Time",
+      level: "Mid Level",
+      status: "Draft",
+      description: "",
+      requirements: [],
+      responsibilities: [],
+      skills: [],
+      salary_min: undefined,
+      salary_max: undefined,
+      openings: 1,
+      interview_rounds: [],
+      experience_min: 1,
+      experience_max: 3,
+    },
+  });
+
+  const [newRequirement, setNewRequirement] = useState("");
+  const [newResponsibility, setNewResponsibility] = useState("");
+  const [isGenerating, setIsGenerating] = useState(false);
+
   // Load job data if editing
   useEffect(() => {
     if (id && jobs) {
       const jobToEdit = jobs.find((job) => job.id === id);
       if (jobToEdit) {
-        setFormData(jobToEdit);
+        form.reset(jobToEdit);
       }
     }
-  }, [id, jobs]);
-  const { toast } = useToast();
+  }, [id, jobs, form]);
 
   // Get unique departments from existing jobs
   const departments = useMemo(() => {
@@ -42,38 +71,16 @@ export default function NewJob() {
     return Array.from(new Set(jobs.map((job) => job.department))).sort();
   }, [jobs]);
 
-  const [formData, setFormData] = useState<
-    Omit<Job, "id" | "created_at" | "updated_at" | "created_by" | "updated_by">
-  >({
-    title: "",
-    department: "",
-    location: "",
-    type: "Full Time",
-    level: "Mid Level",
-    status: "Draft",
-    description: "",
-    requirements: [],
-    responsibilities: [],
-    skills: [],
-    salary_min: undefined,
-    salary_max: undefined,
-  });
-
-  const [newRequirement, setNewRequirement] = useState("");
-  const [newResponsibility, setNewResponsibility] = useState("");
-  const [isGenerating, setIsGenerating] = useState(false);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async (data: z.infer<typeof jobFormSchema>) => {
     try {
       if (id) {
-        await updateJob({ id, updates: formData });
+        await updateJob({ id, updates: data });
         toast({
           title: "Success",
           description: "Job posting updated successfully",
         });
       } else {
-        await createJob(formData);
+        await createJob(data);
         toast({
           title: "Success",
           description: "Job posting created successfully",
@@ -92,23 +99,22 @@ export default function NewJob() {
 
   const addRequirement = () => {
     if (newRequirement.trim()) {
-      setFormData({
-        ...formData,
-        requirements: [...formData.requirements, newRequirement.trim()],
-      });
+      const currentRequirements = form.getValues("requirements") || [];
+      form.setValue("requirements", [
+        ...currentRequirements,
+        newRequirement.trim(),
+      ]);
       setNewRequirement("");
     }
   };
 
   const addResponsibility = () => {
     if (newResponsibility.trim()) {
-      setFormData({
-        ...formData,
-        responsibilities: [
-          ...formData.responsibilities,
-          newResponsibility.trim(),
-        ],
-      });
+      const currentResponsibilities = form.getValues("responsibilities") || [];
+      form.setValue("responsibilities", [
+        ...currentResponsibilities,
+        newResponsibility.trim(),
+      ]);
       setNewResponsibility("");
     }
   };
@@ -122,7 +128,7 @@ export default function NewJob() {
         <p className="text-muted-foreground">Create a new job posting</p>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-8">
+      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-8">
         <Card>
           <CardHeader>
             <CardTitle>Basic Information</CardTitle>
@@ -131,22 +137,14 @@ export default function NewJob() {
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
                 <Label>Job Title</Label>
-                <Input
-                  required
-                  value={formData.title}
-                  onChange={(e) =>
-                    setFormData({ ...formData, title: e.target.value })
-                  }
-                />
+                <Input {...form.register("title")} />
               </div>
 
               <div className="space-y-2">
                 <Label>Department</Label>
                 <Select
-                  value={formData.department}
-                  onValueChange={(value) =>
-                    setFormData({ ...formData, department: value })
-                  }
+                  value={form.getValues("department")}
+                  onValueChange={(value) => form.setValue("department", value)}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select department" />
@@ -171,21 +169,15 @@ export default function NewJob() {
 
               <div className="space-y-2">
                 <Label>Location</Label>
-                <Input
-                  required
-                  value={formData.location}
-                  onChange={(e) =>
-                    setFormData({ ...formData, location: e.target.value })
-                  }
-                />
+                <Input {...form.register("location")} />
               </div>
 
               <div className="space-y-2">
                 <Label>Job Type</Label>
                 <Select
-                  value={formData.type}
+                  value={form.getValues("type")}
                   onValueChange={(value: JobType) =>
-                    setFormData({ ...formData, type: value })
+                    form.setValue("type", value)
                   }
                 >
                   <SelectTrigger>
@@ -201,33 +193,56 @@ export default function NewJob() {
               </div>
 
               <div className="space-y-2">
-                <Label>Level</Label>
-                <Select
-                  value={formData.level}
-                  onValueChange={(value: JobLevel) =>
-                    setFormData({ ...formData, level: value })
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Entry Level">Entry Level</SelectItem>
-                    <SelectItem value="Mid Level">Mid Level</SelectItem>
-                    <SelectItem value="Senior Level">Senior Level</SelectItem>
-                    <SelectItem value="Lead">Lead</SelectItem>
-                    <SelectItem value="Manager">Manager</SelectItem>
-                    <SelectItem value="Director">Director</SelectItem>
-                  </SelectContent>
-                </Select>
+                <Label>Experience Range</Label>
+                <div className="flex gap-4">
+                  <Select
+                    value={form.getValues("experience_min")?.toString()}
+                    onValueChange={(value) =>
+                      form.setValue("experience_min", parseInt(value))
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Min" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 15].map(
+                        (year) => (
+                          <SelectItem key={year} value={year.toString()}>
+                            {year} {year === 1 ? "year" : "years"}
+                          </SelectItem>
+                        ),
+                      )}
+                    </SelectContent>
+                  </Select>
+                  <span className="flex items-center">to</span>
+                  <Select
+                    value={form.getValues("experience_max")?.toString()}
+                    onValueChange={(value) =>
+                      form.setValue("experience_max", parseInt(value))
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Max" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 15, 20].map(
+                        (year) => (
+                          <SelectItem key={year} value={year.toString()}>
+                            {year} {year === 1 ? "year" : "years"}
+                          </SelectItem>
+                        ),
+                      )}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
 
               <div className="space-y-2">
                 <Label>Status</Label>
                 <Select
-                  value={formData.status}
+                  value={form.getValues("status")}
                   onValueChange={(value: JobStatus) =>
-                    setFormData({ ...formData, status: value })
+                    form.setValue("status", value)
                   }
                 >
                   <SelectTrigger>
@@ -251,9 +266,15 @@ export default function NewJob() {
                   variant="outline"
                   size="sm"
                   className="flex items-center gap-2"
-                  disabled={!formData.title || !formData.level || isGenerating}
+                  disabled={
+                    !form.getValues("title") ||
+                    !form.getValues("level") ||
+                    isGenerating
+                  }
                   onClick={async () => {
-                    if (!formData.title || !formData.level) {
+                    const title = form.getValues("title");
+                    const level = form.getValues("level");
+                    if (!title || !level) {
                       toast({
                         variant: "destructive",
                         title: "Error",
@@ -266,17 +287,17 @@ export default function NewJob() {
                     setIsGenerating(true);
                     try {
                       const generated = await generateJobDescription(
-                        formData.title,
-                        formData.level,
+                        title,
+                        level,
                       );
 
-                      setFormData({
-                        ...formData,
-                        description: generated.description,
-                        requirements: generated.requirements,
-                        responsibilities: generated.responsibilities,
-                        skills: generated.skills,
-                      });
+                      form.setValue("description", generated.description);
+                      form.setValue("requirements", generated.requirements);
+                      form.setValue(
+                        "responsibilities",
+                        generated.responsibilities,
+                      );
+                      form.setValue("skills", generated.skills);
 
                       toast({
                         title: "Success",
@@ -303,147 +324,20 @@ export default function NewJob() {
                 </Button>
               </div>
               <Textarea
-                required
-                value={formData.description}
-                onChange={(e) =>
-                  setFormData({ ...formData, description: e.target.value })
-                }
+                {...form.register("description")}
                 className="min-h-[100px]"
               />
             </div>
 
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
-                <Label>Minimum Salary</Label>
+                <Label>Number of Openings</Label>
                 <Input
                   type="number"
-                  value={formData.salary_min || ""}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      salary_min: parseInt(e.target.value) || undefined,
-                    })
-                  }
+                  min="1"
+                  {...form.register("openings", { valueAsNumber: true })}
                 />
               </div>
-
-              <div className="space-y-2">
-                <Label>Maximum Salary</Label>
-                <Input
-                  type="number"
-                  value={formData.salary_max || ""}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      salary_max: parseInt(e.target.value) || undefined,
-                    })
-                  }
-                />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle>Skills</CardTitle>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                className="flex items-center gap-2"
-                disabled={!formData.title || !formData.level || isGenerating}
-                onClick={async () => {
-                  if (!formData.title || !formData.level) {
-                    toast({
-                      variant: "destructive",
-                      title: "Error",
-                      description:
-                        "Please enter a job title and select a level first",
-                    });
-                    return;
-                  }
-
-                  setIsGenerating(true);
-                  try {
-                    const generated = await generateJobDescription(
-                      formData.title,
-                      formData.level,
-                    );
-
-                    setFormData({
-                      ...formData,
-                      skills: generated.skills,
-                    });
-
-                    toast({
-                      title: "Success",
-                      description: "Skills generated successfully",
-                    });
-                  } catch (error) {
-                    console.error("Error generating skills:", error);
-                    toast({
-                      variant: "destructive",
-                      title: "Error",
-                      description: "Failed to generate skills",
-                    });
-                  } finally {
-                    setIsGenerating(false);
-                  }
-                }}
-              >
-                {isGenerating ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Wand2 className="h-4 w-4" />
-                )}
-                {isGenerating ? "Generating..." : "Generate Skills"}
-              </Button>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="flex flex-wrap gap-2">
-              {formData.skills?.map((skill, index) => (
-                <Badge
-                  key={index}
-                  variant="secondary"
-                  className="flex items-center gap-1"
-                >
-                  {skill}
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    className="h-4 w-4 p-0 hover:bg-transparent"
-                    onClick={() =>
-                      setFormData({
-                        ...formData,
-                        skills: formData.skills?.filter((_, i) => i !== index),
-                      })
-                    }
-                  >
-                    ×
-                  </Button>
-                </Badge>
-              ))}
-              <Input
-                placeholder="Add a skill"
-                className="w-32 h-7"
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    e.preventDefault();
-                    const value = (e.target as HTMLInputElement).value.trim();
-                    if (value) {
-                      setFormData({
-                        ...formData,
-                        skills: [...(formData.skills || []), value],
-                      });
-                      (e.target as HTMLInputElement).value = "";
-                    }
-                  }
-                }}
-              />
             </div>
           </CardContent>
         </Card>
@@ -465,7 +359,7 @@ export default function NewJob() {
             </div>
 
             <ul className="list-disc pl-6 space-y-2">
-              {formData.requirements.map((req, index) => (
+              {form.getValues("requirements")?.map((req, index) => (
                 <li key={index} className="text-sm">
                   {req}
                   <Button
@@ -473,14 +367,14 @@ export default function NewJob() {
                     variant="ghost"
                     size="sm"
                     className="ml-2 text-red-500 hover:text-red-600"
-                    onClick={() =>
-                      setFormData({
-                        ...formData,
-                        requirements: formData.requirements.filter(
-                          (_, i) => i !== index,
-                        ),
-                      })
-                    }
+                    onClick={() => {
+                      const currentRequirements =
+                        form.getValues("requirements");
+                      form.setValue(
+                        "requirements",
+                        currentRequirements.filter((_, i) => i !== index),
+                      );
+                    }}
                   >
                     Remove
                   </Button>
@@ -507,7 +401,7 @@ export default function NewJob() {
             </div>
 
             <ul className="list-disc pl-6 space-y-2">
-              {formData.responsibilities.map((resp, index) => (
+              {form.getValues("responsibilities")?.map((resp, index) => (
                 <li key={index} className="text-sm">
                   {resp}
                   <Button
@@ -515,14 +409,14 @@ export default function NewJob() {
                     variant="ghost"
                     size="sm"
                     className="ml-2 text-red-500 hover:text-red-600"
-                    onClick={() =>
-                      setFormData({
-                        ...formData,
-                        responsibilities: formData.responsibilities.filter(
-                          (_, i) => i !== index,
-                        ),
-                      })
-                    }
+                    onClick={() => {
+                      const currentResponsibilities =
+                        form.getValues("responsibilities");
+                      form.setValue(
+                        "responsibilities",
+                        currentResponsibilities.filter((_, i) => i !== index),
+                      );
+                    }}
                   >
                     Remove
                   </Button>

@@ -20,15 +20,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../ui/select";
-import { Interview } from "@/lib/api/interviews";
+import { useJobs } from "@/lib/api/hooks/useJobs";
 import { useCandidates } from "@/lib/api/hooks/useCandidates";
 import { useInterviewers } from "@/lib/api/hooks/useInterviewers";
+import { useInterviewRounds } from "@/lib/api/hooks/useInterviewRounds";
 
 interface InterviewFormProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (data: Omit<Interview, "id" | "created_at" | "updated_at">) => void;
-  initialData?: Interview;
+  onSubmit: (data: any) => void;
+  initialData?: any;
 }
 
 export function InterviewForm({
@@ -37,135 +38,154 @@ export function InterviewForm({
   onSubmit,
   initialData,
 }: InterviewFormProps) {
-  const [formData, setFormData] = useState<Partial<Interview>>({
+  const [formData, setFormData] = useState({
+    job_id: "",
     candidate_id: "",
     interviewer_id: "",
+    interview_round: "",
     date: format(new Date(), "yyyy-MM-dd'T'HH:mm"),
-    type: "technical",
   });
 
-  const { data: candidates } = useCandidates();
-  const { data: interviewers } = useInterviewers();
+  const { jobs, isLoading: jobsLoading, queryError: jobsError } = useJobs();
+  const {
+    data: candidates,
+    isLoading: candidatesLoading,
+    queryError: candidatesError,
+  } = useCandidates();
+  const {
+    data: interviewers,
+    isLoading: interviewersLoading,
+    queryError: interviewersError,
+  } = useInterviewers();
+  const {
+    data: interviewRounds,
+    isLoading: interviewRoundsLoading,
+    queryError: interviewRoundsError,
+  } = useInterviewRounds();
 
-  // Populate form data if editing
   useEffect(() => {
+    console.log("interviewRounds data:", interviewRounds);
+    if (jobsError) {
+      console.error("Jobs error:", jobsError);
+    }
+    if (jobsLoading) {
+      console.log("jobs are loading");
+    }
     if (isOpen && initialData) {
       setFormData({
+        job_id: initialData.job_id,
         candidate_id: initialData.candidate_id,
         interviewer_id: initialData.interviewer_id,
+        interview_round: initialData.interview_round,
         date: format(new Date(initialData.date), "yyyy-MM-dd'T'HH:mm"),
-        type: initialData.type.toLowerCase(),
       });
-    } else if (isOpen && !initialData) {
+    } else if (isOpen) {
       setFormData({
+        job_id: "",
         candidate_id: "",
         interviewer_id: "",
+        interview_round: "",
         date: format(new Date(), "yyyy-MM-dd'T'HH:mm"),
-        type: "technical",
       });
     }
-  }, [isOpen, initialData]);
+  }, [isOpen, initialData, jobs, jobsError, jobsLoading]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit(formData as Omit<Interview, "id" | "created_at" | "updated_at">);
+    onSubmit(formData);
     onClose();
   };
+
+  const filteredCandidates = candidates?.filter(
+    (c) => c.job_id === formData.job_id,
+  );
+
+  if (
+    jobsLoading ||
+    candidatesLoading ||
+    interviewersLoading ||
+    interviewRoundsLoading
+  ) {
+    return <div>Loading...</div>; // Or a loading spinner
+  }
+
+  if (
+    jobsError ||
+    candidatesError ||
+    interviewersError ||
+    interviewRoundsError
+  ) {
+    return <div>Error loading data.</div>;
+  }
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent>
         <DialogHeader>
-          <div className="flex items-center justify-between">
-            <DialogTitle>
-              {initialData ? "Edit Interview" : "Schedule New Interview"}
-            </DialogTitle>
-          </div>
+          <DialogTitle>
+            {initialData ? "Edit Interview" : "Schedule New Interview"}
+          </DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label>Interview Type</Label>
+            <Label>Job Position</Label>
             <Select
-              value={formData.type}
+              value={formData.job_id}
               onValueChange={(value) =>
-                setFormData({ ...formData, type: value })
+                setFormData({ ...formData, job_id: value, candidate_id: "" })
               }
             >
               <SelectTrigger>
-                <SelectValue placeholder="Select interview type" />
+                <SelectValue placeholder="Select job" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="face-to-face">Face-to-Face</SelectItem>
-                <SelectItem value="online">Online</SelectItem>
+                {jobs?.map((job) => (
+                  <SelectItem key={job.id} value={job.id}>
+                    {job.title}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
 
           <div className="space-y-2">
-            <Label>Date</Label>
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  variant={"outline"}
-                  className={cn(
-                    "w-full justify-start text-left font-normal",
-                    !formData.date && "text-muted-foreground",
-                  )}
-                >
-                  <CalendarIcon className="mr-2 h-4 w-4" />
-                  {formData?.date ? (
-                    format(new Date(formData?.date), "PPP")
-                  ) : (
-                    <span>Pick a date</span>
-                  )}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
-                <Calendar
-                  mode="single"
-                  selected={formData.date ? new Date(formData.date) : undefined}
-                  onSelect={(date) =>
-                    setFormData({
-                      ...formData,
-                      date: date ? format(date, "yyyy-MM-dd'T'HH:mm") : "",
-                    })
-                  }
-                  initialFocus
-                />
-              </PopoverContent>
-            </Popover>
+            <Label>Candidate</Label>
+            <Select
+              value={formData.candidate_id}
+              onValueChange={(value) =>
+                setFormData({ ...formData, candidate_id: value })
+              }
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select candidate" />
+              </SelectTrigger>
+              <SelectContent>
+                {filteredCandidates?.map((candidate) => (
+                  <SelectItem key={candidate.id} value={candidate.id}>
+                    {candidate.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="space-y-2">
-            <Label>Time</Label>
+            <Label>Interview Round</Label>
             <Select
-              value={
-                formData.date
-                  ? formData.date.split("T")[1].slice(0, 5)
-                  : "10:00"
+              value={formData.interview_round}
+              onValueChange={(value) =>
+                setFormData({ ...formData, interview_round: value })
               }
-              onValueChange={(time) => {
-                const [date] = formData.date?.split("T") || [""];
-                setFormData({
-                  ...formData,
-                  date: `${date}T${time}:00`,
-                });
-              }}
             >
               <SelectTrigger>
-                <SelectValue placeholder="Select time" />
+                <SelectValue placeholder="Select interview round" />
               </SelectTrigger>
               <SelectContent>
-                {Array.from({ length: 24 }, (_, hour) => [
-                  `${hour.toString().padStart(2, "0")}:00`,
-                  `${hour.toString().padStart(2, "0")}:30`,
-                ])
-                  .flat()
-                  .map((time) => (
-                    <SelectItem key={time} value={time}>
-                      {time}
-                    </SelectItem>
-                  ))}
+                {interviewRounds?.map((round) => (
+                  <SelectItem key={round.id} value={round.id}>
+                    {round.name}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
@@ -192,24 +212,38 @@ export function InterviewForm({
           </div>
 
           <div className="space-y-2">
-            <Label>Candidate</Label>
-            <Select
-              value={formData.candidate_id}
-              onValueChange={(value) =>
-                setFormData({ ...formData, candidate_id: value })
-              }
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select candidate" />
-              </SelectTrigger>
-              <SelectContent>
-                {candidates?.map((candidate) => (
-                  <SelectItem key={candidate.id} value={candidate.id}>
-                    {candidate.name} - {candidate.position}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Label>Date and Time</Label>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className={cn(
+                    "w-full justify-start text-left font-normal",
+                    !formData.date && "text-muted-foreground",
+                  )}
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {formData.date ? (
+                    format(new Date(formData.date), "PPP p")
+                  ) : (
+                    <span>Pick a date</span>
+                  )}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  mode="single"
+                  selected={formData.date ? new Date(formData.date) : undefined}
+                  onSelect={(date) =>
+                    setFormData({
+                      ...formData,
+                      date: date ? format(date, "yyyy-MM-dd'T'HH:mm") : "",
+                    })
+                  }
+                  initialFocus
+                />
+              </PopoverContent>
+            </Popover>
           </div>
 
           <DialogFooter>
