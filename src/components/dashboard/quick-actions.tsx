@@ -1,35 +1,37 @@
 import { Button } from "../ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Plus, Calendar, FileText, UserPlus } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 export function QuickActions() {
+  const navigate = useNavigate();
   const actions = [
     {
       title: "Post New Job",
       description: "Create a new job posting",
       icon: <Plus className="h-5 w-5" />,
-      onClick: () => {},
+      onClick: () => navigate("/jobs"),
       color: "bg-blue-500 hover:bg-blue-600",
     },
     {
       title: "Schedule Interview",
       description: "Set up candidate interviews",
       icon: <Calendar className="h-5 w-5" />,
-      onClick: () => {},
+      onClick: () => navigate("/interview-scheduling"),
       color: "bg-green-500 hover:bg-green-600",
     },
     {
       title: "Review Applications",
       description: "Review pending applications",
       icon: <FileText className="h-5 w-5" />,
-      onClick: () => {},
+      onClick: () => navigate("/interview-feedback"),
       color: "bg-purple-500 hover:bg-purple-600",
     },
     {
       title: "Start Onboarding",
       description: "Begin employee onboarding",
       icon: <UserPlus className="h-5 w-5" />,
-      onClick: () => {},
+      onClick: () => navigate("/associate-onboarding"),
       color: "bg-orange-500 hover:bg-orange-600",
     },
   ];

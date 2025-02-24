@@ -9,7 +9,7 @@ import {
 import { Button } from "../ui/button";
 import { Label } from "../ui/label";
 import { Calendar } from "../ui/calendar";
-import { format } from "date-fns";
+import { format, parse } from "date-fns";
 import { CalendarIcon } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import { cn } from "@/lib/utils";
@@ -23,7 +23,7 @@ import {
 import { useJobs } from "@/lib/api/hooks/useJobs";
 import { useCandidates } from "@/lib/api/hooks/useCandidates";
 import { useInterviewers } from "@/lib/api/hooks/useInterviewers";
-import { useInterviewRounds } from "@/lib/api/hooks/useInterviewRounds";
+import { useInterviewRounds } from "@/lib/api/interviewRounds";
 
 interface InterviewFormProps {
   isOpen: boolean;
@@ -42,57 +42,52 @@ export function InterviewForm({
     job_id: "",
     candidate_id: "",
     interviewer_id: "",
-    interview_round: "",
-    date: format(new Date(), "yyyy-MM-dd'T'HH:mm"),
+    round_id: "",
+    date: new Date(),
+    time: "09:00", // Default time
+    type: "F2F",
   });
 
-  const { jobs, isLoading: jobsLoading, queryError: jobsError } = useJobs();
-  const {
-    data: candidates,
-    isLoading: candidatesLoading,
-    queryError: candidatesError,
-  } = useCandidates();
-  const {
-    data: interviewers,
-    isLoading: interviewersLoading,
-    queryError: interviewersError,
-  } = useInterviewers();
-  const {
-    data: interviewRounds,
-    isLoading: interviewRoundsLoading,
-    queryError: interviewRoundsError,
-  } = useInterviewRounds();
+  const { jobs } = useJobs();
+  const { data: candidates } = useCandidates();
+  const { data: interviewers } = useInterviewers();
+  const { data: interviewRounds } = useInterviewRounds();
 
   useEffect(() => {
-    console.log("interviewRounds data:", interviewRounds);
-    if (jobsError) {
-      console.error("Jobs error:", jobsError);
-    }
-    if (jobsLoading) {
-      console.log("jobs are loading");
-    }
     if (isOpen && initialData) {
+      const parsedDate = new Date(initialData.date); // Convert timestamp to Date object
       setFormData({
         job_id: initialData.job_id,
         candidate_id: initialData.candidate_id,
         interviewer_id: initialData.interviewer_id,
-        interview_round: initialData.interview_round,
-        date: format(new Date(initialData.date), "yyyy-MM-dd'T'HH:mm"),
+        round_id: initialData.round_id,
+        date: parsedDate,
+        time: format(parsedDate, "HH:mm"), // Extract time
+        type: initialData.type || "F2F",
       });
     } else if (isOpen) {
       setFormData({
         job_id: "",
         candidate_id: "",
         interviewer_id: "",
-        interview_round: "",
-        date: format(new Date(), "yyyy-MM-dd'T'HH:mm"),
+        round_id: "",
+        date: new Date(),
+        time: "09:00",
+        type: "F2F",
       });
     }
-  }, [isOpen, initialData, jobs, jobsError, jobsLoading]);
+  }, [isOpen, initialData]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit(formData);
+
+    // Merge Date & Time into a timestamp
+    const [hours, minutes] = formData.time.split(":").map(Number);
+    const interviewTimestamp = new Date(formData.date);
+    interviewTimestamp.setHours(hours, minutes, 0, 0);
+    console.log(interviewTimestamp);
+    const { time, ...interviewData } = formData;
+    onSubmit({ ...interviewData, date: interviewTimestamp }); // Submit merged timestamp
     onClose();
   };
 
@@ -100,23 +95,14 @@ export function InterviewForm({
     (c) => c.job_id === formData.job_id,
   );
 
-  if (
-    jobsLoading ||
-    candidatesLoading ||
-    interviewersLoading ||
-    interviewRoundsLoading
-  ) {
-    return <div>Loading...</div>; // Or a loading spinner
-  }
-
-  if (
-    jobsError ||
-    candidatesError ||
-    interviewersError ||
-    interviewRoundsError
-  ) {
-    return <div>Error loading data.</div>;
-  }
+  const generateTimeOptions = () => {
+    const times = [];
+    for (let hour = 9; hour < 18; hour++) {
+      times.push(`${hour.toString().padStart(2, "0")}:00`);
+      times.push(`${hour.toString().padStart(2, "0")}:30`);
+    }
+    return times;
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -172,13 +158,16 @@ export function InterviewForm({
           <div className="space-y-2">
             <Label>Interview Round</Label>
             <Select
-              value={formData.interview_round}
+              value={formData.round_id}
               onValueChange={(value) =>
-                setFormData({ ...formData, interview_round: value })
+                setFormData({ ...formData, round_id: value })
               }
             >
               <SelectTrigger>
-                <SelectValue placeholder="Select interview round" />
+                <SelectValue placeholder="Select interview round">
+                  {interviewRounds?.find((r) => r.id === formData.round_id)
+                    ?.name || "Select interview round"}
+                </SelectValue>
               </SelectTrigger>
               <SelectContent>
                 {interviewRounds?.map((round) => (
@@ -212,44 +201,65 @@ export function InterviewForm({
           </div>
 
           <div className="space-y-2">
-            <Label>Date and Time</Label>
+            <Label>Interview Type</Label>
+            <Select
+              value={formData.type}
+              onValueChange={(value) =>
+                setFormData({ ...formData, type: value })
+              }
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select interview type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="F2F">Face to Face</SelectItem>
+                <SelectItem value="Online">Online</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Date</Label>
             <Popover>
               <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  className={cn(
-                    "w-full justify-start text-left font-normal",
-                    !formData.date && "text-muted-foreground",
-                  )}
-                >
+                <Button variant="outline" className="w-full text-left">
                   <CalendarIcon className="mr-2 h-4 w-4" />
-                  {formData.date ? (
-                    format(new Date(formData.date), "PPP p")
-                  ) : (
-                    <span>Pick a date</span>
-                  )}
+                  {format(formData.date, "PPP")}
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0" align="start">
                 <Calendar
                   mode="single"
-                  selected={formData.date ? new Date(formData.date) : undefined}
-                  onSelect={(date) =>
-                    setFormData({
-                      ...formData,
-                      date: date ? format(date, "yyyy-MM-dd'T'HH:mm") : "",
-                    })
-                  }
+                  selected={formData.date}
+                  onSelect={(date) => setFormData({ ...formData, date })}
                   initialFocus
                 />
               </PopoverContent>
             </Popover>
           </div>
 
+          <div className="space-y-2">
+            <Label>Time</Label>
+            <Select
+              value={formData.time}
+              onValueChange={(value) =>
+                setFormData({ ...formData, time: value })
+              }
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select time" />
+              </SelectTrigger>
+              <SelectContent>
+                {generateTimeOptions().map((time) => (
+                  <SelectItem key={time} value={time}>
+                    {time}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={onClose}>
-              Cancel
-            </Button>
             <Button type="submit">{initialData ? "Update" : "Schedule"}</Button>
           </DialogFooter>
         </form>

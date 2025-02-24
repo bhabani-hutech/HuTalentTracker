@@ -4,6 +4,7 @@ export type Interview = {
   id: string;
   candidate_id?: string;
   interviewer_id?: string;
+  round_id?: string;
   date: string;
   type: string;
   status:
@@ -22,11 +23,11 @@ export type Interview = {
     name: string;
     job_id?: string;
     stage_id?: string;
-    job?: {
+    jobs?: {
       id: string;
       title: string;
     };
-    stage?: {
+    stages?: {
       id: string;
       stage: string;
     };
@@ -49,9 +50,9 @@ export async function getInterviews() {
       `
       *,
       candidate:candidates!candidate_id(
-        id, name, job_id, stage_id,
-        job:jobs!job_id(id, title),
-        stage:stages!stage_id(id, stage)
+        id, name, job_id, stage_id, round_id,
+        jobs:jobs!job_id(id, title),
+        stages:stages!stage_id(id, stage)
       ),
       interviewer:users!interviewer_id(id, name)
     `,
@@ -73,17 +74,15 @@ export async function getInterviews() {
 export async function createInterview(
   interview: Omit<Interview, "id" | "created_at" | "updated_at">,
 ) {
+  console.log("Creating interview:", interview);
+
   const { data, error } = await supabase
     .from("interviews")
     .insert([interview])
     .select(
       `
       *,
-      candidate:candidates!candidate_id(
-        id, name, job_id, stage_id,
-        job:jobs!job_id(id, title),
-        stage:stages!stage_id(id, stage)
-      ),
+      candidate:candidates!candidate_id(id, name, job_id, stage_id),
       interviewer:users!interviewer_id(id, name)
     `,
     )
@@ -114,12 +113,9 @@ export async function updateInterview(
     .select(
       `
       *,
-      candidate:candidates!candidate_id(
-        id, name, job_id, stage_id,
-        job:jobs!job_id(id, title),
-        stage:stages!stage_id(id, stage)
-      ),
-      interviewer:users!interviewer_id(id, name)
+      candidate:candidates!candidate_id(id, name, job_id, stage_id),
+      interviewer:users!interviewer_id(id, name),
+      interview_round:interview_rounds(id, name)
     `,
     )
     .single();
@@ -136,6 +132,8 @@ export async function updateInterview(
  * Delete an interview by ID
  */
 export async function deleteInterview(id: string) {
+  console.log("Deleting interview with ID:", id);
+
   const { error } = await supabase.from("interviews").delete().eq("id", id);
 
   if (error) {

@@ -10,6 +10,7 @@ import { JobPositionsList } from "./master-data/job-positions-list";
 import { PipelineStagesList } from "./master-data/pipeline-stages-list";
 import { SkillsList } from "./master-data/skills-list";
 import { InterviewRoundsList } from "./master-data/interview-rounds-list";
+import { DepartmentsList } from "./master-data/departments-list";
 import { PanelForm } from "./master-data/panel-form";
 import { RecruiterForm } from "./master-data/recruiter-form";
 import { DepartmentForm } from "./master-data/department-form";
@@ -91,7 +92,7 @@ export function MasterDataSettings() {
 
   return (
     <Tabs defaultValue="organization" className="w-full">
-      <TabsList className="grid w-full grid-cols-7">
+      <TabsList className="grid w-full grid-cols-8">
         <TabsTrigger value="organization">Organizations</TabsTrigger>
         <TabsTrigger value="job-positions">Job Positions</TabsTrigger>
         <TabsTrigger value="panels">Interview Panels</TabsTrigger>
@@ -99,16 +100,14 @@ export function MasterDataSettings() {
         <TabsTrigger value="pipeline">Pipeline Stages</TabsTrigger>
         <TabsTrigger value="skills">Skills</TabsTrigger>
         <TabsTrigger value="interview-rounds">Interview Rounds</TabsTrigger>
+        <TabsTrigger value="departments">Departments</TabsTrigger>
       </TabsList>
-
       <TabsContent value="organization" className="space-y-4">
         <OrganizationsList />
       </TabsContent>
-
       <TabsContent value="job-positions" className="space-y-4">
         <JobPositionsList />
       </TabsContent>
-
       <TabsContent value="panels" className="space-y-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
@@ -150,7 +149,6 @@ export function MasterDataSettings() {
           </CardContent>
         </Card>
       </TabsContent>
-
       <TabsContent value="recruiters" className="space-y-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
@@ -194,65 +192,21 @@ export function MasterDataSettings() {
           </CardContent>
         </Card>
       </TabsContent>
-
-      <TabsContent value="departments" className="space-y-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle>Departments & Clients</CardTitle>
-            <Button onClick={() => setActiveForm({ type: "department" })}>
-              <Plus className="h-4 w-4 mr-2" /> Add Department
-            </Button>
-          </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Department</TableHead>
-                  <TableHead>Client</TableHead>
-                  <TableHead>Location</TableHead>
-                  <TableHead>Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {mockData.departments.map((dept) => (
-                  <TableRow key={dept.id}>
-                    <TableCell>{dept.name}</TableCell>
-                    <TableCell>{dept.client}</TableCell>
-                    <TableCell>{dept.location}</TableCell>
-                    <TableCell>
-                      <Button
-                        variant="ghost"
-                        onClick={() =>
-                          setActiveForm({ type: "department", data: dept })
-                        }
-                      >
-                        Edit
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
-      </TabsContent>
-
       <TabsContent value="pipeline">
         <PipelineStagesList />
       </TabsContent>
-
       <TabsContent value="stages">
         <JobStagesSettings />
       </TabsContent>
-
       <TabsContent value="skills">
         <SkillsList />
       </TabsContent>
-
       <TabsContent value="interview-rounds">
         <InterviewRoundsList />
       </TabsContent>
-
+      <TabsContent value="departments">
+        <DepartmentsList />
+      </TabsContent>
       <OrganizationForm
         isOpen={activeForm.type === "organization"}
         onClose={() => setActiveForm({ type: null })}
@@ -262,7 +216,6 @@ export function MasterDataSettings() {
         }}
         initialData={activeForm.data}
       />
-
       <PanelForm
         isOpen={activeForm.type === "panel"}
         onClose={() => setActiveForm({ type: null })}
@@ -272,7 +225,6 @@ export function MasterDataSettings() {
         }}
         initialData={activeForm.data}
       />
-
       <RecruiterForm
         isOpen={activeForm.type === "recruiter"}
         onClose={() => setActiveForm({ type: null })}
@@ -282,7 +234,6 @@ export function MasterDataSettings() {
         }}
         initialData={activeForm.data}
       />
-
       <DepartmentForm
         isOpen={activeForm.type === "department"}
         onClose={() => setActiveForm({ type: null })}
@@ -292,7 +243,6 @@ export function MasterDataSettings() {
         }}
         initialData={activeForm.data}
       />
-
       <PipelineStageForm
         isOpen={activeForm.type === "pipeline"}
         onClose={() => setActiveForm({ type: null })}

@@ -95,28 +95,6 @@ export function JobPositionForm({
             </div>
 
             <div className="space-y-2">
-              <Label>Level</Label>
-              <Select
-                value={formData.level}
-                onValueChange={(value) =>
-                  setFormData({ ...formData, level: value })
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Entry Level">Entry Level</SelectItem>
-                  <SelectItem value="Mid Level">Mid Level</SelectItem>
-                  <SelectItem value="Senior Level">Senior Level</SelectItem>
-                  <SelectItem value="Lead">Lead</SelectItem>
-                  <SelectItem value="Manager">Manager</SelectItem>
-                  <SelectItem value="Director">Director</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
               <Label>Status</Label>
               <Select
                 value={formData.status}

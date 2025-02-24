@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -8,12 +9,19 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+
+interface Department {
+  id?: number;
+  name: string;
+  description?: string;
+}
 
 interface DepartmentFormProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (data: any) => void;
-  initialData?: any;
+  onSubmit: (data: Department) => void;
+  initialData?: Department | null;
 }
 
 export function DepartmentForm({
@@ -22,6 +30,27 @@ export function DepartmentForm({
   onSubmit,
   initialData,
 }: DepartmentFormProps) {
+  const [formData, setFormData] = useState<Department>({
+    name: "",
+    description: "",
+  });
+
+  useEffect(() => {
+    if (initialData) {
+      setFormData(initialData);
+    } else {
+      setFormData({
+        name: "",
+        description: "",
+      });
+    }
+  }, [initialData]);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onSubmit(formData);
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent>
@@ -30,26 +59,39 @@ export function DepartmentForm({
             {initialData ? "Edit Department" : "Add Department"}
           </DialogTitle>
         </DialogHeader>
-        <div className="grid gap-4 py-4">
-          <div className="space-y-2">
-            <Label>Department Name</Label>
-            <Input placeholder="Enter department name" />
+        <form onSubmit={handleSubmit}>
+          <div className="grid gap-4 py-4">
+            <div className="space-y-2">
+              <Label>Department Name</Label>
+              <Input
+                required
+                value={formData.name}
+                onChange={(e) =>
+                  setFormData({ ...formData, name: e.target.value })
+                }
+                placeholder="Enter department name"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label>Description</Label>
+              <Textarea
+                value={formData.description}
+                onChange={(e) =>
+                  setFormData({ ...formData, description: e.target.value })
+                }
+                placeholder="Enter department description"
+              />
+            </div>
           </div>
-          <div className="space-y-2">
-            <Label>Client Name</Label>
-            <Input placeholder="Enter client name" />
-          </div>
-          <div className="space-y-2">
-            <Label>Location</Label>
-            <Input placeholder="Enter location" />
-          </div>
-        </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={onClose}>
-            Cancel
-          </Button>
-          <Button onClick={() => onSubmit({})}>Save</Button>
-        </DialogFooter>
+
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={onClose}>
+              Cancel
+            </Button>
+            <Button type="submit">{initialData ? "Update" : "Create"}</Button>
+          </DialogFooter>
+        </form>
       </DialogContent>
     </Dialog>
   );
