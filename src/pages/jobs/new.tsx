@@ -7,6 +7,7 @@ import { generateJobDescription } from "@/lib/api/ai";
 import { useParams, useNavigate } from "react-router-dom";
 import { Wand2, Loader2 } from "lucide-react";
 import { useJobs } from "@/lib/api/hooks/useJobs";
+import { useDepartments } from "@/lib/api/hooks/useDepartments";
 import { useToast } from "@/components/ui/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -26,6 +27,7 @@ import { Job, JobLevel, JobType, JobStatus } from "@/types/database";
 export default function NewJob() {
   const { id } = useParams();
   const { jobs, createJob, updateJob } = useJobs();
+  const { departments } = useDepartments();
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -65,11 +67,7 @@ export default function NewJob() {
     }
   }, [id, jobs, form]);
 
-  // Get unique departments from existing jobs
-  const departments = useMemo(() => {
-    if (!jobs) return [];
-    return Array.from(new Set(jobs.map((job) => job.department))).sort();
-  }, [jobs]);
+  // const { departments } = useDepartments();
 
   const handleSubmit = async (data: z.infer<typeof jobFormSchema>) => {
     try {
@@ -150,19 +148,11 @@ export default function NewJob() {
                     <SelectValue placeholder="Select department" />
                   </SelectTrigger>
                   <SelectContent>
-                    {departments.map((dept) => (
-                      <SelectItem key={dept} value={dept}>
-                        {dept}
+                    {departments?.map((dept) => (
+                      <SelectItem key={dept.id} value={dept.name}>
+                        {dept.name}
                       </SelectItem>
                     ))}
-                    <SelectItem value="Engineering">Engineering</SelectItem>
-                    <SelectItem value="Design">Design</SelectItem>
-                    <SelectItem value="Product">Product</SelectItem>
-                    <SelectItem value="Marketing">Marketing</SelectItem>
-                    <SelectItem value="Sales">Sales</SelectItem>
-                    <SelectItem value="HR">HR</SelectItem>
-                    <SelectItem value="Finance">Finance</SelectItem>
-                    <SelectItem value="Operations">Operations</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

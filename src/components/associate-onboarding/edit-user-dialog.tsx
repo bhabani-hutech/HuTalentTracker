@@ -16,6 +16,7 @@ import {
   SelectValue,
 } from "../ui/select";
 import { useState, useEffect } from "react";
+import { useDepartments } from "@/lib/api/hooks/useDepartments";
 import { User } from "@/types/database";
 
 interface EditUserDialogProps {
@@ -31,6 +32,7 @@ export function EditUserDialog({
   onSubmit,
   user,
 }: EditUserDialogProps) {
+  const { departments } = useDepartments();
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -98,11 +100,11 @@ export function EditUserDialog({
                 <SelectValue placeholder="Select department" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="Engineering">Engineering</SelectItem>
-                <SelectItem value="Design">Design</SelectItem>
-                <SelectItem value="Product">Product</SelectItem>
-                <SelectItem value="Marketing">Marketing</SelectItem>
-                <SelectItem value="Sales">Sales</SelectItem>
+                {departments?.map((dept) => (
+                  <SelectItem key={dept.id} value={dept.name}>
+                    {dept.name}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>

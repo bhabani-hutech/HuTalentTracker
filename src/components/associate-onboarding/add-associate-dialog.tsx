@@ -16,6 +16,7 @@ import {
   SelectValue,
 } from "../ui/select";
 import { useState } from "react";
+import { useDepartments } from "@/lib/api/hooks/useDepartments";
 
 interface AddAssociateDialogProps {
   isOpen: boolean;
@@ -28,6 +29,7 @@ export function AddAssociateDialog({
   onClose,
   onSubmit,
 }: AddAssociateDialogProps) {
+  const { departments } = useDepartments();
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -84,11 +86,11 @@ export function AddAssociateDialog({
                 <SelectValue placeholder="Select department" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="Engineering">Engineering</SelectItem>
-                <SelectItem value="Design">Design</SelectItem>
-                <SelectItem value="Product">Product</SelectItem>
-                <SelectItem value="Marketing">Marketing</SelectItem>
-                <SelectItem value="Sales">Sales</SelectItem>
+                {departments?.map((dept) => (
+                  <SelectItem key={dept.id} value={dept.name}>
+                    {dept.name}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
