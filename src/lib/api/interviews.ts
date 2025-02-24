@@ -36,6 +36,10 @@ export type Interview = {
     id: string;
     name: string;
   };
+  interview_round?: {
+    id: string;
+    name: string;
+  };
 };
 
 /**
@@ -50,11 +54,12 @@ export async function getInterviews() {
       `
       *,
       candidate:candidates!candidate_id(
-        id, name, job_id, stage_id, round_id,
+        id, name, job_id, stage_id, 
         jobs:jobs!job_id(id, title),
         stages:stages!stage_id(id, stage)
       ),
-      interviewer:users!interviewer_id(id, name)
+      interviewer:users!interviewer_id(id, name),
+      interview_round:interview_rounds!round_id(id, name)
     `,
     )
     .order("date", { ascending: true });

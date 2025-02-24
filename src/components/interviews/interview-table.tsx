@@ -67,11 +67,11 @@ export function InterviewTable({
           <TableHeader>
             <TableRow>
               <TableHead>Candidate</TableHead>
-              <TableHead>Position</TableHead>
+              <TableHead>Job</TableHead>
               <TableHead>Interviewer</TableHead>
               <TableHead>Type</TableHead>
               <TableHead>Date & Time</TableHead>
-              <TableHead>Status</TableHead>
+              <TableHead>Round</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -81,20 +81,13 @@ export function InterviewTable({
                 <TableCell className="font-medium">
                   {interview.candidate?.name}
                 </TableCell>
-                <TableCell>{interview.candidate?.position}</TableCell>
+                <TableCell>{interview.candidate?.jobs?.title}</TableCell>
                 <TableCell>{interview.interviewer?.name}</TableCell>
                 <TableCell>
                   <Badge variant="secondary">{interview.type}</Badge>
                 </TableCell>
                 <TableCell>{formatDate(interview.date)}</TableCell>
-                <TableCell>
-                  <Badge
-                    className={`${getStatusColor(interview.status)} text-white`}
-                  >
-                    {interview?.status?.charAt(0)?.toUpperCase() +
-                      interview?.status?.slice(1)}
-                  </Badge>
-                </TableCell>
+                <TableCell>{interview.interview_round?.name}</TableCell>
                 <TableCell className="text-right">
                   <Button
                     variant="ghost"

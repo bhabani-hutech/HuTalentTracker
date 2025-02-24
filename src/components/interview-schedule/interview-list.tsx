@@ -117,12 +117,12 @@ export function InterviewList() {
             <TableHeader>
               <TableRow>
                 <TableHead>Candidate</TableHead>
-                <TableHead>Position</TableHead>
+                <TableHead>Job</TableHead>
                 <TableHead>Date & Time</TableHead>
                 <TableHead>Type</TableHead>
                 <TableHead>Interviewer</TableHead>
                 <TableHead>Progress</TableHead>
-                <TableHead>Status</TableHead>
+                <TableHead>Round</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
@@ -132,7 +132,7 @@ export function InterviewList() {
                   <TableCell className="font-medium">
                     {interview.candidate?.name}
                   </TableCell>
-                  <TableCell>{interview.candidate?.position}</TableCell>
+                  <TableCell>{interview.candidate?.jobs?.title}</TableCell>
                   <TableCell>
                     <div className="space-y-1">
                       <div>
@@ -147,14 +147,10 @@ export function InterviewList() {
                     <Badge variant="secondary">{interview.type}</Badge>
                   </TableCell>
                   <TableCell>{interview.interviewer?.name}</TableCell>
-                  <TableCell>
-                    <Badge className={getProgressColor(interview.status)}>
-                      {interview.status}
-                    </Badge>
-                  </TableCell>
+
                   <TableCell>
                     <Select
-                      defaultValue={interview.status || "HR round"}
+                      defaultValue={interview.interview_round?.name || "HR round"}
                       onValueChange={(value) => {
                         console.log(
                           `Changed status for ${interview.id} to ${value}`,
