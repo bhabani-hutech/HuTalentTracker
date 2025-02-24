@@ -5,8 +5,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../ui/select";
+import { useDepartments } from "@/lib/api/hooks/useDepartments";
 
 export function DashboardFilters() {
+  const { departments } = useDepartments();
   return (
     <div className="flex flex-wrap gap-4">
       <Select defaultValue="all">
@@ -15,10 +17,11 @@ export function DashboardFilters() {
         </SelectTrigger>
         <SelectContent>
           <SelectItem value="all">All Departments</SelectItem>
-          <SelectItem value="engineering">Engineering</SelectItem>
-          <SelectItem value="design">Design</SelectItem>
-          <SelectItem value="product">Product</SelectItem>
-          <SelectItem value="marketing">Marketing</SelectItem>
+          {departments?.map((dept) => (
+            <SelectItem key={dept.id} value={dept.name}>
+              {dept.name}
+            </SelectItem>
+          ))}
         </SelectContent>
       </Select>
 
