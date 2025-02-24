@@ -92,7 +92,7 @@ export function InterviewForm({
   };
 
   const filteredCandidates = candidates?.filter(
-    (c) => c.job_id === formData.job_id,
+    (c) => c.job_id === formData.job_id
   );
 
   const generateTimeOptions = () => {
@@ -112,8 +112,8 @@ export function InterviewForm({
             {initialData ? "Edit Interview" : "Schedule New Interview"}
           </DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
+        <form onSubmit={handleSubmit} className='space-y-4'>
+          <div className='space-y-2'>
             <Label>Job Position</Label>
             <Select
               value={formData.job_id}
@@ -122,7 +122,7 @@ export function InterviewForm({
               }
             >
               <SelectTrigger>
-                <SelectValue placeholder="Select job" />
+                <SelectValue placeholder='Select job' />
               </SelectTrigger>
               <SelectContent>
                 {jobs?.map((job) => (
@@ -134,7 +134,7 @@ export function InterviewForm({
             </Select>
           </div>
 
-          <div className="space-y-2">
+          <div className='space-y-2'>
             <Label>Candidate</Label>
             <Select
               value={formData.candidate_id}
@@ -143,7 +143,7 @@ export function InterviewForm({
               }
             >
               <SelectTrigger>
-                <SelectValue placeholder="Select candidate" />
+                <SelectValue placeholder='Select candidate' />
               </SelectTrigger>
               <SelectContent>
                 {filteredCandidates?.map((candidate) => (
@@ -155,23 +155,24 @@ export function InterviewForm({
             </Select>
           </div>
 
-          <div className="space-y-2">
+          <div className='space-y-2'>
             <Label>Interview Round</Label>
             <Select
-              value={formData.round_id}
-              onValueChange={(value) =>
-                setFormData({ ...formData, round_id: value })
+              value={formData.round_id?.toString()} // Ensure it's a string
+              onValueChange={
+                (value) => setFormData({ ...formData, round_id: Number(value) }) // Convert back to number
               }
             >
               <SelectTrigger>
-                <SelectValue placeholder="Select interview round">
-                  {interviewRounds?.find((r) => r.id === formData.round_id)
-                    ?.name || "Select interview round"}
+                <SelectValue placeholder='Select interview round'>
+                  {interviewRounds?.find(
+                    (r) => r.id === Number(formData.round_id)
+                  )?.name || "Select interview round"}
                 </SelectValue>
               </SelectTrigger>
               <SelectContent>
                 {interviewRounds?.map((round) => (
-                  <SelectItem key={round.id} value={round.id}>
+                  <SelectItem key={round.id} value={round.id.toString()}>
                     {round.name}
                   </SelectItem>
                 ))}
@@ -179,7 +180,7 @@ export function InterviewForm({
             </Select>
           </div>
 
-          <div className="space-y-2">
+          <div className='space-y-2'>
             <Label>Interviewer</Label>
             <Select
               value={formData.interviewer_id}
@@ -188,7 +189,7 @@ export function InterviewForm({
               }
             >
               <SelectTrigger>
-                <SelectValue placeholder="Select interviewer" />
+                <SelectValue placeholder='Select interviewer' />
               </SelectTrigger>
               <SelectContent>
                 {interviewers?.map((interviewer) => (
@@ -200,7 +201,7 @@ export function InterviewForm({
             </Select>
           </div>
 
-          <div className="space-y-2">
+          <div className='space-y-2'>
             <Label>Interview Type</Label>
             <Select
               value={formData.type}
@@ -209,27 +210,27 @@ export function InterviewForm({
               }
             >
               <SelectTrigger>
-                <SelectValue placeholder="Select interview type" />
+                <SelectValue placeholder='Select interview type' />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="F2F">Face to Face</SelectItem>
-                <SelectItem value="Online">Online</SelectItem>
+                <SelectItem value='F2F'>Face to Face</SelectItem>
+                <SelectItem value='Online'>Online</SelectItem>
               </SelectContent>
             </Select>
           </div>
 
-          <div className="space-y-2">
+          <div className='space-y-2'>
             <Label>Date</Label>
             <Popover>
               <PopoverTrigger asChild>
-                <Button variant="outline" className="w-full text-left">
-                  <CalendarIcon className="mr-2 h-4 w-4" />
+                <Button variant='outline' className='w-full text-left'>
+                  <CalendarIcon className='mr-2 h-4 w-4' />
                   {format(formData.date, "PPP")}
                 </Button>
               </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
+              <PopoverContent className='w-auto p-0' align='start'>
                 <Calendar
-                  mode="single"
+                  mode='single'
                   selected={formData.date}
                   onSelect={(date) => setFormData({ ...formData, date })}
                   initialFocus
@@ -238,7 +239,7 @@ export function InterviewForm({
             </Popover>
           </div>
 
-          <div className="space-y-2">
+          <div className='space-y-2'>
             <Label>Time</Label>
             <Select
               value={formData.time}
@@ -247,7 +248,7 @@ export function InterviewForm({
               }
             >
               <SelectTrigger>
-                <SelectValue placeholder="Select time" />
+                <SelectValue placeholder='Select time' />
               </SelectTrigger>
               <SelectContent>
                 {generateTimeOptions().map((time) => (
@@ -260,7 +261,7 @@ export function InterviewForm({
           </div>
 
           <DialogFooter>
-            <Button type="submit">{initialData ? "Update" : "Schedule"}</Button>
+            <Button type='submit'>{initialData ? "Update" : "Schedule"}</Button>
           </DialogFooter>
         </form>
       </DialogContent>

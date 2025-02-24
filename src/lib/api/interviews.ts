@@ -37,7 +37,7 @@ export type Interview = {
     name: string;
   };
   interview_round?: {
-    id: string;
+    id: number,
     name: string;
   };
 };
