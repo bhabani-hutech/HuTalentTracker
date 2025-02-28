@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -37,6 +37,15 @@ export function SkillForm({
     name: initialData?.name || "",
     category: initialData?.category || "",
   });
+  useEffect(() => {
+    if (isOpen) {
+        if (initialData) {
+            setFormData(initialData); 
+        } else {
+            setFormData({ name: "", category: "" }); 
+        }
+    }
+}, [isOpen, initialData]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

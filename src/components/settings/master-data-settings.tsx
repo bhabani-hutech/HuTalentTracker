@@ -92,7 +92,7 @@ export function MasterDataSettings() {
 
   return (
     <Tabs defaultValue="organization" className="w-full">
-      <TabsList className="grid w-full grid-cols-8">
+      <TabsList className="grid w-full grid-cols-7">
         <TabsTrigger value="organization">Organizations</TabsTrigger>
         <TabsTrigger value="job-positions">Job Positions</TabsTrigger>
         <TabsTrigger value="panels">Interview Panels</TabsTrigger>
@@ -100,7 +100,7 @@ export function MasterDataSettings() {
         <TabsTrigger value="pipeline">Pipeline Stages</TabsTrigger>
         <TabsTrigger value="skills">Skills</TabsTrigger>
         <TabsTrigger value="interview-rounds">Interview Rounds</TabsTrigger>
-        <TabsTrigger value="departments">Departments</TabsTrigger>
+        {/* <TabsTrigger value="departments">Departments</TabsTrigger> */}
       </TabsList>
       <TabsContent value="organization" className="space-y-4">
         <OrganizationsList />
@@ -204,9 +204,9 @@ export function MasterDataSettings() {
       <TabsContent value="interview-rounds">
         <InterviewRoundsList />
       </TabsContent>
-      <TabsContent value="departments">
+      {/* <TabsContent value="departments">
         <DepartmentsList />
-      </TabsContent>
+      </TabsContent> */}
       <OrganizationForm
         isOpen={activeForm.type === "organization"}
         onClose={() => setActiveForm({ type: null })}

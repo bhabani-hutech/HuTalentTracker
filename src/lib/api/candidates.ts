@@ -9,6 +9,7 @@ export interface Candidate {
   name: string;
   email: string;
   phone?: string;
+  position?: string;
   job_id: string; // UUID reference to jobs table
   source: string;
   stage_id: number; // Reference to stage table's id (int8)

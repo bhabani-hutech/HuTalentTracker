@@ -25,7 +25,7 @@ export default function InterviewScheduleDashboard() {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
   const { toast } = useToast();
-
+  console.log(selectedInterview);
   const fetchInterviews = async () => {
     try {
       const data = await getInterviews();
@@ -50,7 +50,7 @@ export default function InterviewScheduleDashboard() {
         { event: "*", schema: "public", table: "interviews" },
         () => {
           fetchInterviews();
-        },
+        }
       )
       .subscribe();
 
@@ -60,7 +60,7 @@ export default function InterviewScheduleDashboard() {
   }, []);
 
   const handleSubmit = async (
-    data: Omit<Interview, "id" | "created_at" | "updated_at">,
+    data: Omit<Interview, "id" | "created_at" | "updated_at">
   ) => {
     try {
       if (selectedInterview) {

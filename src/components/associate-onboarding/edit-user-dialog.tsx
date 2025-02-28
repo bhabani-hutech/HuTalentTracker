@@ -41,16 +41,36 @@ export function EditUserDialog({
   });
 
   // Update form data when user changes
+  // useEffect(() => {
+  //   if (user) {
+  //     setFormData({
+  //       name: user.name,
+  //       email: user.email,
+  //       role: user.role,
+  //       department: user.department || "",
+  //     });
+  //   }
+  // }, [user]);
+
   useEffect(() => {
     if (user) {
-      setFormData({
-        name: user.name,
-        email: user.email,
-        role: user.role,
-        department: user.department || "",
-      });
+        setFormData({
+            name: user.name || "",
+            email: user.email || "",
+            role: user.role || "Interviewer",
+            department: user.department || "",
+        });
+    } else {
+        setFormData({
+            name: "",
+            email: "",
+            role: "Interviewer",
+            department: "",
+        });
     }
-  }, [user]);
+}, [user]);
+
+
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();

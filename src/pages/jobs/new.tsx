@@ -44,10 +44,10 @@ export default function NewJob() {
       requirements: [],
       responsibilities: [],
       skills: [],
-      salary_min: undefined,
-      salary_max: undefined,
+      // salary_min: undefined,
+      // salary_max: undefined,
       openings: 1,
-      interview_rounds: [],
+      // interview_rounds: [],
       experience_min: 1,
       experience_max: 3,
     },
@@ -70,6 +70,7 @@ export default function NewJob() {
   // const { departments } = useDepartments();
 
   const handleSubmit = async (data: z.infer<typeof jobFormSchema>) => {
+    console.log(data);
     try {
       if (id) {
         await updateJob({ id, updates: data });
@@ -116,7 +117,7 @@ export default function NewJob() {
       setNewResponsibility("");
     }
   };
-
+  console.log(form.formState);
   return (
     <div className="container py-8 space-y-8">
       <div>
@@ -200,7 +201,7 @@ export default function NewJob() {
                           <SelectItem key={year} value={year.toString()}>
                             {year} {year === 1 ? "year" : "years"}
                           </SelectItem>
-                        ),
+                        )
                       )}
                     </SelectContent>
                   </Select>
@@ -220,7 +221,7 @@ export default function NewJob() {
                           <SelectItem key={year} value={year.toString()}>
                             {year} {year === 1 ? "year" : "years"}
                           </SelectItem>
-                        ),
+                        )
                       )}
                     </SelectContent>
                   </Select>
@@ -278,14 +279,14 @@ export default function NewJob() {
                     try {
                       const generated = await generateJobDescription(
                         title,
-                        level,
+                        level
                       );
 
                       form.setValue("description", generated.description);
                       form.setValue("requirements", generated.requirements);
                       form.setValue(
                         "responsibilities",
-                        generated.responsibilities,
+                        generated.responsibilities
                       );
                       form.setValue("skills", generated.skills);
 
@@ -362,7 +363,7 @@ export default function NewJob() {
                         form.getValues("requirements");
                       form.setValue(
                         "requirements",
-                        currentRequirements.filter((_, i) => i !== index),
+                        currentRequirements.filter((_, i) => i !== index)
                       );
                     }}
                   >
@@ -404,7 +405,7 @@ export default function NewJob() {
                         form.getValues("responsibilities");
                       form.setValue(
                         "responsibilities",
-                        currentResponsibilities.filter((_, i) => i !== index),
+                        currentResponsibilities.filter((_, i) => i !== index)
                       );
                     }}
                   >

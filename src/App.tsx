@@ -56,14 +56,14 @@ const navigationItems: NavItem[] = [
     icon: Calendar,
   },
   {
-    title: "Interview Pipeline",
-    href: "/interview-kanban",
-    icon: ListTodo,
-  },
-  {
     title: "Interview Feedback",
     href: "/interview-feedback",
     icon: MessageSquare,
+  },
+  {
+    title: "Interview Pipeline",
+    href: "/interview-kanban",
+    icon: ListTodo,
   },
   {
     title: "Status Tracking",

@@ -24,6 +24,7 @@ import {
 import { useToast } from "@/components/ui/use-toast";
 import { createInterview } from "@/lib/api/interviews";
 import { useInterviewers } from "@/lib/api/hooks/useInterviewers";
+import { useInterviewRounds } from "@/lib/api/interviewRounds";
 
 interface InterviewSchedulerProps {
   isOpen: boolean;
@@ -31,7 +32,8 @@ interface InterviewSchedulerProps {
   candidate: {
     id: string;
     name: string;
-    position: string;
+    job_id:string;
+    // position: string;
   } | null;
 }
 
@@ -44,9 +46,15 @@ export function InterviewScheduler({
   const [time, setTime] = useState<string>("10:00");
   const [interviewType, setInterviewType] = useState("technical");
   const [interviewerId, setInterviewerId] = useState("");
+  
+
+  const [roundId, setRoundId] = useState("");
+
   const { toast } = useToast();
   const { data: interviewers } = useInterviewers();
+  const { data: interviewRounds } = useInterviewRounds();
 
+  console.log(candidate);
   const timeSlots = [
     "09:00",
     "09:30",
@@ -78,6 +86,14 @@ export function InterviewScheduler({
         });
         return;
       }
+      if (!candidate?.job_id) {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "No job selected",
+        });
+        return;
+      }
 
       if (!date) {
         toast({
@@ -96,14 +112,24 @@ export function InterviewScheduler({
         });
         return;
       }
+      if (!roundId) {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Please select a round",
+        });
+        return;
+      }
 
       // Create the interview
       const interviewData = {
         candidate_id: candidate.id,
+        job_id: candidate.job_id,
         interviewer_id: interviewerId,
+        round_id: roundId,
         date: new Date(`${format(date, "yyyy-MM-dd")}T${time}`).toISOString(),
         type: interviewType,
-        status: "HR round",
+        // status: "HR round" as const,
       };
 
       await createInterview(interviewData);
@@ -122,9 +148,8 @@ export function InterviewScheduler({
       });
     }
   };
-
   if (!candidate) return null;
-
+  console.log(candidate);
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[425px]">
@@ -133,11 +158,12 @@ export function InterviewScheduler({
         </DialogHeader>
         <div className="grid gap-4 py-4">
           <div className="space-y-2">
+            <Label>Job Position</Label>
+            <Input value={`${candidate.name}`} disabled />
+          </div>
+          <div className="space-y-2">
             <Label>Candidate</Label>
-            <Input
-              value={`${candidate.name} - ${candidate.position}`}
-              disabled
-            />
+            <Input value={`${candidate.name}`} disabled />
           </div>
 
           <div className="space-y-2">
@@ -147,8 +173,23 @@ export function InterviewScheduler({
                 <SelectValue placeholder="Select interview type" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="face-to-face">Face-to-Face</SelectItem>
-                <SelectItem value="online">Online</SelectItem>
+                <SelectItem value="F2F">Face-to-Face</SelectItem>
+                <SelectItem value="Online">Online</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-2">
+            <Label>Interview Round</Label>
+            <Select value={roundId} onValueChange={setRoundId}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select Interview Round" />
+              </SelectTrigger>
+              <SelectContent>
+                {interviewRounds?.map((interviewRound) => (
+                  <SelectItem key={interviewRound.id} value={interviewRound.id}>
+                    {interviewRound.name}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
@@ -161,7 +202,7 @@ export function InterviewScheduler({
                   variant={"outline"}
                   className={cn(
                     "w-full justify-start text-left font-normal",
-                    !date && "text-muted-foreground",
+                    !date && "text-muted-foreground"
                   )}
                 >
                   <CalendarIcon className="mr-2 h-4 w-4" />

@@ -58,14 +58,14 @@ export function ResumeList({
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedCandidate, setSelectedCandidate] = useState<Candidate | null>(
-    null,
+    null
   );
   const [editingCandidate, setEditingCandidate] = useState<Candidate | null>(
-    null,
+    null
   );
   const [showFilters, setShowFilters] = useState(false);
   const [scheduleInterview, setScheduleInterview] = useState<Candidate | null>(
-    null,
+    null
   );
   const resultsPerPage = 10;
 
@@ -98,18 +98,19 @@ export function ResumeList({
       </Card>
     );
   }
+  console.log(candidates);
 
   const filteredCandidates = candidates.filter(
     (candidate) =>
       candidate.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      candidate.position.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (candidate.email || "").toLowerCase().includes(searchTerm.toLowerCase()),
+      candidate.position?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (candidate.email || "").toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const totalPages = Math.ceil(filteredCandidates.length / resultsPerPage);
   const paginatedCandidates = filteredCandidates.slice(
     (currentPage - 1) * resultsPerPage,
-    currentPage * resultsPerPage,
+    currentPage * resultsPerPage
   );
 
   return (
@@ -144,6 +145,12 @@ export function ResumeList({
                   position: "",
                   notice_period: "",
                   source: "Direct Application",
+                  experience: "",
+                  type: "Full Time",
+                  skills: [],
+                  location: "",
+                  match_score: 0,
+                  created_at: new Date().toISOString(),
                 })
               }
             >
@@ -250,6 +257,17 @@ export function ResumeList({
         }}
         candidate={editingCandidate}
         jobs={jobs}
+      />
+      <ResumePreview
+        isOpen={!!selectedCandidate}
+        onClose={() => setSelectedCandidate(null)}
+        resume={selectedCandidate}
+      />
+
+      <InterviewScheduler
+        isOpen={!!scheduleInterview}
+        onClose={() => setScheduleInterview(null)}
+        candidate={scheduleInterview}
       />
     </Card>
   );

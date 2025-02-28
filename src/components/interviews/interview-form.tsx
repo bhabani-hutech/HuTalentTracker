@@ -38,43 +38,58 @@ export function InterviewForm({
   onSubmit,
   initialData,
 }: InterviewFormProps) {
-  const [formData, setFormData] = useState({
-    job_id: "",
-    candidate_id: "",
-    interviewer_id: "",
-    round_id: "",
-    date: new Date(),
-    time: "09:00", // Default time
-    type: "F2F",
-  });
+  const [formData, setFormData] = useState(
+    initialData
+      ? {
+          ...initialData,
+          job_id: initialData.job_id || "",
+          candidate_id: initialData.candidate_id || "",
+          interviewer_id: initialData.interviewer_id || "",
+          round_id: initialData.round_id || "",
+          date: initialData.date || new Date(),
+          time: "09:00", // Extract time
+          type: initialData.type || "F2F",
+        }
+      : {
+          job_id: "",
+          candidate_id: "",
+          interviewer_id: "",
+          round_id: "",
+          date: new Date(),
+          time: "09:00", // Default time
+          type: "F2F",
+        }
+  );
 
   const { jobs } = useJobs();
   const { data: candidates } = useCandidates();
   const { data: interviewers } = useInterviewers();
   const { data: interviewRounds } = useInterviewRounds();
-
+  console.log(candidates);
   useEffect(() => {
-    if (isOpen && initialData) {
-      const parsedDate = new Date(initialData.date); // Convert timestamp to Date object
-      setFormData({
-        job_id: initialData.job_id,
-        candidate_id: initialData.candidate_id,
-        interviewer_id: initialData.interviewer_id,
-        round_id: initialData.round_id,
-        date: parsedDate,
-        time: format(parsedDate, "HH:mm"), // Extract time
-        type: initialData.type || "F2F",
-      });
-    } else if (isOpen) {
-      setFormData({
-        job_id: "",
-        candidate_id: "",
-        interviewer_id: "",
-        round_id: "",
-        date: new Date(),
-        time: "09:00",
-        type: "F2F",
-      });
+    if (isOpen) {
+      if (initialData) {
+        const parsedDate = new Date(initialData.date); // Convert timestamp to Date object
+        setFormData({
+          job_id: initialData.job_id,
+          candidate_id: initialData.candidate_id,
+          interviewer_id: initialData.interviewer_id,
+          round_id: initialData.round_id,
+          date: parsedDate,
+          time: format(parsedDate, "HH:mm"), // Extract time
+          type: initialData.type || "F2F",
+        });
+      } else {
+        setFormData({
+          job_id: "",
+          candidate_id: "",
+          interviewer_id: "",
+          round_id: "",
+          date: new Date(),
+          time: "09:00",
+          type: "F2F",
+        });
+      }
     }
   }, [isOpen, initialData]);
 
@@ -103,7 +118,7 @@ export function InterviewForm({
     }
     return times;
   };
-
+  console.log(formData);
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent>
@@ -112,8 +127,8 @@ export function InterviewForm({
             {initialData ? "Edit Interview" : "Schedule New Interview"}
           </DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className='space-y-4'>
-          <div className='space-y-2'>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-2">
             <Label>Job Position</Label>
             <Select
               value={formData.job_id}
@@ -122,7 +137,7 @@ export function InterviewForm({
               }
             >
               <SelectTrigger>
-                <SelectValue placeholder='Select job' />
+                <SelectValue placeholder="Select job" />
               </SelectTrigger>
               <SelectContent>
                 {jobs?.map((job) => (
@@ -134,7 +149,7 @@ export function InterviewForm({
             </Select>
           </div>
 
-          <div className='space-y-2'>
+          <div className="space-y-2">
             <Label>Candidate</Label>
             <Select
               value={formData.candidate_id}
@@ -143,7 +158,7 @@ export function InterviewForm({
               }
             >
               <SelectTrigger>
-                <SelectValue placeholder='Select candidate' />
+                <SelectValue placeholder="Select candidate" />
               </SelectTrigger>
               <SelectContent>
                 {filteredCandidates?.map((candidate) => (
@@ -155,7 +170,7 @@ export function InterviewForm({
             </Select>
           </div>
 
-          <div className='space-y-2'>
+          <div className="space-y-2">
             <Label>Interview Round</Label>
             <Select
               value={formData.round_id?.toString()} // Ensure it's a string
@@ -164,7 +179,7 @@ export function InterviewForm({
               }
             >
               <SelectTrigger>
-                <SelectValue placeholder='Select interview round'>
+                <SelectValue placeholder="Select interview round">
                   {interviewRounds?.find(
                     (r) => r.id === Number(formData.round_id)
                   )?.name || "Select interview round"}
@@ -180,7 +195,7 @@ export function InterviewForm({
             </Select>
           </div>
 
-          <div className='space-y-2'>
+          <div className="space-y-2">
             <Label>Interviewer</Label>
             <Select
               value={formData.interviewer_id}
@@ -189,7 +204,7 @@ export function InterviewForm({
               }
             >
               <SelectTrigger>
-                <SelectValue placeholder='Select interviewer' />
+                <SelectValue placeholder="Select interviewer" />
               </SelectTrigger>
               <SelectContent>
                 {interviewers?.map((interviewer) => (
@@ -201,7 +216,7 @@ export function InterviewForm({
             </Select>
           </div>
 
-          <div className='space-y-2'>
+          <div className="space-y-2">
             <Label>Interview Type</Label>
             <Select
               value={formData.type}
@@ -210,27 +225,27 @@ export function InterviewForm({
               }
             >
               <SelectTrigger>
-                <SelectValue placeholder='Select interview type' />
+                <SelectValue placeholder="Select interview type" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value='F2F'>Face to Face</SelectItem>
-                <SelectItem value='Online'>Online</SelectItem>
+                <SelectItem value="F2F">Face to Face</SelectItem>
+                <SelectItem value="Online">Online</SelectItem>
               </SelectContent>
             </Select>
           </div>
 
-          <div className='space-y-2'>
+          <div className="space-y-2">
             <Label>Date</Label>
             <Popover>
               <PopoverTrigger asChild>
-                <Button variant='outline' className='w-full text-left'>
-                  <CalendarIcon className='mr-2 h-4 w-4' />
+                <Button variant="outline" className="w-full text-left">
+                  <CalendarIcon className="mr-2 h-4 w-4" />
                   {format(formData.date, "PPP")}
                 </Button>
               </PopoverTrigger>
-              <PopoverContent className='w-auto p-0' align='start'>
+              <PopoverContent className="w-auto p-0" align="start">
                 <Calendar
-                  mode='single'
+                  mode="single"
                   selected={formData.date}
                   onSelect={(date) => setFormData({ ...formData, date })}
                   initialFocus
@@ -239,7 +254,7 @@ export function InterviewForm({
             </Popover>
           </div>
 
-          <div className='space-y-2'>
+          <div className="space-y-2">
             <Label>Time</Label>
             <Select
               value={formData.time}
@@ -248,7 +263,7 @@ export function InterviewForm({
               }
             >
               <SelectTrigger>
-                <SelectValue placeholder='Select time' />
+                <SelectValue placeholder="Select time" />
               </SelectTrigger>
               <SelectContent>
                 {generateTimeOptions().map((time) => (
@@ -261,7 +276,7 @@ export function InterviewForm({
           </div>
 
           <DialogFooter>
-            <Button type='submit'>{initialData ? "Update" : "Schedule"}</Button>
+            <Button type="submit">{initialData ? "Update" : "Schedule"}</Button>
           </DialogFooter>
         </form>
       </DialogContent>
