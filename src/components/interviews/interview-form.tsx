@@ -38,35 +38,22 @@ export function InterviewForm({
   onSubmit,
   initialData,
 }: InterviewFormProps) {
-  const [formData, setFormData] = useState(
-    initialData
-      ? {
-          ...initialData,
-          job_id: initialData.job_id || "",
-          candidate_id: initialData.candidate_id || "",
-          interviewer_id: initialData.interviewer_id || "",
-          round_id: initialData.round_id || "",
-          date: initialData.date || new Date(),
-          time: "09:00", // Extract time
-          type: initialData.type || "F2F",
-        }
-      : {
-          job_id: "",
-          candidate_id: "",
-          interviewer_id: "",
-          round_id: "",
-          date: new Date(),
-          time: "09:00", // Default time
-          type: "F2F",
-        },
-  );
+  const [formData, setFormData] = useState({
+    job_id: "",
+    candidate_id: "",
+    interviewer_id: "",
+    round_id: null,
+    date: new Date(),
+    time: "09:00", // Default time
+    type: "F2F",
+  });
 
   const { jobs } = useJobs();
   const { data: candidates } = useCandidates();
   const { data: interviewers } = useInterviewers();
   const { data: interviewRounds } = useInterviewRounds();
-  console.log(candidates);
   useEffect(() => {
+    console.log(initialData);
     if (isOpen) {
       if (initialData) {
         const parsedDate = new Date(initialData.date); // Convert timestamp to Date object
@@ -85,14 +72,14 @@ export function InterviewForm({
           job_id: "",
           candidate_id: "",
           interviewer_id: "",
-          round_id: "",
+          round_id: null,
           date: new Date(),
           time: "09:00",
           type: "F2F",
         });
       }
     }
-  }, [isOpen, initialData]);
+  }, [isOpen]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();

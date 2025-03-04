@@ -369,23 +369,6 @@ export function KanbanBoard({ selectedJobId }: KanbanBoardProps) {
             <ChevronLeft className="h-4 w-4" />
             Previous
           </Button>
-
-          <Select
-            value={jobFilter || ""}
-            onValueChange={(value) => setJobFilter(value || null)}
-          >
-            <SelectTrigger className="w-[200px]">
-              <SelectValue placeholder="Filter by position" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="">All Positions</SelectItem>
-              {getUniquePositions().map((position) => (
-                <SelectItem key={position} value={position}>
-                  {position}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
         </div>
 
         <span className="text-sm text-muted-foreground">
