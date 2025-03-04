@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -25,6 +25,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { createInterview } from "@/lib/api/interviews";
 import { useInterviewers } from "@/lib/api/hooks/useInterviewers";
 import { useInterviewRounds } from "@/lib/api/interviewRounds";
+import { supabase } from "@/lib/supabase";
 
 interface InterviewSchedulerProps {
   isOpen: boolean;
@@ -32,7 +33,7 @@ interface InterviewSchedulerProps {
   candidate: {
     id: string;
     name: string;
-    job_id:string;
+    job_id: string;
     // position: string;
   } | null;
 }
@@ -46,7 +47,6 @@ export function InterviewScheduler({
   const [time, setTime] = useState<string>("10:00");
   const [interviewType, setInterviewType] = useState("technical");
   const [interviewerId, setInterviewerId] = useState("");
-  
 
   const [roundId, setRoundId] = useState("");
 
@@ -121,6 +121,17 @@ export function InterviewScheduler({
         return;
       }
 
+      // Find the screening stage ID (usually stage 1)
+      const { data: stages } = await supabase
+        .from("stages")
+        .select("id, stage")
+        .order("stage_order", { ascending: true });
+
+      const screeningStage = stages?.find(
+        (stage) => stage.stage === "Screening" || stage.id === "1",
+      );
+      const defaultStageId = screeningStage ? screeningStage.id : "1";
+
       // Create the interview
       const interviewData = {
         candidate_id: candidate.id,
@@ -129,7 +140,7 @@ export function InterviewScheduler({
         round_id: roundId,
         date: new Date(`${format(date, "yyyy-MM-dd")}T${time}`).toISOString(),
         type: interviewType,
-        // status: "HR round" as const,
+        stage_id: defaultStageId, // Set default stage to Screening
       };
 
       await createInterview(interviewData);
@@ -149,7 +160,28 @@ export function InterviewScheduler({
     }
   };
   if (!candidate) return null;
-  console.log(candidate);
+  // Fetch job title if job_id is available
+  useEffect(() => {
+    if (candidate?.job_id) {
+      const fetchJobTitle = async () => {
+        try {
+          const { data } = await supabase
+            .from("jobs")
+            .select("title")
+            .eq("id", candidate.job_id)
+            .single();
+
+          if (data) {
+            console.log("Found job title:", data.title);
+          }
+        } catch (err) {
+          console.error("Error fetching job title:", err);
+        }
+      };
+      fetchJobTitle();
+    }
+  }, [candidate]);
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[425px]">
@@ -159,7 +191,10 @@ export function InterviewScheduler({
         <div className="grid gap-4 py-4">
           <div className="space-y-2">
             <Label>Job Position</Label>
-            <Input value={`${candidate.name}`} disabled />
+            <Input
+              value={candidate?.position || "Unspecified Position"}
+              disabled
+            />
           </div>
           <div className="space-y-2">
             <Label>Candidate</Label>
@@ -202,7 +237,7 @@ export function InterviewScheduler({
                   variant={"outline"}
                   className={cn(
                     "w-full justify-start text-left font-normal",
-                    !date && "text-muted-foreground"
+                    !date && "text-muted-foreground",
                   )}
                 >
                   <CalendarIcon className="mr-2 h-4 w-4" />

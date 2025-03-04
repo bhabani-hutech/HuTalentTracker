@@ -65,12 +65,17 @@ export default function ResumeSourcing() {
             name: parsedData.name || file.name.split(".")[0],
             email: parsedData.email || "",
             phone: parsedData.phone,
-            job_id: null, // Assigning a new UUID for job_id
+            job_id: null,
+            position: "Unspecified Position", // Add position field
             source: file.type.includes("pdf") ? "PDF Upload" : "Word Upload",
             file_url: fileUrl,
             match_score: 0,
             notice_period: "",
-            stage_id: 1,
+            stage_id: 1, // Default to screening stage
+            type: "Full Time",
+            experience: parsedData.experience || "0-1 years",
+            skills: parsedData.skills || "",
+            location: parsedData.location || "Remote",
           });
 
           toast({

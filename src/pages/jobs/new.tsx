@@ -1,28 +1,28 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { jobFormSchema } from "@/lib/schemas/job";
-import { generateJobDescription } from "@/lib/api/ai";
+import { jobFormSchema } from "@/lib/schemas/job"; // Adjust path as needed
+import { generateJobDescription } from "@/lib/api/ai"; // Adjust path as needed
 import { useParams, useNavigate } from "react-router-dom";
-import { Wand2, Loader2 } from "lucide-react";
-import { useJobs } from "@/lib/api/hooks/useJobs";
-import { useDepartments } from "@/lib/api/hooks/useDepartments";
-import { useToast } from "@/components/ui/use-toast";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
-import { Textarea } from "@/components/ui/textarea";
+import { Wand2, Loader2 } from "lucide-react"; // Make sure you have lucide-react installed
+import { useJobs } from "@/lib/api/hooks/useJobs"; // Adjust path as needed
+import { useDepartments } from "@/lib/api/hooks/useDepartments"; // Adjust path as needed
+import { useToast } from "@/components/ui/use-toast"; // Adjust path as needed
+import { SkillSelector } from "@/components/jobs/skill-selector"; // Adjust path as needed
+import { Button } from "@/components/ui/button"; // Adjust path as needed
+import { Input } from "@/components/ui/input"; // Adjust path as needed
+import { Label } from "@/components/ui/label"; // Adjust path as needed
+import { Textarea } from "@/components/ui/textarea"; // Adjust path as needed
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Job, JobLevel, JobType, JobStatus } from "@/types/database";
+} from "@/components/ui/select"; // Adjust path as needed
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"; // Adjust path as needed
+import { JobType, JobStatus } from "@/types/database"; // Adjust path as needed
 
 export default function NewJob() {
   const { id } = useParams();
@@ -38,26 +38,66 @@ export default function NewJob() {
       department: "",
       location: "",
       type: "Full Time",
-      level: "Mid Level",
+      level: "Mid Level", // If you have a job level type, replace string with it
       status: "Draft",
       description: "",
       requirements: [],
       responsibilities: [],
       skills: [],
-      // salary_min: undefined,
-      // salary_max: undefined,
+      domain_skills: [],
+      technical_skills: [],
+      soft_skills: [],
       openings: 1,
-      // interview_rounds: [],
+      interview_rounds: [
+        { name: "Initial Screening", type: "HR", duration: 30 },
+      ],
       experience_min: 1,
       experience_max: 3,
     },
+    mode: "onChange",
   });
+
+  console.log(form);
+  console.log(form.formState.errors);
 
   const [newRequirement, setNewRequirement] = useState("");
   const [newResponsibility, setNewResponsibility] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
 
-  // Load job data if editing
+  const {
+    handleSubmit,
+    formState: { errors },
+  } = form; // Destructure handleSubmit and errors
+
+  const onSubmit = useCallback(
+    async (data: z.infer<typeof jobFormSchema>) => {
+      try {
+        if (id) {
+          await updateJob({ id, updates: data });
+          toast({
+            title: "Success",
+            description: "Job posting updated successfully",
+          });
+        } else {
+          await createJob(data);
+          toast({
+            title: "Success",
+            description: "Job posting created successfully",
+          });
+        }
+        navigate("/jobs");
+      } catch (error) {
+        console.error("Error submitting job:", error);
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Failed to save job posting",
+        });
+      }
+    },
+    [id, createJob, updateJob, navigate, toast],
+  );
+
   useEffect(() => {
     if (id && jobs) {
       const jobToEdit = jobs.find((job) => job.id === id);
@@ -67,35 +107,6 @@ export default function NewJob() {
     }
   }, [id, jobs, form]);
 
-  // const { departments } = useDepartments();
-
-  const handleSubmit = async (data: z.infer<typeof jobFormSchema>) => {
-    console.log(data);
-    try {
-      if (id) {
-        await updateJob({ id, updates: data });
-        toast({
-          title: "Success",
-          description: "Job posting updated successfully",
-        });
-      } else {
-        await createJob(data);
-        toast({
-          title: "Success",
-          description: "Job posting created successfully",
-        });
-      }
-      navigate("/jobs");
-    } catch (error) {
-      console.error("Error submitting job:", error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to save job posting",
-      });
-    }
-  };
-
   const addRequirement = () => {
     if (newRequirement.trim()) {
       const currentRequirements = form.getValues("requirements") || [];
@@ -103,6 +114,7 @@ export default function NewJob() {
         ...currentRequirements,
         newRequirement.trim(),
       ]);
+      form.trigger("requirements");
       setNewRequirement("");
     }
   };
@@ -114,10 +126,11 @@ export default function NewJob() {
         ...currentResponsibilities,
         newResponsibility.trim(),
       ]);
+      form.trigger("responsibilities");
       setNewResponsibility("");
     }
   };
-  console.log(form.formState);
+
   return (
     <div className="container py-8 space-y-8">
       <div>
@@ -127,7 +140,7 @@ export default function NewJob() {
         <p className="text-muted-foreground">Create a new job posting</p>
       </div>
 
-      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-8">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
         <Card>
           <CardHeader>
             <CardTitle>Basic Information</CardTitle>
@@ -137,13 +150,23 @@ export default function NewJob() {
               <div className="space-y-2">
                 <Label>Job Title</Label>
                 <Input {...form.register("title")} />
+                {form.formState.errors.title && (
+                  <p className="text-sm text-red-500">
+                    {form.formState.errors.title.message}
+                  </p>
+                )}
               </div>
 
               <div className="space-y-2">
-                <Label>Department</Label>
+                <Label htmlFor="department">Department</Label>
                 <Select
-                  value={form.getValues("department")}
-                  onValueChange={(value) => form.setValue("department", value)}
+                  name="department"
+                  value={form.watch("department") || ""}
+                  onValueChange={(value) => {
+                    const dept = departments?.find((d) => d.name === value);
+                    form.setValue("department", value);
+                    // No need to set department_id as it's not in the form schema
+                  }}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select department" />
@@ -156,23 +179,34 @@ export default function NewJob() {
                     ))}
                   </SelectContent>
                 </Select>
+                {form.formState.errors.department && (
+                  <p className="text-sm text-red-500">
+                    {form.formState.errors.department.message}
+                  </p>
+                )}
               </div>
 
               <div className="space-y-2">
                 <Label>Location</Label>
                 <Input {...form.register("location")} />
+                {form.formState.errors.location && (
+                  <p className="text-sm text-red-500">
+                    {form.formState.errors.location.message}
+                  </p>
+                )}
               </div>
 
               <div className="space-y-2">
-                <Label>Job Type</Label>
+                <Label htmlFor="jobType">Job Type</Label>
                 <Select
-                  value={form.getValues("type")}
+                  name="type"
+                  value={form.watch("type") || ""}
                   onValueChange={(value: JobType) =>
                     form.setValue("type", value)
                   }
                 >
                   <SelectTrigger>
-                    <SelectValue />
+                    <SelectValue placeholder="Select Job Type" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="Full Time">Full Time</SelectItem>
@@ -181,16 +215,29 @@ export default function NewJob() {
                     <SelectItem value="Internship">Internship</SelectItem>
                   </SelectContent>
                 </Select>
+                {form.formState.errors.type && (
+                  <p className="text-sm text-red-500">
+                    {form.formState.errors.type.message}
+                  </p>
+                )}
               </div>
-
               <div className="space-y-2">
                 <Label>Experience Range</Label>
                 <div className="flex gap-4">
+                  {/* Min Experience */}
                   <Select
-                    value={form.getValues("experience_min")?.toString()}
-                    onValueChange={(value) =>
-                      form.setValue("experience_min", parseInt(value))
-                    }
+                    name="experience_min"
+                    value={form.watch("experience_min")?.toString() || ""}
+                    onValueChange={(value) => {
+                      form.setValue("experience_min", parseInt(value));
+                      // Ensure min is less than max
+                      if (
+                        form.watch("experience_max") &&
+                        parseInt(value) > form.watch("experience_max")
+                      ) {
+                        form.setValue("experience_max", parseInt(value));
+                      }
+                    }}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Min" />
@@ -201,16 +248,20 @@ export default function NewJob() {
                           <SelectItem key={year} value={year.toString()}>
                             {year} {year === 1 ? "year" : "years"}
                           </SelectItem>
-                        )
+                        ),
                       )}
                     </SelectContent>
                   </Select>
+
                   <span className="flex items-center">to</span>
+
+                  {/* Max Experience */}
                   <Select
-                    value={form.getValues("experience_max")?.toString()}
-                    onValueChange={(value) =>
-                      form.setValue("experience_max", parseInt(value))
-                    }
+                    name="experience_max"
+                    value={form.watch("experience_max")?.toString() || ""}
+                    onValueChange={(value) => {
+                      form.setValue("experience_max", parseInt(value));
+                    }}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Max" />
@@ -218,26 +269,46 @@ export default function NewJob() {
                     <SelectContent>
                       {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 15, 20].map(
                         (year) => (
-                          <SelectItem key={year} value={year.toString()}>
+                          <SelectItem
+                            key={year}
+                            value={year.toString()}
+                            disabled={
+                              form.watch("experience_min") &&
+                              year < form.watch("experience_min")
+                            }
+                          >
                             {year} {year === 1 ? "year" : "years"}
                           </SelectItem>
-                        )
+                        ),
                       )}
                     </SelectContent>
                   </Select>
                 </div>
+
+                {/* Error Messages */}
+                {form.formState.errors.experience_min && (
+                  <p className="text-sm text-red-500">
+                    {form.formState.errors.experience_min.message}
+                  </p>
+                )}
+                {form.formState.errors.experience_max && (
+                  <p className="text-sm text-red-500">
+                    {form.formState.errors.experience_max.message}
+                  </p>
+                )}
               </div>
 
               <div className="space-y-2">
-                <Label>Status</Label>
+                <Label htmlFor="status">Status</Label>
                 <Select
-                  value={form.getValues("status")}
+                  name="status"
+                  value={form.watch("status") || ""}
                   onValueChange={(value: JobStatus) =>
                     form.setValue("status", value)
                   }
                 >
                   <SelectTrigger>
-                    <SelectValue />
+                    <SelectValue placeholder="Select Status" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="Draft">Draft</SelectItem>
@@ -246,6 +317,11 @@ export default function NewJob() {
                     <SelectItem value="On Hold">On Hold</SelectItem>
                   </SelectContent>
                 </Select>
+                {form.formState.errors.status && (
+                  <p className="text-sm text-red-500">
+                    {form.formState.errors.status.message}
+                  </p>
+                )}
               </div>
             </div>
 
@@ -279,14 +355,14 @@ export default function NewJob() {
                     try {
                       const generated = await generateJobDescription(
                         title,
-                        level
+                        level,
                       );
 
                       form.setValue("description", generated.description);
                       form.setValue("requirements", generated.requirements);
                       form.setValue(
                         "responsibilities",
-                        generated.responsibilities
+                        generated.responsibilities,
                       );
                       form.setValue("skills", generated.skills);
 
@@ -318,6 +394,11 @@ export default function NewJob() {
                 {...form.register("description")}
                 className="min-h-[100px]"
               />
+              {form.formState.errors.description && (
+                <p className="text-sm text-red-500">
+                  {form.formState.errors.description.message}
+                </p>
+              )}
             </div>
 
             <div className="grid gap-4 md:grid-cols-2">
@@ -328,8 +409,38 @@ export default function NewJob() {
                   min="1"
                   {...form.register("openings", { valueAsNumber: true })}
                 />
+                {form.formState.errors.openings && (
+                  <p className="text-sm text-red-500">
+                    {form.formState.errors.openings.message}
+                  </p>
+                )}
               </div>
             </div>
+
+            <SkillSelector
+              skillType="domain"
+              label="Domain Skills"
+              selectedSkills={(form.watch("domain_skills") as any) || []}
+              onChange={(skills) =>
+                form.setValue("domain_skills", skills as any)
+              }
+            />
+
+            <SkillSelector
+              skillType="technical"
+              label="Technical Skills"
+              selectedSkills={(form.watch("technical_skills") as any) || []}
+              onChange={(skills) =>
+                form.setValue("technical_skills", skills as any)
+              }
+            />
+
+            <SkillSelector
+              skillType="soft"
+              label="Soft Skills"
+              selectedSkills={(form.watch("soft_skills") as any) || []}
+              onChange={(skills) => form.setValue("soft_skills", skills as any)}
+            />
           </CardContent>
         </Card>
 
@@ -349,6 +460,12 @@ export default function NewJob() {
               </Button>
             </div>
 
+            {form.formState.errors.requirements && (
+              <p className="text-sm text-red-500">
+                {form.formState.errors.requirements.message}
+              </p>
+            )}
+
             <ul className="list-disc pl-6 space-y-2">
               {form.getValues("requirements")?.map((req, index) => (
                 <li key={index} className="text-sm">
@@ -361,10 +478,11 @@ export default function NewJob() {
                     onClick={() => {
                       const currentRequirements =
                         form.getValues("requirements");
-                      form.setValue(
-                        "requirements",
-                        currentRequirements.filter((_, i) => i !== index)
+                      const updatedRequirements = currentRequirements.filter(
+                        (_, i) => i !== index,
                       );
+                      form.setValue("requirements", updatedRequirements);
+                      form.trigger("requirements"); // Trigger validation
                     }}
                   >
                     Remove
@@ -391,6 +509,12 @@ export default function NewJob() {
               </Button>
             </div>
 
+            {form.formState.errors.responsibilities && (
+              <p className="text-sm text-red-500">
+                {form.formState.errors.responsibilities.message}
+              </p>
+            )}
+
             <ul className="list-disc pl-6 space-y-2">
               {form.getValues("responsibilities")?.map((resp, index) => (
                 <li key={index} className="text-sm">
@@ -403,10 +527,13 @@ export default function NewJob() {
                     onClick={() => {
                       const currentResponsibilities =
                         form.getValues("responsibilities");
+                      const updatedResponsibilities =
+                        currentResponsibilities.filter((_, i) => i !== index);
                       form.setValue(
                         "responsibilities",
-                        currentResponsibilities.filter((_, i) => i !== index)
+                        updatedResponsibilities,
                       );
+                      form.trigger("responsibilities"); // Trigger validation
                     }}
                   >
                     Remove

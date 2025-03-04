@@ -10,7 +10,6 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
-import { supabase } from "@/lib/supabase";
 
 interface Skill {
   id?: string;
@@ -24,6 +23,7 @@ interface SkillFormProps {
   onClose: () => void;
   onSubmit: (data: Skill) => void;
   initialData?: Skill;
+  skillType?: "domain" | "technical" | "soft";
 }
 
 export function SkillForm({
@@ -31,30 +31,34 @@ export function SkillForm({
   onClose,
   onSubmit,
   initialData,
+  skillType = "domain",
 }: SkillFormProps) {
   const { toast } = useToast();
   const [formData, setFormData] = useState<Skill>({
     name: initialData?.name || "",
-    category: initialData?.category || "",
+    category: "",
   });
   useEffect(() => {
     if (isOpen) {
-        if (initialData) {
-            setFormData(initialData); 
-        } else {
-            setFormData({ name: "", category: "" }); 
-        }
+      if (initialData) {
+        setFormData({
+          ...initialData,
+          category: "",
+        });
+      } else {
+        setFormData({ name: "", category: "" });
+      }
     }
-}, [isOpen, initialData]);
+  }, [isOpen, initialData]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      if (!formData.name || !formData.category) {
+      if (!formData.name) {
         toast({
           variant: "destructive",
           title: "Error",
-          description: "Name and category are required",
+          description: "Name is required",
         });
         return;
       }
@@ -75,7 +79,11 @@ export function SkillForm({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{initialData ? "Edit Skill" : "Add Skill"}</DialogTitle>
+          <DialogTitle>
+            {initialData
+              ? `Edit ${skillType.charAt(0).toUpperCase() + skillType.slice(1)} Skill`
+              : `Add ${skillType.charAt(0).toUpperCase() + skillType.slice(1)} Skill`}
+          </DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit}>
           <div className="grid gap-4 py-4">
@@ -88,18 +96,6 @@ export function SkillForm({
                   setFormData({ ...formData, name: e.target.value })
                 }
                 placeholder="Enter skill name"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label>Category</Label>
-              <Input
-                required
-                value={formData.category}
-                onChange={(e) =>
-                  setFormData({ ...formData, category: e.target.value })
-                }
-                placeholder="Enter skill category"
               />
             </div>
           </div>

@@ -5,7 +5,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Search, Plus, Eye, Power, PenSquare } from "lucide-react";
+import { Search, Plus, Eye, Power, PenSquare, Trash2 } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -17,18 +17,17 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { JobPreviewModal } from "@/components/jobs/job-preview-modal";
 import { JobStatus } from "@/types/database";
-import { PipelineStagesList } from "/src/components/pipeline-stages-list";
 
 export default function Jobs() {
   const navigate = useNavigate();
-  const { jobs, isLoading, deleteJob } = useJobs();
+  const { jobs, isLoading, updateJob, deleteJob } = useJobs();
   const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedJob, setSelectedJob] = useState<Job | null>(null);
+  const [selectedJob, setSelectedJob] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const resultsPerPage = 10;
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = async (id) => {
     if (window.confirm("Are you sure you want to delete this job posting?")) {
       try {
         await deleteJob(id);
@@ -59,7 +58,7 @@ export default function Jobs() {
     currentPage * resultsPerPage,
   );
 
-  const getStatusColor = (status: JobStatus) => {
+  const getStatusColor = (status) => {
     switch (status) {
       case "Published":
         return "bg-green-500 hover:bg-green-600";
@@ -179,34 +178,47 @@ export default function Jobs() {
                               <Button
                                 variant="ghost"
                                 size="icon"
-                                onClick={async () => {
-                                  try {
-                                    await updateJob({
+                                onClick={() => {
+                                  const newStatus =
+                                    job.status === "Published"
+                                      ? "Draft"
+                                      : "Published";
+                                  updateJob(
+                                    {
                                       id: job.id,
                                       updates: {
-                                        status:
-                                          job.status === "Published"
-                                            ? "Draft"
-                                            : "Published",
+                                        status: newStatus,
                                       },
-                                    });
-                                    toast({
-                                      title: "Success",
-                                      description: `Job ${job.status === "Published" ? "unpublished" : "published"} successfully`,
-                                    });
-                                  } catch (error) {
-                                    toast({
-                                      variant: "destructive",
-                                      title: "Error",
-                                      description:
-                                        "Failed to update job status",
-                                    });
-                                  }
+                                    },
+                                    {
+                                      onSuccess: () => {
+                                        toast({
+                                          title: "Success",
+                                          description: `Job ${job.status === "Published" ? "unpublished" : "published"} successfully`,
+                                        });
+                                      },
+                                      onError: () => {
+                                        toast({
+                                          variant: "destructive",
+                                          title: "Error",
+                                          description:
+                                            "Failed to update job status",
+                                        });
+                                      },
+                                    },
+                                  );
                                 }}
                               >
                                 <Power
                                   className={`h-4 w-4 ${job.status === "Published" ? "text-green-500" : "text-gray-500"}`}
                                 />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => handleDelete(job.id)}
+                              >
+                                <Trash2 className="h-4 w-4 text-red-500" />
                               </Button>
                             </TableCell>
                           </TableRow>

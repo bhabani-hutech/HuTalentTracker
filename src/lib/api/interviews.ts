@@ -37,7 +37,7 @@ export type Interview = {
     name: string;
   };
   interview_round?: {
-    id: number,
+    id: number;
     name: string;
   };
 };
@@ -46,31 +46,33 @@ export type Interview = {
  * Fetch all interviews with candidate, interviewer, job title, and stage
  */
 export async function getInterviews() {
-  console.log("1. IN INTERVIEW getInterviews");
+  try {
+    const { data, error } = await supabase
+      .from("interviews")
+      .select(
+        `
+        *,
+        candidate:candidates!candidate_id(
+          id, name, job_id, stage_id, 
+          jobs:jobs!job_id(id, title),
+          stages:stages!stage_id(id, stage)
+        ),
+        interviewer:users!interviewer_id(id, name),
+        interview_round:interview_rounds!round_id(id, name)
+      `,
+      )
+      .order("date", { ascending: true });
 
-  const { data, error } = await supabase
-    .from("interviews")
-    .select(
-      `
-      *,
-      candidate:candidates!candidate_id(
-        id, name, job_id, stage_id, 
-        jobs:jobs!job_id(id, title),
-        stages:stages!stage_id(id, stage)
-      ),
-      interviewer:users!interviewer_id(id, name),
-      interview_round:interview_rounds!round_id(id, name)
-    `,
-    )
-    .order("date", { ascending: true });
+    if (error) {
+      console.error("Error fetching interviews:", error);
+      throw error;
+    }
 
-  if (error) {
-    console.error("Error fetching interviews:", error);
-    throw error;
+    return data as Interview[];
+  } catch (error) {
+    console.error("Unexpected error in getInterviews:", error);
+    return [] as Interview[];
   }
-
-  console.log("3. IN INTERVIEW getInterviews", data);
-  return data as Interview[];
 }
 
 /**

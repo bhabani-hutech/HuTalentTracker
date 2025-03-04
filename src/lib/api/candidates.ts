@@ -61,8 +61,32 @@ export async function createCandidate(
     ...candidate,
     source: candidate.source || "Manual Upload",
     email: candidate.email || "",
-    stage_id: candidate.stage_id || 1, // Default to stage 1 if not provided
+    stage_id: candidate.stage_id || 1, // Default to stage 1 (Screening) if not provided
+    type: candidate.type || "Full Time",
+    experience: candidate.experience || "0-1 years",
+    skills: candidate.skills || "",
+    location: candidate.location || "Remote",
+    position:
+      candidate.position ||
+      (candidate.job_id ? undefined : "Unspecified Position"),
   };
+
+  // If job_id is provided but position isn't, try to get the job title
+  if (candidate.job_id && !candidate.position) {
+    try {
+      const { data: job } = await supabase
+        .from("jobs")
+        .select("title")
+        .eq("id", candidate.job_id)
+        .single();
+
+      if (job) {
+        candidateWithDefaults.position = job.title;
+      }
+    } catch (err) {
+      console.error("Error fetching job title:", err);
+    }
+  }
 
   const { data, error } = await supabase
     .from("candidates")

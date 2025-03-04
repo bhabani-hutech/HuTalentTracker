@@ -33,7 +33,7 @@ export function InterviewFeedbackForm({
   const { createFeedback, updateFeedback } = useFeedback();
   const { data: interviewers } = useInterviewers();
   const { data: candidates } = useCandidates();
-  const { data: interviews } = useInterviews();
+  const { interviews } = useInterviews();
 
   const [formData, setFormData] = useState<Partial<InterviewFeedback>>(
     existingFeedback
@@ -155,7 +155,11 @@ export function InterviewFeedbackForm({
         <div className="space-y-2">
           <Label>Position</Label>
           <Input
-            value={formData.candidate?.position || ""}
+            value={
+              formData.candidate?.position ||
+              formData.candidate?.jobs?.title ||
+              ""
+            }
             disabled
             placeholder="Position will be shown here"
           />

@@ -62,6 +62,8 @@ export function useInterviews(interviewId?: string) {
     queryKey: ["interviews"],
     queryFn: fetchInterviews,
     refetchOnWindowFocus: false, // Optional: prevents unnecessary refetching
+    retry: 3,
+    staleTime: 30000, // 30 seconds
   });
 
   // React Query to get specific interview by ID

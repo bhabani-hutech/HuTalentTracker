@@ -8,7 +8,9 @@ import { OrganizationForm } from "./master-data/organization-form";
 import { OrganizationsList } from "./master-data/organizations-list";
 import { JobPositionsList } from "./master-data/job-positions-list";
 import { PipelineStagesList } from "./master-data/pipeline-stages-list";
-import { SkillsList } from "./master-data/skills-list";
+import { DomainSkillsList } from "./master-data/domain-skills-list";
+import { TechnicalSkillsList } from "./master-data/technical-skills-list";
+import { SoftSkillsList } from "./master-data/soft-skills-list";
 import { InterviewRoundsList } from "./master-data/interview-rounds-list";
 import { DepartmentsList } from "./master-data/departments-list";
 import { PanelForm } from "./master-data/panel-form";
@@ -199,7 +201,22 @@ export function MasterDataSettings() {
         <JobStagesSettings />
       </TabsContent>
       <TabsContent value="skills">
-        <SkillsList />
+        <Tabs defaultValue="domain" className="w-full">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="domain">Domain Skills</TabsTrigger>
+            <TabsTrigger value="technical">Technical Skills</TabsTrigger>
+            <TabsTrigger value="soft">Soft Skills</TabsTrigger>
+          </TabsList>
+          <TabsContent value="domain" className="mt-4">
+            <DomainSkillsList />
+          </TabsContent>
+          <TabsContent value="technical" className="mt-4">
+            <TechnicalSkillsList />
+          </TabsContent>
+          <TabsContent value="soft" className="mt-4">
+            <SoftSkillsList />
+          </TabsContent>
+        </Tabs>
       </TabsContent>
       <TabsContent value="interview-rounds">
         <InterviewRoundsList />

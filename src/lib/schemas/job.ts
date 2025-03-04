@@ -23,6 +23,30 @@ export const jobFormSchema = z
       .array(z.string())
       .min(1, "At least one responsibility is required"),
     skills: z.array(z.string()).optional(),
+    domain_skills: z
+      .array(
+        z.object({
+          name: z.string(),
+          level: z.enum(["Basic", "Intermediate", "Expert"]),
+        }),
+      )
+      .optional(),
+    technical_skills: z
+      .array(
+        z.object({
+          name: z.string(),
+          level: z.enum(["Basic", "Intermediate", "Expert"]),
+        }),
+      )
+      .optional(),
+    soft_skills: z
+      .array(
+        z.object({
+          name: z.string(),
+          level: z.enum(["Basic", "Intermediate", "Expert"]),
+        }),
+      )
+      .optional(),
     salary_min: z.number().optional(),
     salary_max: z.number().optional(),
     openings: z.number().min(1, "Number of openings is required"),
@@ -34,7 +58,9 @@ export const jobFormSchema = z
           duration: z.number().min(15, "Duration must be at least 15 minutes"),
         }),
       )
-      .min(1, "At least one interview round is required"),
+      .optional(),
+    // .min(1, "At least one interview round is required"),
+
     experience_min: z.number().min(0, "Minimum experience cannot be negative"),
     experience_max: z.number().min(0, "Maximum experience cannot be negative"),
   })

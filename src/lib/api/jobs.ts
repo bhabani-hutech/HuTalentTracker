@@ -2,24 +2,42 @@ import { supabase } from "../supabase";
 import { Job } from "@/types/database";
 
 export async function getJobs() {
-  const { data, error } = await supabase
-    .from("jobs")
-    .select("*")
-    .order("created_at", { ascending: false });
+  try {
+    const { data, error } = await supabase
+      .from("jobs")
+      .select("*")
+      .order("created_at", { ascending: false });
 
-  if (error) throw error;
-  return data as Job[];
+    if (error) {
+      console.error("Error fetching jobs:", error);
+      throw error;
+    }
+
+    return data as Job[];
+  } catch (error) {
+    console.error("Error in getJobs:", error);
+    throw error;
+  }
 }
 
 export async function getJobById(id: string) {
-  const { data, error } = await supabase
-    .from("jobs")
-    .select("*")
-    .eq("id", id)
-    .single();
+  try {
+    const { data, error } = await supabase
+      .from("jobs")
+      .select("*")
+      .eq("id", id)
+      .single();
 
-  if (error) throw error;
-  return data as Job;
+    if (error) {
+      console.error("Error fetching job by ID:", error);
+      throw error;
+    }
+
+    return data as Job;
+  } catch (error) {
+    console.error("Error in getJobById:", error);
+    throw error;
+  }
 }
 
 export async function createJob(
@@ -28,43 +46,80 @@ export async function createJob(
     "id" | "created_at" | "updated_at" | "created_by" | "updated_by"
   >,
 ) {
-  // Convert skills array to string array or empty array if undefined
-  const jobData = {
-    ...job,
-    skills: job.skills || [],
-  };
+  try {
+    // Convert skills array to string array or empty array if undefined
+    const jobData = {
+      ...job,
+      skills: job.skills || [],
+    };
 
-  const { data, error } = await supabase
-    .from("jobs")
-    .insert([jobData])
-    .select()
-    .single();
+    console.log("Creating job with data:", jobData);
 
-  if (error) throw error;
-  return data as Job;
+    const { data, error } = await supabase
+      .from("jobs")
+      .insert([jobData])
+      .select()
+      .single();
+
+    if (error) {
+      console.error("Error creating job:", error);
+      throw error;
+    }
+
+    console.log("Job created successfully:", data);
+    return data as Job;
+  } catch (error) {
+    console.error("Error in createJob:", error);
+    throw error;
+  }
 }
 
 export async function updateJob(id: string, updates: Partial<Job>) {
-  // Ensure skills is an array if provided
-  const jobUpdates = {
-    ...updates,
-    skills: updates.skills || [],
-  };
+  try {
+    console.log("Updating job with ID:", id, "Updates:", updates);
 
-  const { data, error } = await supabase
-    .from("jobs")
-    .update(jobUpdates)
-    .eq("id", id)
-    .select()
-    .single();
+    // Ensure skills is an array if provided
+    const jobUpdates = {
+      ...updates,
+      skills: updates.skills || [],
+      updated_at: new Date().toISOString(),
+    };
 
-  if (error) throw error;
-  return data as Job;
+    const { data, error } = await supabase
+      .from("jobs")
+      .update(jobUpdates)
+      .eq("id", id)
+      .select()
+      .single();
+
+    if (error) {
+      console.error("Error updating job:", error);
+      throw error;
+    }
+
+    console.log("Job updated successfully:", data);
+    return data as Job;
+  } catch (error) {
+    console.error("Error in updateJob:", error);
+    throw error;
+  }
 }
 
 export async function deleteJob(id: string) {
-  const { error } = await supabase.from("jobs").delete().eq("id", id);
+  try {
+    console.log("Deleting job with ID:", id);
 
-  if (error) throw error;
-  return true;
+    const { error } = await supabase.from("jobs").delete().eq("id", id);
+
+    if (error) {
+      console.error("Error deleting job:", error);
+      throw error;
+    }
+
+    console.log("Job deleted successfully");
+    return true;
+  } catch (error) {
+    console.error("Error in deleteJob:", error);
+    throw error;
+  }
 }

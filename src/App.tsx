@@ -7,7 +7,7 @@ import InterviewKanban from "./pages/interview-kanban";
 import Settings from "./pages/settings";
 import routes from "tempo-routes";
 import { Icons } from "@/components/icons";
-import InterviewScheduleDashboard from "./pages/interview-schedule-dashboard";
+import InterviewSchedule from "./pages/interview-schedule";
 import Jobs from "./pages/jobs";
 import NewJob from "./pages/jobs/new";
 import JobSelection from "./pages/jobs/select";
@@ -113,7 +113,7 @@ function AppContent() {
             <Route path="/resume-sourcing" element={<ResumeSourcing />} />
             <Route
               path="/interview-scheduling"
-              element={<InterviewScheduleDashboard />}
+              element={<InterviewSchedule />}
             />
             {/* Interview Feedback routes */}
             <Route path="/interview-kanban" element={<InterviewKanban />} />

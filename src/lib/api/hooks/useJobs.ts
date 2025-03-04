@@ -34,7 +34,10 @@ export function useJobs() {
   const updateMutation = useMutation({
     mutationFn: ({ id, updates }: { id: string; updates: Partial<Job> }) =>
       updateJob(id, updates),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["jobs"] }),
+    onSuccess: () => {
+      console.log("Job updated successfully");
+      queryClient.invalidateQueries({ queryKey: ["jobs"] });
+    },
     onError: (error) => {
       console.error("Error updating job:", error);
       // Handle error (e.g., show a toast)
@@ -73,13 +76,10 @@ export function useJobs() {
     isLoading,
     queryError,
     createJob: createMutation.mutate,
-    createJobIsLoading: createMutation.isLoading,
     createJobError: createMutation.error,
     updateJob: updateMutation.mutate,
-    updateJobIsLoading: updateMutation.isLoading,
     updateJobError: updateMutation.error,
     deleteJob: deleteMutation.mutate,
-    deleteJobIsLoading: deleteMutation.isLoading,
     deleteJobError: deleteMutation.error,
   };
 }

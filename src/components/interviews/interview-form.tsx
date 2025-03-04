@@ -58,7 +58,7 @@ export function InterviewForm({
           date: new Date(),
           time: "09:00", // Default time
           type: "F2F",
-        }
+        },
   );
 
   const { jobs } = useJobs();
@@ -71,14 +71,15 @@ export function InterviewForm({
       if (initialData) {
         const parsedDate = new Date(initialData.date); // Convert timestamp to Date object
         setFormData({
-          job_id: initialData.job_id,
-          candidate_id: initialData.candidate_id,
-          interviewer_id: initialData.interviewer_id,
-          round_id: initialData.round_id,
+          job_id: initialData.job_id || "",
+          candidate_id: initialData.candidate_id || "",
+          interviewer_id: initialData.interviewer_id || "",
+          round_id: initialData.round_id || "",
           date: parsedDate,
           time: format(parsedDate, "HH:mm"), // Extract time
           type: initialData.type || "F2F",
         });
+        console.log("Populating form with initial data:", initialData);
       } else {
         setFormData({
           job_id: "",
@@ -107,7 +108,7 @@ export function InterviewForm({
   };
 
   const filteredCandidates = candidates?.filter(
-    (c) => c.job_id === formData.job_id
+    (c) => c.job_id === formData.job_id,
   );
 
   const generateTimeOptions = () => {
@@ -181,7 +182,7 @@ export function InterviewForm({
               <SelectTrigger>
                 <SelectValue placeholder="Select interview round">
                   {interviewRounds?.find(
-                    (r) => r.id === Number(formData.round_id)
+                    (r) => r.id === Number(formData.round_id),
                   )?.name || "Select interview round"}
                 </SelectValue>
               </SelectTrigger>
