@@ -107,7 +107,7 @@ export function KanbanBoard({ selectedJobId }: KanbanBoardProps) {
 
   useEffect(() => {
     const loadData = async () => {
-      if (!stages.length || !selectedJobId || isLoading) return;
+      if (!stages.length || !selectedJobId) return;
 
       try {
         // Query candidates with position field

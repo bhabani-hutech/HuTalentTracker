@@ -24,10 +24,13 @@ export function useCandidates() {
     },
   });
 
-  const createMutation = useMutation({
+  const createCandidateMutation = useMutation({
     mutationFn: createCandidate,
-    onSuccess: () =>
-      queryClient.invalidateQueries({ queryKey: ["candidates"] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["candidates"] });
+      // Also invalidate the kanban board data when a new candidate is added
+      queryClient.invalidateQueries({ queryKey: ["interviews"] });
+    },
   });
 
   const updateMutation = useMutation({
@@ -70,7 +73,7 @@ export function useCandidates() {
     data,
     isLoading,
     error,
-    createCandidate: createMutation.mutate,
+    createCandidate: createCandidateMutation.mutate,
     updateCandidate: updateMutation.mutate,
     deleteCandidate: deleteMutation.mutate,
   };

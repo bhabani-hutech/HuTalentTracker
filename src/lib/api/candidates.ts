@@ -88,6 +88,11 @@ export async function createCandidate(
     }
   }
 
+  // Set the stage_id to the screening stage (1) by default for new candidates
+  if (!candidateWithDefaults.stage_id) {
+    candidateWithDefaults.stage_id = 1; // Default to screening stage
+  }
+
   const { data, error } = await supabase
     .from("candidates")
     .insert([candidateWithDefaults])

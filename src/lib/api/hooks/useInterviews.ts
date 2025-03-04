@@ -19,7 +19,7 @@ const fetchInterviews = async () => {
       throw new Error(error.message);
     }
 
-    console.log("Fetched interviews data:", data);
+    // console.log("Fetched interviews data:", data);
     return data || []; // Always return an array
   } catch (err) {
     console.error("Unexpected error in fetchInterviews:", err);
@@ -41,7 +41,7 @@ const fetchInterviewById = async (id: string) => {
       throw new Error(error.message);
     }
 
-    console.log(`Fetched interview data for ID ${id}:`, data);
+    // console.log(`Fetched interview data for ID ${id}:`, data);
     return data || null;
   } catch (err) {
     console.error(`Unexpected error in fetchInterviewById for ID ${id}:`, err);
@@ -92,7 +92,7 @@ export function useInterviews(interviewId?: string) {
       return data;
     },
     onSuccess: () => {
-      console.log("Interview created, refetching...");
+      // console.log("Interview created, refetching...");
       queryClient.invalidateQueries({ queryKey: ["interviews"] });
     },
   });
@@ -119,7 +119,7 @@ export function useInterviews(interviewId?: string) {
       return data;
     },
     onSuccess: () => {
-      console.log("Interview updated, refetching...");
+      // console.log("Interview updated, refetching...");
       queryClient.invalidateQueries({ queryKey: ["interviews"] });
     },
   });
@@ -140,7 +140,7 @@ export function useInterviews(interviewId?: string) {
       return data;
     },
     onSuccess: () => {
-      console.log("Interview deleted, refetching...");
+      // console.log("Interview deleted, refetching...");
       queryClient.invalidateQueries({ queryKey: ["interviews"] });
     },
   });
@@ -153,7 +153,7 @@ export function useInterviews(interviewId?: string) {
         "postgres_changes",
         { event: "*", schema: "public", table: "interviews" },
         (payload) => {
-          console.log("Realtime update received:", payload);
+          // console.log("Realtime update received:", payload);
           queryClient.invalidateQueries({ queryKey: ["interviews"] });
 
           // Also invalidate specific interview if ID matches
@@ -171,10 +171,11 @@ export function useInterviews(interviewId?: string) {
     };
   }, [queryClient, interviewId]);
 
-  console.log("Loading state:", isLoading);
-  console.log("Error state:", error);
-  console.log("Interviews data:", interviews);
-  console.log("Interview by ID:", interviewById);
+  // Remove console logs to prevent excessive logging
+  // console.log("Loading state:", isLoading);
+  // console.log("Error state:", error);
+  // console.log("Interviews data:", interviews);
+  // console.log("Interview by ID:", interviewById);
 
   return {
     interviews,

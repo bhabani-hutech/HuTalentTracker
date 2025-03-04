@@ -81,7 +81,7 @@ export async function getInterviews() {
 export async function createInterview(
   interview: Omit<Interview, "id" | "created_at" | "updated_at">,
 ) {
-  console.log("Creating interview:", interview);
+  // console.log("Creating interview:", interview);
 
   const { data, error } = await supabase
     .from("interviews")
@@ -110,8 +110,7 @@ export async function updateInterview(
   id: string,
   updates: Partial<Omit<Interview, "id" | "created_at" | "updated_at">>,
 ) {
-  console.log("IN INTERVIEW updateInterview");
-  console.log("Updating interview with ID:", id, "with updates:", updates);
+  // console.log("Updating interview with ID:", id, "with updates:", updates);
 
   const { data, error } = await supabase
     .from("interviews")
@@ -139,7 +138,7 @@ export async function updateInterview(
  * Delete an interview by ID
  */
 export async function deleteInterview(id: string) {
-  console.log("Deleting interview with ID:", id);
+  // console.log("Deleting interview with ID:", id);
 
   const { error } = await supabase.from("interviews").delete().eq("id", id);
 

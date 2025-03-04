@@ -50,11 +50,13 @@ export function InterviewScheduler({
 
   const [roundId, setRoundId] = useState("");
 
+  const [jobTitle, setJobTitle] = useState<string>("Unspecified Position");
+
   const { toast } = useToast();
   const { data: interviewers } = useInterviewers();
   const { data: interviewRounds } = useInterviewRounds();
 
-  console.log(candidate);
+  // console.log(candidate);
   const timeSlots = [
     "09:00",
     "09:30",
@@ -161,26 +163,35 @@ export function InterviewScheduler({
   };
   if (!candidate) return null;
   // Fetch job title if job_id is available
-  useEffect(() => {
-    if (candidate?.job_id) {
-      const fetchJobTitle = async () => {
-        try {
-          const { data } = await supabase
-            .from("jobs")
-            .select("title")
-            .eq("id", candidate.job_id)
-            .single();
 
-          if (data) {
-            console.log("Found job title:", data.title);
-          }
-        } catch (err) {
-          console.error("Error fetching job title:", err);
+  useEffect(() => {
+    const fetchJobTitle = async () => {
+      if (!candidate?.job_id) {
+        setJobTitle("Unspecified Position"); // Always update state
+        return;
+      }
+
+      try {
+        const { data, error } = await supabase
+          .from("jobs")
+          .select("title")
+          .eq("id", candidate.job_id)
+          .single();
+
+        if (error) {
+          console.error("Error fetching job title:", error);
+          setJobTitle("Unknown Position");
+        } else if (data) {
+          setJobTitle(data.title);
         }
-      };
-      fetchJobTitle();
-    }
-  }, [candidate]);
+      } catch (err) {
+        console.error("Unexpected error fetching job title:", err);
+        setJobTitle("Unknown Position");
+      }
+    };
+
+    fetchJobTitle();
+  }, [candidate?.job_id]); // Dependency array
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -191,10 +202,7 @@ export function InterviewScheduler({
         <div className="grid gap-4 py-4">
           <div className="space-y-2">
             <Label>Job Position</Label>
-            <Input
-              value={candidate?.position || "Unspecified Position"}
-              disabled
-            />
+            <Input value={jobTitle} disabled />
           </div>
           <div className="space-y-2">
             <Label>Candidate</Label>
