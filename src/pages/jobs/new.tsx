@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/select"; // Adjust path as needed
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"; // Adjust path as needed
 import { JobType, JobStatus } from "@/types/database"; // Adjust path as needed
+import { supabase } from "@/lib/supabase";
 
 export default function NewJob() {
   const { id } = useParams();
@@ -30,6 +31,9 @@ export default function NewJob() {
   const { departments } = useDepartments();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const [locations, setLocations] = useState<
+    { id: number; name: string; address: string }[]
+  >([]);
 
   const form = useForm<z.infer<typeof jobFormSchema>>({
     resolver: zodResolver(jobFormSchema),
@@ -106,6 +110,46 @@ export default function NewJob() {
       }
     }
   }, [id, jobs, form]);
+
+  // Fetch locations from own organizations
+  useEffect(() => {
+    const fetchOwnOrgLocations = async () => {
+      try {
+        const { data: organizations, error } = await supabase
+          .from("organizations")
+          .select("*")
+          .eq("is_own_org", true);
+
+        if (error) throw error;
+
+        // Extract all locations from own organizations
+        const allLocations = [];
+        for (const org of organizations || []) {
+          if (org.locations && Array.isArray(org.locations)) {
+            for (const location of org.locations) {
+              allLocations.push({
+                id: Date.now() + Math.random(), // Generate a unique ID
+                name: location.name,
+                address: [
+                  location.address,
+                  location.city,
+                  location.state,
+                  location.country,
+                ]
+                  .filter(Boolean)
+                  .join(", "),
+              });
+            }
+          }
+        }
+        setLocations(allLocations);
+      } catch (error) {
+        console.error("Error fetching organization locations:", error);
+      }
+    };
+
+    fetchOwnOrgLocations();
+  }, []);
 
   const addRequirement = () => {
     if (newRequirement.trim()) {
@@ -188,7 +232,39 @@ export default function NewJob() {
 
               <div className="space-y-2">
                 <Label>Location</Label>
-                <Input {...form.register("location")} />
+                <Select
+                  value={form.watch("location") || ""}
+                  onValueChange={(value) => form.setValue("location", value)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select location" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {locations.length > 0 ? (
+                      locations.map((location) => (
+                        <SelectItem key={location.id} value={location.name}>
+                          {location.name} - {location.address}
+                        </SelectItem>
+                      ))
+                    ) : (
+                      <SelectItem value="custom">Custom Location</SelectItem>
+                    )}
+                    <SelectItem value="Remote">Remote</SelectItem>
+                    <SelectItem value="Hybrid">Hybrid</SelectItem>
+                  </SelectContent>
+                </Select>
+                {form.watch("location") === "custom" && (
+                  <Input
+                    className="mt-2"
+                    placeholder="Enter custom location"
+                    value={
+                      form.watch("location") === "custom"
+                        ? ""
+                        : form.watch("location")
+                    }
+                    onChange={(e) => form.setValue("location", e.target.value)}
+                  />
+                )}
                 {form.formState.errors.location && (
                   <p className="text-sm text-red-500">
                     {form.formState.errors.location.message}

@@ -20,9 +20,11 @@ export type Database = {
           job_id: string | null
           location: string | null
           match_score: number | null
+          move_reason: string | null
           name: string
           notice_period: string | null
           phone: string | null
+          position: string | null
           skills: string | null
           source: string | null
           stage_id: number | null
@@ -39,9 +41,11 @@ export type Database = {
           job_id?: string | null
           location?: string | null
           match_score?: number | null
+          move_reason?: string | null
           name: string
           notice_period?: string | null
           phone?: string | null
+          position?: string | null
           skills?: string | null
           source?: string | null
           stage_id?: number | null
@@ -58,9 +62,11 @@ export type Database = {
           job_id?: string | null
           location?: string | null
           match_score?: number | null
+          move_reason?: string | null
           name?: string
           notice_period?: string | null
           phone?: string | null
+          position?: string | null
           skills?: string | null
           source?: string | null
           stage_id?: number | null
@@ -359,6 +365,7 @@ export type Database = {
           created_by: string | null
           department: string
           description: string
+          domain_skills: Json | null
           experience_max: number | null
           experience_min: number | null
           id: string
@@ -368,10 +375,10 @@ export type Database = {
           openings: number | null
           requirements: string[]
           responsibilities: string[]
-          salary_max: number | null
-          salary_min: number | null
           skills: string[] | null
+          soft_skills: Json | null
           status: Database["public"]["Enums"]["job_status"]
+          technical_skills: Json | null
           title: string
           type: Database["public"]["Enums"]["job_type"]
           updated_at: string
@@ -382,6 +389,7 @@ export type Database = {
           created_by?: string | null
           department: string
           description: string
+          domain_skills?: Json | null
           experience_max?: number | null
           experience_min?: number | null
           id?: string
@@ -391,10 +399,10 @@ export type Database = {
           openings?: number | null
           requirements?: string[]
           responsibilities?: string[]
-          salary_max?: number | null
-          salary_min?: number | null
           skills?: string[] | null
+          soft_skills?: Json | null
           status?: Database["public"]["Enums"]["job_status"]
+          technical_skills?: Json | null
           title: string
           type?: Database["public"]["Enums"]["job_type"]
           updated_at?: string
@@ -405,6 +413,7 @@ export type Database = {
           created_by?: string | null
           department?: string
           description?: string
+          domain_skills?: Json | null
           experience_max?: number | null
           experience_min?: number | null
           id?: string
@@ -414,10 +423,10 @@ export type Database = {
           openings?: number | null
           requirements?: string[]
           responsibilities?: string[]
-          salary_max?: number | null
-          salary_min?: number | null
           skills?: string[] | null
+          soft_skills?: Json | null
           status?: Database["public"]["Enums"]["job_status"]
+          technical_skills?: Json | null
           title?: string
           type?: Database["public"]["Enums"]["job_type"]
           updated_at?: string
@@ -509,6 +518,33 @@ export type Database = {
         }
         Relationships: []
       }
+      pipeline_comments: {
+        Row: {
+          comment: string
+          created_at: string | null
+          id: string
+          item_id: string
+          item_type: string
+          updated_at: string | null
+        }
+        Insert: {
+          comment: string
+          created_at?: string | null
+          id?: string
+          item_id: string
+          item_type: string
+          updated_at?: string | null
+        }
+        Update: {
+          comment?: string
+          created_at?: string | null
+          id?: string
+          item_id?: string
+          item_type?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       skills: {
         Row: {
           category: string
@@ -516,6 +552,7 @@ export type Database = {
           id: number
           name: string
           skill_order: number
+          skill_type: string | null
           updated_at: string | null
         }
         Insert: {
@@ -524,6 +561,7 @@ export type Database = {
           id?: number
           name: string
           skill_order: number
+          skill_type?: string | null
           updated_at?: string | null
         }
         Update: {
@@ -532,6 +570,7 @@ export type Database = {
           id?: number
           name?: string
           skill_order?: number
+          skill_type?: string | null
           updated_at?: string | null
         }
         Relationships: []

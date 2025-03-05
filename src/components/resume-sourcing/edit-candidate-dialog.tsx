@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import {
   Dialog,
@@ -19,6 +19,8 @@ import {
 } from "../ui/select";
 import { Label } from "../ui/label";
 import { Candidate } from "@/lib/api/candidates";
+import { supabase } from "@/lib/supabase";
+import { useSkills } from "@/lib/api/hooks/useSkills";
 
 interface EditCandidateDialogProps {
   isOpen: boolean;
@@ -37,6 +39,51 @@ export function EditCandidateDialog({
 }: EditCandidateDialogProps) {
   const { register, handleSubmit, setValue, watch, reset } =
     useForm<Partial<Candidate>>();
+  const [ownOrgLocations, setOwnOrgLocations] = useState<
+    { name: string; address: string }[]
+  >([]);
+  const { skills: domainSkills } = useSkills("domain");
+  const { skills: technicalSkills } = useSkills("technical");
+  const { skills: softSkills } = useSkills("soft");
+
+  // Fetch locations from own organizations
+  useEffect(() => {
+    const fetchOwnOrgLocations = async () => {
+      try {
+        const { data: organizations, error } = await supabase
+          .from("organizations")
+          .select("*")
+          .eq("is_own_org", true);
+
+        if (error) throw error;
+
+        // Extract all locations from own organizations
+        const allLocations = [];
+        for (const org of organizations || []) {
+          if (org.locations && Array.isArray(org.locations)) {
+            for (const location of org.locations) {
+              allLocations.push({
+                name: location.name,
+                address: [
+                  location.address,
+                  location.city,
+                  location.state,
+                  location.country,
+                ]
+                  .filter(Boolean)
+                  .join(", "),
+              });
+            }
+          }
+        }
+        setOwnOrgLocations(allLocations);
+      } catch (error) {
+        console.error("Error fetching organization locations:", error);
+      }
+    };
+
+    fetchOwnOrgLocations();
+  }, []);
 
   // Populate form when candidate data is available
   useEffect(() => {
@@ -54,6 +101,13 @@ export function EditCandidateDialog({
       console.error("Error updating candidate:", error);
     }
   };
+
+  // Combine all skills for the dropdown
+  const allSkills = [
+    ...domainSkills.map((skill) => ({ ...skill, category: "Domain" })),
+    ...technicalSkills.map((skill) => ({ ...skill, category: "Technical" })),
+    ...softSkills.map((skill) => ({ ...skill, category: "Soft" })),
+  ];
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -125,7 +179,47 @@ export function EditCandidateDialog({
 
           <div className="space-y-2">
             <Label>Location</Label>
-            <Input {...register("location")} placeholder="e.g. New York, NY" />
+            <Select
+              value={watch("location") || ""}
+              onValueChange={(value) => setValue("location", value)}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select location" />
+              </SelectTrigger>
+              <SelectContent>
+                {ownOrgLocations.length > 0 && (
+                  <>
+                    {ownOrgLocations.map((location, index) => (
+                      <SelectItem key={index} value={location.name}>
+                        {location.name} - {location.address}
+                      </SelectItem>
+                    ))}
+                    <SelectItem value="divider" disabled>
+                      ────────────────
+                    </SelectItem>
+                  </>
+                )}
+                <SelectItem value="Remote">Remote</SelectItem>
+                <SelectItem value="Hybrid">Hybrid</SelectItem>
+                <SelectItem value="New York, NY">New York, NY</SelectItem>
+                <SelectItem value="San Francisco, CA">
+                  San Francisco, CA
+                </SelectItem>
+                <SelectItem value="London, UK">London, UK</SelectItem>
+                <SelectItem value="Bangalore, India">
+                  Bangalore, India
+                </SelectItem>
+                <SelectItem value="Singapore">Singapore</SelectItem>
+                <SelectItem value="Other">Other</SelectItem>
+              </SelectContent>
+            </Select>
+            {watch("location") === "Other" && (
+              <Input
+                className="mt-2"
+                {...register("location")}
+                placeholder="Enter custom location"
+              />
+            )}
           </div>
 
           <div className="space-y-2">
@@ -149,10 +243,38 @@ export function EditCandidateDialog({
 
           <div className="space-y-2">
             <Label>Skills</Label>
+            <Select
+              value=""
+              onValueChange={(value) => {
+                const currentSkills = watch("skills") || "";
+                const skillsArray = currentSkills
+                  ? currentSkills.split(",").map((s) => s.trim())
+                  : [];
+                if (!skillsArray.includes(value)) {
+                  skillsArray.push(value);
+                  setValue("skills", skillsArray.join(", "));
+                }
+              }}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select skills to add" />
+              </SelectTrigger>
+              <SelectContent>
+                {allSkills.length > 0 ? (
+                  allSkills.map((skill) => (
+                    <SelectItem key={skill.id} value={skill.name}>
+                      {skill.name} ({skill.category})
+                    </SelectItem>
+                  ))
+                ) : (
+                  <SelectItem disabled>No skills available</SelectItem>
+                )}
+              </SelectContent>
+            </Select>
             <Textarea
               {...register("skills")}
               placeholder="Enter skills (comma-separated)"
-              className="min-h-[100px]"
+              className="min-h-[100px] mt-2"
             />
           </div>
 

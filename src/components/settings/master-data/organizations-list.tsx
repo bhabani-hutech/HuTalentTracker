@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Plus, Trash2, PenSquare } from "lucide-react";
+import { Plus, Trash2, PenSquare, Building2 } from "lucide-react";
 import { OrganizationForm } from "./organization-form";
 import {
   Table,
@@ -11,27 +11,31 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/lib/supabase";
 
 interface Organization {
-  id: string;
+  id: number;
   name: string;
-  industry?: string;
-  description?: string;
-  website?: string;
-  email_domain?: string;
-  logo_url?: string;
+  industry: string;
+  description: string;
+  website: string;
+  email_domain: string;
+  logo_url: string;
+  is_own_org: boolean;
+  locations: any[];
+  departments: any[];
 }
 
 export function OrganizationsList() {
   const { toast } = useToast();
   const [organizations, setOrganizations] = useState<Organization[]>([]);
-  const [selectedOrg, setSelectedOrg] = useState<Organization | null>(null);
+  const [selectedOrganization, setSelectedOrganization] =
+    useState<Organization | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Load organizations
   const loadOrganizations = async () => {
     try {
       const { data, error } = await supabase
@@ -57,7 +61,7 @@ export function OrganizationsList() {
     loadOrganizations();
   }, []);
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = async (id: number) => {
     if (window.confirm("Are you sure you want to delete this organization?")) {
       try {
         const { error } = await supabase
@@ -83,6 +87,53 @@ export function OrganizationsList() {
     }
   };
 
+  const handleOwnOrgToggle = async (org: Organization) => {
+    try {
+      // If setting to own org, first reset any existing own org
+      if (!org.is_own_org) {
+        // Find current own org if any
+        const currentOwnOrg = organizations.find((o) => o.is_own_org);
+
+        if (currentOwnOrg) {
+          // Reset current own org
+          await supabase
+            .from("organizations")
+            .update({ is_own_org: false })
+            .eq("id", currentOwnOrg.id);
+        }
+
+        // Set new own org
+        await supabase
+          .from("organizations")
+          .update({ is_own_org: true })
+          .eq("id", org.id);
+
+        toast({
+          title: "Success",
+          description: `${org.name} is now set as your own organization`,
+        });
+      } else {
+        // Cannot unset the only own org
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description:
+            "You must have one organization set as your own. Create another organization first before changing this setting.",
+        });
+        return;
+      }
+
+      loadOrganizations();
+    } catch (error) {
+      console.error("Error updating organization type:", error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to update organization type",
+      });
+    }
+  };
+
   if (isLoading) return <div>Loading...</div>;
 
   return (
@@ -92,7 +143,7 @@ export function OrganizationsList() {
           <CardTitle>Organizations</CardTitle>
           <Button
             onClick={() => {
-              setSelectedOrg(null);
+              setSelectedOrganization(null);
               setShowForm(true);
             }}
           >
@@ -106,48 +157,106 @@ export function OrganizationsList() {
             <TableHeader>
               <TableRow>
                 <TableHead>Name</TableHead>
+                <TableHead>Type</TableHead>
                 <TableHead>Industry</TableHead>
-                <TableHead className="hidden md:table-cell">Website</TableHead>
-                <TableHead className="hidden lg:table-cell">
-                  Email Domain
-                </TableHead>
+                <TableHead>Website</TableHead>
+                <TableHead>Locations</TableHead>
+                <TableHead>Departments</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {organizations.map((org) => (
-                <TableRow key={org.id}>
-                  <TableCell className="font-medium">{org.name}</TableCell>
-                  <TableCell>{org.industry || "-"}</TableCell>
-                  <TableCell className="hidden md:table-cell">
-                    {org.website || "-"}
-                  </TableCell>
-                  <TableCell className="hidden lg:table-cell">
-                    {org.email_domain || "-"}
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex justify-end gap-2">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => {
-                          setSelectedOrg(org);
-                          setShowForm(true);
-                        }}
-                      >
-                        <PenSquare className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleDelete(org.id)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
+              {organizations.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={7} className="text-center py-8">
+                    No organizations found. Add your first one!
                   </TableCell>
                 </TableRow>
-              ))}
+              ) : (
+                organizations.map((org) => (
+                  <TableRow key={org.id}>
+                    <TableCell className="font-medium">{org.name}</TableCell>
+                    <TableCell>
+                      <Badge
+                        variant={org.is_own_org ? "default" : "outline"}
+                        className={
+                          org.is_own_org
+                            ? "bg-green-500 hover:bg-green-600"
+                            : ""
+                        }
+                      >
+                        {org.is_own_org ? "Own Organization" : "Partner"}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>{org.industry || "-"}</TableCell>
+                    <TableCell>
+                      {org.website ? (
+                        <a
+                          href={org.website}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-500 hover:underline"
+                        >
+                          {org.website.replace(/^https?:\/\//, "")}
+                        </a>
+                      ) : (
+                        "-"
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {org.locations?.length ? (
+                        <Badge variant="outline">
+                          {org.locations.length} location
+                          {org.locations.length !== 1 ? "s" : ""}
+                        </Badge>
+                      ) : (
+                        "-"
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {org.departments?.length ? (
+                        <Badge variant="outline">
+                          {org.departments.length} department
+                          {org.departments.length !== 1 ? "s" : ""}
+                        </Badge>
+                      ) : (
+                        "-"
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex justify-end gap-2">
+                        {!org.is_own_org && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            title="Set as Own Organization"
+                            onClick={() => handleOwnOrgToggle(org)}
+                          >
+                            <Building2 className="h-4 w-4 text-green-600" />
+                          </Button>
+                        )}
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => {
+                            setSelectedOrganization(org);
+                            setShowForm(true);
+                          }}
+                        >
+                          <PenSquare className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleDelete(org.id)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
             </TableBody>
           </Table>
         </div>
@@ -157,35 +266,92 @@ export function OrganizationsList() {
         isOpen={showForm}
         onClose={() => {
           setShowForm(false);
-          setSelectedOrg(null);
+          setSelectedOrganization(null);
         }}
         onSubmit={async (data) => {
           try {
-            if (selectedOrg?.id) {
+            // Check if name is unique
+            const { data: existingOrgs, error: checkError } = await supabase
+              .from("organizations")
+              .select("id, name")
+              .eq("name", data.name);
+
+            if (checkError) throw checkError;
+
+            // If editing, filter out the current org from the check
+            const nameExists = selectedOrganization?.id
+              ? existingOrgs.some(
+                  (org) =>
+                    org.id !== selectedOrganization.id &&
+                    org.name === data.name,
+                )
+              : existingOrgs.length > 0;
+
+            if (nameExists) {
+              toast({
+                variant: "destructive",
+                title: "Error",
+                description: "An organization with this name already exists",
+              });
+              return;
+            }
+
+            // If setting to own org, first reset any existing own org
+            if (data.is_own_org) {
+              // Find current own org if any
+              const { data: currentOwnOrgs } = await supabase
+                .from("organizations")
+                .select("id")
+                .eq("is_own_org", true);
+
+              // If there's an existing own org and it's not the one being edited
+              if (
+                currentOwnOrgs?.length &&
+                (!selectedOrganization?.id ||
+                  currentOwnOrgs[0].id !== selectedOrganization.id)
+              ) {
+                await supabase
+                  .from("organizations")
+                  .update({ is_own_org: false })
+                  .eq("id", currentOwnOrgs[0].id);
+              }
+            }
+
+            if (selectedOrganization?.id) {
               await supabase
                 .from("organizations")
                 .update(data)
-                .eq("id", selectedOrg.id);
+                .eq("id", selectedOrganization.id);
             } else {
+              // For new organizations, if no own org exists, set this as own org
+              const { data: existingOwnOrgs } = await supabase
+                .from("organizations")
+                .select("id")
+                .eq("is_own_org", true);
+
+              if (!existingOwnOrgs?.length && !data.is_own_org) {
+                data.is_own_org = true;
+              }
+
               await supabase.from("organizations").insert([data]);
             }
             loadOrganizations();
             setShowForm(false);
-            setSelectedOrg(null);
+            setSelectedOrganization(null);
             toast({
               title: "Success",
-              description: `Organization ${selectedOrg ? "updated" : "added"} successfully`,
+              description: `Organization ${selectedOrganization ? "updated" : "added"} successfully`,
             });
           } catch (error) {
             console.error("Error saving organization:", error);
             toast({
               variant: "destructive",
               title: "Error",
-              description: `Failed to ${selectedOrg ? "update" : "add"} organization`,
+              description: `Failed to ${selectedOrganization ? "update" : "add"} organization`,
             });
           }
         }}
-        initialData={selectedOrg}
+        initialData={selectedOrganization}
       />
     </Card>
   );

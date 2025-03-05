@@ -12,6 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/lib/supabase";
+import { Switch } from "@/components/ui/switch";
 
 interface Location {
   id?: string;
@@ -37,6 +38,7 @@ interface Organization {
   website?: string;
   email_domain?: string;
   logo_url?: string;
+  is_own_org?: boolean;
   locations?: Location[];
   departments?: Department[];
 }
@@ -62,6 +64,7 @@ export function OrganizationForm({
     website: "",
     email_domain: "",
     logo_url: "",
+    is_own_org: false,
     locations: [],
     departments: [],
   });
@@ -83,8 +86,20 @@ export function OrganizationForm({
   useEffect(() => {
     if (initialData) {
       setFormData(initialData);
+    } else {
+      setFormData({
+        name: "",
+        industry: "",
+        description: "",
+        website: "",
+        email_domain: "",
+        logo_url: "",
+        is_own_org: false,
+        locations: [],
+        departments: [],
+      });
     }
-  }, [initialData]);
+  }, [initialData, isOpen]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -138,7 +153,7 @@ export function OrganizationForm({
           </DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit}>
-          <div className="grid gap-4">
+          <div className="grid gap-6 py-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Organization Name</Label>
@@ -163,6 +178,19 @@ export function OrganizationForm({
               </div>
             </div>
 
+            <div className="flex items-center space-x-2">
+              <Switch
+                id="is-own-org"
+                checked={formData.is_own_org}
+                onCheckedChange={(checked) =>
+                  setFormData({ ...formData, is_own_org: checked })
+                }
+              />
+              <Label htmlFor="is-own-org" className="font-medium">
+                This is our own organization (not a partner)
+              </Label>
+            </div>
+
             <div className="space-y-2">
               <Label>Description</Label>
               <Textarea
@@ -171,6 +199,7 @@ export function OrganizationForm({
                   setFormData({ ...formData, description: e.target.value })
                 }
                 placeholder="Enter organization description"
+                className="min-h-[100px]"
               />
             </div>
 
@@ -210,199 +239,202 @@ export function OrganizationForm({
                 placeholder="Enter logo URL"
               />
             </div>
-          </div>
 
-          {/* Departments Section */}
-          <div className="space-y-4">
-            <Label className="text-lg font-semibold">Departments</Label>
-            <div className="space-y-4">
-              {formData.departments?.map((dept, index) => (
-                <div
-                  key={index}
-                  className="flex items-center gap-4 p-2 border rounded"
-                >
-                  <div className="flex-1">
-                    <div className="font-medium">{dept.name}</div>
-                    <div className="text-sm text-muted-foreground">
-                      {dept.description}
-                    </div>
-                  </div>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => {
-                      const newDepts = [...(formData.departments || [])];
-                      newDepts.splice(index, 1);
-                      setFormData({ ...formData, departments: newDepts });
-                    }}
+            {/* Departments Section */}
+            <div className="space-y-4 border-t pt-4">
+              <Label className="text-lg font-semibold">Departments</Label>
+              <div className="space-y-4">
+                {formData.departments?.map((dept, index) => (
+                  <div
+                    key={index}
+                    className="flex items-center gap-4 p-3 border rounded-md bg-gray-50"
                   >
-                    Remove
-                  </Button>
-                </div>
-              ))}
-              <div className="flex gap-4">
-                <div className="flex-1 space-y-2">
-                  <Input
-                    placeholder="Department name"
-                    value={newDepartment.name}
-                    onChange={(e) =>
-                      setNewDepartment({
-                        ...newDepartment,
-                        name: e.target.value,
-                      })
-                    }
-                  />
-                  <Input
-                    placeholder="Department description"
-                    value={newDepartment.description}
-                    onChange={(e) =>
-                      setNewDepartment({
-                        ...newDepartment,
-                        description: e.target.value,
-                      })
-                    }
-                  />
-                </div>
-                <Button
-                  type="button"
-                  onClick={() => {
-                    if (newDepartment.name) {
-                      setFormData({
-                        ...formData,
-                        departments: [
-                          ...(formData.departments || []),
-                          newDepartment,
-                        ],
-                      });
-                      setNewDepartment({ name: "", description: "" });
-                    }
-                  }}
-                >
-                  Add Department
-                </Button>
-              </div>
-            </div>
-          </div>
-
-          {/* Locations Section */}
-          <div className="space-y-4">
-            <Label className="text-lg font-semibold">Locations</Label>
-            <div className="space-y-4">
-              {formData.locations?.map((loc, index) => (
-                <div
-                  key={index}
-                  className="flex items-start gap-4 p-2 border rounded"
-                >
-                  <div className="flex-1">
-                    <div className="font-medium">{loc.name}</div>
-                    <div className="text-sm text-muted-foreground">
-                      {[
-                        loc.address,
-                        loc.city,
-                        loc.state,
-                        loc.country,
-                        loc.postal_code,
-                      ]
-                        .filter(Boolean)
-                        .join(", ")}
+                    <div className="flex-1">
+                      <div className="font-medium">{dept.name}</div>
+                      <div className="text-sm text-muted-foreground">
+                        {dept.description}
+                      </div>
                     </div>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        const newDepts = [...(formData.departments || [])];
+                        newDepts.splice(index, 1);
+                        setFormData({ ...formData, departments: newDepts });
+                      }}
+                    >
+                      Remove
+                    </Button>
                   </div>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => {
-                      const newLocs = [...(formData.locations || [])];
-                      newLocs.splice(index, 1);
-                      setFormData({ ...formData, locations: newLocs });
-                    }}
-                  >
-                    Remove
-                  </Button>
-                </div>
-              ))}
-              <div className="grid gap-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <Input
-                    placeholder="Location name"
-                    value={newLocation.name}
-                    onChange={(e) =>
-                      setNewLocation({ ...newLocation, name: e.target.value })
-                    }
-                  />
-                  <Input
-                    placeholder="Address"
-                    value={newLocation.address}
-                    onChange={(e) =>
-                      setNewLocation({
-                        ...newLocation,
-                        address: e.target.value,
-                      })
-                    }
-                  />
-                </div>
-                <div className="grid grid-cols-3 gap-4">
-                  <Input
-                    placeholder="City"
-                    value={newLocation.city}
-                    onChange={(e) =>
-                      setNewLocation({ ...newLocation, city: e.target.value })
-                    }
-                  />
-                  <Input
-                    placeholder="State/Province"
-                    value={newLocation.state}
-                    onChange={(e) =>
-                      setNewLocation({ ...newLocation, state: e.target.value })
-                    }
-                  />
-                  <Input
-                    placeholder="Postal code"
-                    value={newLocation.postal_code}
-                    onChange={(e) =>
-                      setNewLocation({
-                        ...newLocation,
-                        postal_code: e.target.value,
-                      })
-                    }
-                  />
-                </div>
+                ))}
                 <div className="flex gap-4">
-                  <Input
-                    placeholder="Country"
-                    value={newLocation.country}
-                    onChange={(e) =>
-                      setNewLocation({
-                        ...newLocation,
-                        country: e.target.value,
-                      })
-                    }
-                  />
+                  <div className="flex-1 space-y-2">
+                    <Input
+                      placeholder="Department name"
+                      value={newDepartment.name}
+                      onChange={(e) =>
+                        setNewDepartment({
+                          ...newDepartment,
+                          name: e.target.value,
+                        })
+                      }
+                    />
+                    <Input
+                      placeholder="Department description"
+                      value={newDepartment.description}
+                      onChange={(e) =>
+                        setNewDepartment({
+                          ...newDepartment,
+                          description: e.target.value,
+                        })
+                      }
+                    />
+                  </div>
                   <Button
                     type="button"
                     onClick={() => {
-                      if (newLocation.name) {
+                      if (newDepartment.name) {
                         setFormData({
                           ...formData,
-                          locations: [
-                            ...(formData.locations || []),
-                            newLocation,
+                          departments: [
+                            ...(formData.departments || []),
+                            newDepartment,
                           ],
                         });
-                        setNewLocation({
-                          name: "",
-                          address: "",
-                          city: "",
-                          state: "",
-                          country: "",
-                          postal_code: "",
-                        });
+                        setNewDepartment({ name: "", description: "" });
                       }
                     }}
                   >
-                    Add Location
+                    Add Department
                   </Button>
+                </div>
+              </div>
+            </div>
+
+            {/* Locations Section */}
+            <div className="space-y-4 border-t pt-4">
+              <Label className="text-lg font-semibold">Locations</Label>
+              <div className="space-y-4">
+                {formData.locations?.map((loc, index) => (
+                  <div
+                    key={index}
+                    className="flex items-start gap-4 p-3 border rounded-md bg-gray-50"
+                  >
+                    <div className="flex-1">
+                      <div className="font-medium">{loc.name}</div>
+                      <div className="text-sm text-muted-foreground">
+                        {[
+                          loc.address,
+                          loc.city,
+                          loc.state,
+                          loc.country,
+                          loc.postal_code,
+                        ]
+                          .filter(Boolean)
+                          .join(", ")}
+                      </div>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        const newLocs = [...(formData.locations || [])];
+                        newLocs.splice(index, 1);
+                        setFormData({ ...formData, locations: newLocs });
+                      }}
+                    >
+                      Remove
+                    </Button>
+                  </div>
+                ))}
+                <div className="grid gap-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <Input
+                      placeholder="Location name"
+                      value={newLocation.name}
+                      onChange={(e) =>
+                        setNewLocation({ ...newLocation, name: e.target.value })
+                      }
+                    />
+                    <Input
+                      placeholder="Address"
+                      value={newLocation.address}
+                      onChange={(e) =>
+                        setNewLocation({
+                          ...newLocation,
+                          address: e.target.value,
+                        })
+                      }
+                    />
+                  </div>
+                  <div className="grid grid-cols-3 gap-4">
+                    <Input
+                      placeholder="City"
+                      value={newLocation.city}
+                      onChange={(e) =>
+                        setNewLocation({ ...newLocation, city: e.target.value })
+                      }
+                    />
+                    <Input
+                      placeholder="State/Province"
+                      value={newLocation.state}
+                      onChange={(e) =>
+                        setNewLocation({
+                          ...newLocation,
+                          state: e.target.value,
+                        })
+                      }
+                    />
+                    <Input
+                      placeholder="Postal code"
+                      value={newLocation.postal_code}
+                      onChange={(e) =>
+                        setNewLocation({
+                          ...newLocation,
+                          postal_code: e.target.value,
+                        })
+                      }
+                    />
+                  </div>
+                  <div className="flex gap-4">
+                    <Input
+                      placeholder="Country"
+                      value={newLocation.country}
+                      onChange={(e) =>
+                        setNewLocation({
+                          ...newLocation,
+                          country: e.target.value,
+                        })
+                      }
+                    />
+                    <Button
+                      type="button"
+                      onClick={() => {
+                        if (newLocation.name) {
+                          setFormData({
+                            ...formData,
+                            locations: [
+                              ...(formData.locations || []),
+                              newLocation,
+                            ],
+                          });
+                          setNewLocation({
+                            name: "",
+                            address: "",
+                            city: "",
+                            state: "",
+                            country: "",
+                            postal_code: "",
+                          });
+                        }
+                      }}
+                    >
+                      Add Location
+                    </Button>
+                  </div>
                 </div>
               </div>
             </div>
