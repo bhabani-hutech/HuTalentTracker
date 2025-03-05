@@ -107,7 +107,7 @@ export function KanbanBoard({ selectedJobId }: KanbanBoardProps) {
 
   useEffect(() => {
     const loadData = async () => {
-      if (!stages.length || !selectedJobId) return;
+      if (!stages.length || !selectedJobId || isLoading) return;
 
       try {
         // Query candidates with position field
@@ -369,6 +369,28 @@ export function KanbanBoard({ selectedJobId }: KanbanBoardProps) {
             <ChevronLeft className="h-4 w-4" />
             Previous
           </Button>
+          <Select
+            value={jobFilter || "all"}
+            onValueChange={(value) =>
+              setJobFilter(value === "all" ? null : value)
+            }
+          >
+            <SelectTrigger className="w-[200px]">
+              <SelectValue placeholder="Filter by position" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Positions</SelectItem>
+              {getUniquePositions()
+                .map((position) =>
+                  position ? (
+                    <SelectItem key={position} value={position}>
+                      {position}
+                    </SelectItem>
+                  ) : null,
+                )
+                .filter(Boolean)}
+            </SelectContent>
+          </Select>
         </div>
 
         <span className="text-sm text-muted-foreground">

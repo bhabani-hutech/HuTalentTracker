@@ -28,7 +28,7 @@ export function useCandidates() {
     mutationFn: createCandidate,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["candidates"] });
-      // Also invalidate the kanban board data when a new candidate is added
+      // Also invalidate interviews to update the kanban board
       queryClient.invalidateQueries({ queryKey: ["interviews"] });
     },
   });
@@ -41,14 +41,18 @@ export function useCandidates() {
       id: string;
       updates: Partial<Candidate>;
     }) => updateCandidate(id, updates),
-    onSuccess: () =>
-      queryClient.invalidateQueries({ queryKey: ["candidates"] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["candidates"] });
+      queryClient.invalidateQueries({ queryKey: ["interviews"] });
+    },
   });
 
   const deleteMutation = useMutation({
     mutationFn: deleteCandidate,
-    onSuccess: () =>
-      queryClient.invalidateQueries({ queryKey: ["candidates"] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["candidates"] });
+      queryClient.invalidateQueries({ queryKey: ["interviews"] });
+    },
   });
 
   // Set up real-time subscription
@@ -60,6 +64,7 @@ export function useCandidates() {
         { event: "*", schema: "public", table: "candidates" },
         (payload) => {
           queryClient.invalidateQueries({ queryKey: ["candidates"] });
+          queryClient.invalidateQueries({ queryKey: ["interviews"] });
         },
       )
       .subscribe();

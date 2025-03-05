@@ -53,7 +53,6 @@ export function InterviewForm({
   const { data: interviewers } = useInterviewers();
   const { data: interviewRounds } = useInterviewRounds();
   useEffect(() => {
-    console.log(initialData);
     if (isOpen) {
       if (initialData) {
         const parsedDate = new Date(initialData.date); // Convert timestamp to Date object
@@ -61,12 +60,11 @@ export function InterviewForm({
           job_id: initialData.job_id || "",
           candidate_id: initialData.candidate_id || "",
           interviewer_id: initialData.interviewer_id || "",
-          round_id: initialData.round_id || "",
+          round_id: initialData.round_id,
           date: parsedDate,
           time: format(parsedDate, "HH:mm"), // Extract time
           type: initialData.type || "F2F",
         });
-        console.log("Populating form with initial data:", initialData);
       } else {
         setFormData({
           job_id: "",
@@ -79,7 +77,7 @@ export function InterviewForm({
         });
       }
     }
-  }, [isOpen]);
+  }, [isOpen, initialData]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -88,7 +86,6 @@ export function InterviewForm({
     const [hours, minutes] = formData.time.split(":").map(Number);
     const interviewTimestamp = new Date(formData.date);
     interviewTimestamp.setHours(hours, minutes, 0, 0);
-    console.log(interviewTimestamp);
     const { time, ...interviewData } = formData;
     onSubmit({ ...interviewData, date: interviewTimestamp }); // Submit merged timestamp
     onClose();
@@ -106,7 +103,7 @@ export function InterviewForm({
     }
     return times;
   };
-  console.log(formData);
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent>

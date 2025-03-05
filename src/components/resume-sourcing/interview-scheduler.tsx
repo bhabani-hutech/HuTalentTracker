@@ -165,9 +165,11 @@ export function InterviewScheduler({
   // Fetch job title if job_id is available
 
   useEffect(() => {
+    let isMounted = true;
+
     const fetchJobTitle = async () => {
       if (!candidate?.job_id) {
-        setJobTitle("Unspecified Position"); // Always update state
+        if (isMounted) setJobTitle("Unspecified Position");
         return;
       }
 
@@ -178,20 +180,23 @@ export function InterviewScheduler({
           .eq("id", candidate.job_id)
           .single();
 
-        if (error) {
-          console.error("Error fetching job title:", error);
-          setJobTitle("Unknown Position");
-        } else if (data) {
-          setJobTitle(data.title);
+        if (isMounted) {
+          setJobTitle(
+            error ? "Unknown Position" : data?.title || "Unknown Position",
+          );
         }
       } catch (err) {
         console.error("Unexpected error fetching job title:", err);
-        setJobTitle("Unknown Position");
+        if (isMounted) setJobTitle("Unknown Position");
       }
     };
 
     fetchJobTitle();
-  }, [candidate?.job_id]); // Dependency array
+
+    return () => {
+      isMounted = false;
+    };
+  }, [candidate?.job_id]);
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
