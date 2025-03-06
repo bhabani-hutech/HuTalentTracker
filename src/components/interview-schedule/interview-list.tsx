@@ -1,4 +1,4 @@
-import { useState ,useEffect} from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -150,7 +150,9 @@ export function InterviewList() {
 
                   <TableCell>
                     <Select
-                      defaultValue={interview.interview_round?.name || "HR round"}
+                      defaultValue={
+                        interview.interview_round?.name || "HR round"
+                      }
                       onValueChange={(value) => {
                         console.log(
                           `Changed status for ${interview.id} to ${value}`,
@@ -182,9 +184,11 @@ export function InterviewList() {
                     <Button
                       variant="ghost"
                       size="icon"
-                      onClick={() =>
-                        (window.location.href = `/interview-feedback?interview=${interview.id}`)
-                      }
+                      onClick={() => {
+                        // Use React Router navigation instead of window.location
+                        const feedbackUrl = `/interview-feedback?interview=${interview.id}`;
+                        window.open(feedbackUrl, "_blank");
+                      }}
                     >
                       <MessageSquare className="h-4 w-4" />
                       <span className="sr-only">Add Feedback</span>

@@ -16,6 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { supabase } from "@/lib/supabase";
 
 interface JobPosition {
   id?: number;
@@ -42,6 +43,41 @@ export function JobPositionForm({
     department: "",
     status: "Active",
   });
+  const [departments, setDepartments] = useState<{ name: string }[]>([]);
+
+  // Fetch departments from own organizations
+  useEffect(() => {
+    const fetchDepartments = async () => {
+      try {
+        const { data: organizations, error } = await supabase
+          .from("organizations")
+          .select("*")
+          .eq("is_own_org", true);
+
+        if (error) throw error;
+
+        // Extract all departments from own organizations
+        const allDepartments: { name: string }[] = [];
+        for (const org of organizations || []) {
+          if (org.departments && Array.isArray(org.departments)) {
+            for (const dept of org.departments) {
+              if (
+                dept.name &&
+                !allDepartments.some((d) => d.name === dept.name)
+              ) {
+                allDepartments.push({ name: dept.name });
+              }
+            }
+          }
+        }
+        setDepartments(allDepartments);
+      } catch (error) {
+        console.error("Error fetching organization departments:", error);
+      }
+    };
+
+    fetchDepartments();
+  }, []);
 
   useEffect(() => {
     if (initialData) {
@@ -84,14 +120,29 @@ export function JobPositionForm({
 
             <div className="space-y-2">
               <Label>Department</Label>
-              <Input
-                required
+              <Select
                 value={formData.department}
-                onChange={(e) =>
-                  setFormData({ ...formData, department: e.target.value })
+                onValueChange={(value) =>
+                  setFormData({ ...formData, department: value })
                 }
-                placeholder="Enter department"
-              />
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select department" />
+                </SelectTrigger>
+                <SelectContent>
+                  {departments.length > 0 ? (
+                    departments.map((dept, index) => (
+                      <SelectItem key={index} value={dept.name}>
+                        {dept.name}
+                      </SelectItem>
+                    ))
+                  ) : (
+                    <SelectItem value="" disabled>
+                      No departments available
+                    </SelectItem>
+                  )}
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="space-y-2">

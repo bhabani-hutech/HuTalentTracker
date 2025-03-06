@@ -249,8 +249,6 @@ export default function NewJob() {
                     ) : (
                       <SelectItem value="custom">Custom Location</SelectItem>
                     )}
-                    <SelectItem value="Remote">Remote</SelectItem>
-                    <SelectItem value="Hybrid">Hybrid</SelectItem>
                   </SelectContent>
                 </Select>
                 {form.watch("location") === "custom" && (

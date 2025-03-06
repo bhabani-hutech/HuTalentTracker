@@ -42,10 +42,6 @@ export function KanbanBoard({ selectedJobId }: KanbanBoardProps) {
   const { interviews, isLoading, updateInterview } = useInterviews();
   const { toast } = useToast();
   const [stages, setStages] = useState<{ id: string; stage: string }[]>([]);
-  const [visibleStages, setVisibleStages] = useState<
-    { id: string; stage: string }[]
-  >([]);
-  const [startStageIndex, setStartStageIndex] = useState(0);
   const [groupedItems, setGroupedItems] = useState<
     Record<string, KanbanItem[]>
   >({});
@@ -87,10 +83,6 @@ export function KanbanBoard({ selectedJobId }: KanbanBoardProps) {
           .order("stage_order", { ascending: true });
         if (error) throw error;
         setStages(data || []);
-
-        // Initialize visible stages (first 4)
-        const initialVisibleCount = Math.min(4, data?.length || 0);
-        setVisibleStages(data?.slice(0, initialVisibleCount) || []);
 
         // Initialize visible item counts
         const counts: Record<string, number> = {};
@@ -319,23 +311,6 @@ export function KanbanBoard({ selectedJobId }: KanbanBoardProps) {
     }));
   };
 
-  // Navigation for stages
-  const showNextStages = () => {
-    if (startStageIndex + 4 < stages.length) {
-      const newStartIndex = startStageIndex + 1;
-      setStartStageIndex(newStartIndex);
-      setVisibleStages(stages.slice(newStartIndex, newStartIndex + 4));
-    }
-  };
-
-  const showPrevStages = () => {
-    if (startStageIndex > 0) {
-      const newStartIndex = startStageIndex - 1;
-      setStartStageIndex(newStartIndex);
-      setVisibleStages(stages.slice(newStartIndex, newStartIndex + 4));
-    }
-  };
-
   // Get unique job positions from candidates
   const getUniquePositions = () => {
     const positions = new Set<string>();
@@ -358,58 +333,14 @@ export function KanbanBoard({ selectedJobId }: KanbanBoardProps) {
 
   return (
     <>
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={showPrevStages}
-            disabled={startStageIndex === 0}
-          >
-            <ChevronLeft className="h-4 w-4" />
-            Previous
-          </Button>
-          <Select
-            value={jobFilter || "all"}
-            onValueChange={(value) =>
-              setJobFilter(value === "all" ? null : value)
-            }
-          >
-            <SelectTrigger className="w-[200px]">
-              <SelectValue placeholder="Filter by position" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Positions</SelectItem>
-              {getUniquePositions()
-                .map((position) =>
-                  position ? (
-                    <SelectItem key={position} value={position}>
-                      {position}
-                    </SelectItem>
-                  ) : null,
-                )
-                .filter(Boolean)}
-            </SelectContent>
-          </Select>
-        </div>
-
+      <div className="mb-4">
         <span className="text-sm text-muted-foreground">
-          Showing stages {startStageIndex + 1} to{" "}
-          {Math.min(startStageIndex + 4, stages.length)} of {stages.length}
+          Showing all {stages.length} stages
         </span>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={showNextStages}
-          disabled={startStageIndex + 4 >= stages.length}
-        >
-          Next
-          <ChevronRight className="h-4 w-4" />
-        </Button>
       </div>
 
-      <div className="flex gap-4 overflow-x-auto pb-4 h-[calc(100vh-180px)]">
-        {visibleStages.map((stage) => {
+      <div className="flex flex-wrap gap-4 pb-4 h-[calc(100vh-180px)] overflow-y-auto">
+        {stages.map((stage) => {
           // Apply position filter if selected
           const stageItems = groupedItems[stage.id] || [];
           const filteredStageItems = filterItemsByPosition(
@@ -423,7 +354,7 @@ export function KanbanBoard({ selectedJobId }: KanbanBoardProps) {
           return (
             <Card
               key={stage.id}
-              className="min-w-[300px] bg-gray-50 shadow-md rounded-lg flex flex-col h-full"
+              className="w-[250px] bg-gray-50 shadow-md rounded-lg flex flex-col h-auto"
             >
               <CardHeader className="py-3 bg-gray-200 rounded-t-lg">
                 <CardTitle className="text-sm font-medium flex items-center justify-between text-gray-700">

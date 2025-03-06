@@ -194,23 +194,8 @@ export function EditCandidateDialog({
                         {location.name} - {location.address}
                       </SelectItem>
                     ))}
-                    <SelectItem value="divider" disabled>
-                      ────────────────
-                    </SelectItem>
                   </>
                 )}
-                <SelectItem value="Remote">Remote</SelectItem>
-                <SelectItem value="Hybrid">Hybrid</SelectItem>
-                <SelectItem value="New York, NY">New York, NY</SelectItem>
-                <SelectItem value="San Francisco, CA">
-                  San Francisco, CA
-                </SelectItem>
-                <SelectItem value="London, UK">London, UK</SelectItem>
-                <SelectItem value="Bangalore, India">
-                  Bangalore, India
-                </SelectItem>
-                <SelectItem value="Singapore">Singapore</SelectItem>
-                <SelectItem value="Other">Other</SelectItem>
               </SelectContent>
             </Select>
             {watch("location") === "Other" && (
@@ -243,39 +228,91 @@ export function EditCandidateDialog({
 
           <div className="space-y-2">
             <Label>Skills</Label>
-            <Select
-              value=""
-              onValueChange={(value) => {
-                const currentSkills = watch("skills") || "";
-                const skillsArray = currentSkills
-                  ? currentSkills.split(",").map((s) => s.trim())
-                  : [];
-                if (!skillsArray.includes(value)) {
-                  skillsArray.push(value);
-                  setValue("skills", skillsArray.join(", "));
-                }
-              }}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select skills to add" />
-              </SelectTrigger>
-              <SelectContent>
-                {allSkills.length > 0 ? (
-                  allSkills.map((skill) => (
-                    <SelectItem key={skill.id} value={skill.name}>
-                      {skill.name} ({skill.category})
-                    </SelectItem>
-                  ))
-                ) : (
-                  <SelectItem disabled>No skills available</SelectItem>
-                )}
-              </SelectContent>
-            </Select>
-            <Textarea
-              {...register("skills")}
-              placeholder="Enter skills (comma-separated)"
-              className="min-h-[100px] mt-2"
-            />
+            <div className="flex flex-col gap-2">
+              {/* Select Dropdown */}
+              <Select
+                value=""
+                onValueChange={(value) => {
+                  try {
+                    const currentSkills = watch("skills") || "";
+                    const skillsArray = currentSkills
+                      ? currentSkills
+                          .split(",")
+                          .map((s) => s.trim())
+                          .filter(Boolean)
+                      : [];
+
+                    if (!skillsArray.includes(value)) {
+                      skillsArray.push(value);
+                      setValue("skills", skillsArray.join(", "));
+                    }
+                  } catch (error) {
+                    console.error("Error adding skill:", error);
+                  }
+                }}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select skills to add" />
+                </SelectTrigger>
+                <SelectContent>
+                  {allSkills.length > 0 ? (
+                    allSkills.map((skill) => (
+                      <SelectItem key={skill.id} value={skill.name}>
+                        {skill.name} ({skill.category})
+                      </SelectItem>
+                    ))
+                  ) : (
+                    <SelectItem disabled>No skills available</SelectItem>
+                  )}
+                </SelectContent>
+              </Select>
+
+              {/* Display Selected Skills */}
+              <div className="flex flex-wrap gap-2 mt-2">
+                {(() => {
+                  try {
+                    const skillsString = watch("skills") || "";
+                    if (!skillsString) return null;
+
+                    const skillsArray = skillsString
+                      .split(",")
+                      .map((s) => s.trim())
+                      .filter(Boolean);
+
+                    return skillsArray.map((skill, index) => (
+                      <div
+                        key={index}
+                        className="bg-gray-100 text-gray-800 px-2 py-1 rounded-md flex items-center gap-1"
+                      >
+                        <span>{skill}</span>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          className="h-4 w-4 p-0 hover:bg-transparent"
+                          onClick={() => {
+                            try {
+                              const currentSkills = watch("skills") || "";
+                              const updatedSkills = currentSkills
+                                .split(",")
+                                .map((s) => s.trim())
+                                .filter((s) => s && s !== skill);
+                              setValue("skills", updatedSkills.join(", "));
+                            } catch (error) {
+                              console.error("Error removing skill:", error);
+                            }
+                          }}
+                        >
+                          <span className="text-xs">×</span>
+                        </Button>
+                      </div>
+                    ));
+                  } catch (error) {
+                    console.error("Error rendering skills:", error);
+                    return null;
+                  }
+                })()}
+              </div>
+            </div>
           </div>
 
           <DialogFooter>
