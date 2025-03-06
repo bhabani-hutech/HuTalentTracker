@@ -4,6 +4,7 @@ import Home from "./components/home";
 import ResumeSourcing from "./pages/resume-sourcing";
 import InterviewFeedback from "./pages/interview-feedback";
 import InterviewKanban from "./pages/interview-kanban";
+import InterviewFlow from "./pages/interview-flow";
 import Settings from "./pages/settings";
 import routes from "tempo-routes";
 import { Icons } from "@/components/icons";
@@ -29,6 +30,7 @@ import {
   Database,
   Settings as SettingsIcon,
   Briefcase,
+  GitBranch,
 } from "lucide-react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "./components/ui/toaster";
@@ -64,6 +66,11 @@ const navigationItems: NavItem[] = [
     title: "Interview Pipeline",
     href: "/interview-kanban",
     icon: ListTodo,
+  },
+  {
+    title: "Interview Flow",
+    href: "/interview-flow",
+    icon: GitBranch,
   },
   {
     title: "Status Tracking",
@@ -117,6 +124,7 @@ function AppContent() {
             />
             {/* Interview Feedback routes */}
             <Route path="/interview-kanban" element={<InterviewKanban />} />
+            <Route path="/interview-flow" element={<InterviewFlow />} />
             <Route path="/interview-feedback" element={<InterviewFeedback />}>
               <Route path=":interviewId" element={<InterviewFeedback />} />
               <Route

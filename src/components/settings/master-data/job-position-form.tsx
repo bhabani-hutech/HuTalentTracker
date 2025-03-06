@@ -137,7 +137,7 @@ export function JobPositionForm({
                       </SelectItem>
                     ))
                   ) : (
-                    <SelectItem value="" disabled>
+                    <SelectItem value="None" disabled>
                       No departments available
                     </SelectItem>
                   )}

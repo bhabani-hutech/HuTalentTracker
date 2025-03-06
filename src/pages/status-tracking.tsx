@@ -133,7 +133,6 @@ export default function StatusTracking() {
               <SelectValue placeholder="Select job position" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">All Positions</SelectItem>
               {jobPositions.map((job) => (
                 <SelectItem key={job.id} value={job.id}>
                   {job.title}
