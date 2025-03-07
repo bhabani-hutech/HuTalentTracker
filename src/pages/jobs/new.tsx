@@ -151,6 +151,9 @@ export default function NewJob() {
     fetchOwnOrgLocations();
   }, []);
 
+  // Alternative approach using the API hook (commented out for reference)
+  // const { locations: orgLocations, isLoading: isLoadingLocations } = useLocations();
+
   const addRequirement = () => {
     if (newRequirement.trim()) {
       const currentRequirements = form.getValues("requirements") || [];

@@ -1,28 +1,30 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 
-interface Locations {
+interface Location {
   id: number;
   name: string;
   address?: string;
 }
 
 export function useLocations() {
+  const queryClient = useQueryClient();
+
   const {
-    data: organizations,
+    data: locations,
     isLoading,
     error,
   } = useQuery({
     queryKey: ["locations"],
     queryFn: async () => {
-        const { data, error } = await supabase
-          .from("organizations")
-          .select("*")
-          .eq("is_own_org", true);
+      const { data, error } = await supabase
+        .from("organizations")
+        .select("*")
+        .eq("is_own_org", true);
 
       if (error) throw error;
-      return data as Locations[];
+      return data as Location[];
     },
   });
 
@@ -43,7 +45,7 @@ export function useLocations() {
     return () => {
       subscription.unsubscribe();
     };
-  }, []);
+  }, [queryClient]);
 
   return { locations, isLoading, error };
 }
