@@ -24,17 +24,20 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"; // Adjust path as needed
 import { JobType, JobStatus } from "@/types/database"; // Adjust path as needed
 import { supabase } from "@/lib/supabase";
+import { useLocations } from "@/lib/api/hooks/useLocations";
 
 export default function NewJob() {
   const { id } = useParams();
   const { jobs, createJob, updateJob } = useJobs();
   const { departments } = useDepartments();
+  const { locations } = useLocations();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [locations, setLocations] = useState<
-    { id: number; name: string; address: string }[]
-  >([]);
-
+  // const [locations, setLocations] = useState<
+  //   { id: number; name: string; address: string }[]
+  // >([]);
+  console.log(locations?.[0]?.locations, JSON.stringify(locations));
+  // console.log(location, departments);
   const form = useForm<z.infer<typeof jobFormSchema>>({
     resolver: zodResolver(jobFormSchema),
     defaultValues: {
@@ -99,7 +102,7 @@ export default function NewJob() {
         });
       }
     },
-    [id, createJob, updateJob, navigate, toast],
+    [id, createJob, updateJob, navigate, toast]
   );
 
   useEffect(() => {
@@ -112,44 +115,44 @@ export default function NewJob() {
   }, [id, jobs, form]);
 
   // Fetch locations from own organizations
-  useEffect(() => {
-    const fetchOwnOrgLocations = async () => {
-      try {
-        const { data: organizations, error } = await supabase
-          .from("organizations")
-          .select("*")
-          .eq("is_own_org", true);
+  // useEffect(() => {
+  //   const fetchOwnOrgLocations = async () => {
+  //     try {
+  //       const { data: organizations, error } = await supabase
+  //         .from("organizations")
+  //         .select("*")
+  //         .eq("is_own_org", true);
 
-        if (error) throw error;
+  //       if (error) throw error;
 
-        // Extract all locations from own organizations
-        const allLocations = [];
-        for (const org of organizations || []) {
-          if (org.locations && Array.isArray(org.locations)) {
-            for (const location of org.locations) {
-              allLocations.push({
-                id: Date.now() + Math.random(), // Generate a unique ID
-                name: location.name,
-                address: [
-                  location.address,
-                  location.city,
-                  location.state,
-                  location.country,
-                ]
-                  .filter(Boolean)
-                  .join(", "),
-              });
-            }
-          }
-        }
-        setLocations(allLocations);
-      } catch (error) {
-        console.error("Error fetching organization locations:", error);
-      }
-    };
+  //       // Extract all locations from own organizations
+  //       const allLocations = [];
+  //       for (const org of organizations || []) {
+  //         if (org.locations && Array.isArray(org.locations)) {
+  //           for (const location of org.locations) {
+  //             allLocations.push({
+  //               id: Date.now() + Math.random(), // Generate a unique ID
+  //               name: location.name,
+  //               address: [
+  //                 location.address,
+  //                 location.city,
+  //                 location.state,
+  //                 location.country,
+  //               ]
+  //                 .filter(Boolean)
+  //                 .join(", "),
+  //             });
+  //           }
+  //         }
+  //       }
+  //       setLocations(allLocations);
+  //     } catch (error) {
+  //       console.error("Error fetching organization locations:", error);
+  //     }
+  //   };
 
-    fetchOwnOrgLocations();
-  }, []);
+  //   fetchOwnOrgLocations();
+  // }, []);
 
   // Alternative approach using the API hook (commented out for reference)
   // const { locations: orgLocations, isLoading: isLoadingLocations } = useLocations();
@@ -232,7 +235,6 @@ export default function NewJob() {
                   </p>
                 )}
               </div>
-
               <div className="space-y-2">
                 <Label>Location</Label>
                 <Select
@@ -243,15 +245,14 @@ export default function NewJob() {
                     <SelectValue placeholder="Select location" />
                   </SelectTrigger>
                   <SelectContent>
-                    {locations.length > 0 ? (
-                      locations.map((location) => (
-                        <SelectItem key={location.id} value={location.name}>
-                          {location.name} - {location.address}
-                        </SelectItem>
-                      ))
-                    ) : (
-                      <SelectItem value="custom">Custom Location</SelectItem>
-                    )}
+                 
+                     {
+                      locations?.[0]?.locations?.map((location) => ( 
+                    <SelectItem key={location?.id} value={location?.name}>
+                      {location?.name} - {location?.address}
+                    </SelectItem>
+                   ))
+                  }
                   </SelectContent>
                 </Select>
                 {form.watch("location") === "custom" && (
@@ -325,7 +326,7 @@ export default function NewJob() {
                           <SelectItem key={year} value={year.toString()}>
                             {year} {year === 1 ? "year" : "years"}
                           </SelectItem>
-                        ),
+                        )
                       )}
                     </SelectContent>
                   </Select>
@@ -356,7 +357,7 @@ export default function NewJob() {
                           >
                             {year} {year === 1 ? "year" : "years"}
                           </SelectItem>
-                        ),
+                        )
                       )}
                     </SelectContent>
                   </Select>
@@ -432,14 +433,14 @@ export default function NewJob() {
                     try {
                       const generated = await generateJobDescription(
                         title,
-                        level,
+                        level
                       );
 
                       form.setValue("description", generated.description);
                       form.setValue("requirements", generated.requirements);
                       form.setValue(
                         "responsibilities",
-                        generated.responsibilities,
+                        generated.responsibilities
                       );
                       form.setValue("skills", generated.skills);
 
@@ -556,7 +557,7 @@ export default function NewJob() {
                       const currentRequirements =
                         form.getValues("requirements");
                       const updatedRequirements = currentRequirements.filter(
-                        (_, i) => i !== index,
+                        (_, i) => i !== index
                       );
                       form.setValue("requirements", updatedRequirements);
                       form.trigger("requirements"); // Trigger validation
@@ -608,7 +609,7 @@ export default function NewJob() {
                         currentResponsibilities.filter((_, i) => i !== index);
                       form.setValue(
                         "responsibilities",
-                        updatedResponsibilities,
+                        updatedResponsibilities
                       );
                       form.trigger("responsibilities"); // Trigger validation
                     }}

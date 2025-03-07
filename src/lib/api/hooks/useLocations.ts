@@ -11,6 +11,7 @@ interface Location {
 export function useLocations() {
   const queryClient = useQueryClient();
 
+  
   const {
     data: locations,
     isLoading,
@@ -23,6 +24,7 @@ export function useLocations() {
         .select("*")
         .eq("is_own_org", true);
 
+        console.log(locations)
       if (error) throw error;
       return data as Location[];
     },
