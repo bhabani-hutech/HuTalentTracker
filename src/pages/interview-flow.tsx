@@ -4,8 +4,6 @@ import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/lib/supabase";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -20,7 +18,18 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/use-toast";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { Info, MessageSquare } from "lucide-react";
+import { CommentDialog } from "@/components/interview-kanban/comment-dialog";
+import { useComments } from "@/lib/api/hooks/useComments";
 
 export default function InterviewFlow() {
   const [stages, setStages] = useState([]);
@@ -34,6 +43,10 @@ export default function InterviewFlow() {
     fromStage: null,
     toStage: null,
     comment: "",
+  });
+  const [commentDialog, setCommentDialog] = useState({
+    isOpen: false,
+    item: null,
   });
   const { toast } = useToast();
 
@@ -77,7 +90,9 @@ export default function InterviewFlow() {
         // Fetch candidates with their stages
         const { data: candidatesData } = await supabase
           .from("candidates")
-          .select("id, name, stage_id, job_id, created_at, source, jobs(title)")
+          .select(
+            "id, name, stage_id, job_id, created_at, updated_at, source, move_reason, jobs(title)",
+          )
           .eq("job_id", selectedJobId)
           .order("updated_at", { ascending: false });
 
@@ -112,7 +127,9 @@ export default function InterviewFlow() {
       try {
         const { data } = await supabase
           .from("candidates")
-          .select("id, name, stage_id, job_id, created_at, source, jobs(title)")
+          .select(
+            "id, name, stage_id, job_id, created_at, updated_at, source, move_reason, jobs(title)",
+          )
           .eq("job_id", selectedJobId)
           .order("updated_at", { ascending: false });
 
@@ -287,28 +304,68 @@ export default function InterviewFlow() {
                       </div>
                     ) : (
                       candidatesByStage[stage.id]?.map((candidate) => (
-                        <div
-                          key={candidate.id}
-                          className="p-3 cursor-move bg-white shadow-sm hover:shadow-md transition-all duration-200 rounded-md border border-gray-200 w-[200px]"
-                          draggable
-                          onDragStart={(e) =>
-                            handleDragStart(e, candidate, stage)
-                          }
-                        >
-                          <div className="font-medium text-gray-900">
-                            {candidate.name}
-                          </div>
-                          {candidate.jobs?.title && (
-                            <div className="text-xs text-gray-600 mt-1">
-                              {candidate.jobs.title}
-                            </div>
-                          )}
-                          {candidate.move_reason && (
-                            <div className="text-xs text-blue-600 mt-1 italic">
-                              "{candidate.move_reason}"
-                            </div>
-                          )}
-                        </div>
+                        <TooltipProvider key={candidate.id}>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <div
+                                className="p-3 cursor-move bg-white shadow-sm hover:shadow-md transition-all duration-200 rounded-md border border-gray-200 w-[200px] relative group"
+                                draggable
+                                onDragStart={(e) =>
+                                  handleDragStart(e, candidate, stage)
+                                }
+                              >
+                                <div className="font-medium text-gray-900">
+                                  {candidate.name}
+                                  <div className="absolute top-2 right-2 flex space-x-1">
+                                    {candidate.move_reason && (
+                                      <div className="text-blue-500">
+                                        <Info className="h-4 w-4" />
+                                      </div>
+                                    )}
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      className="h-5 w-5 p-0 text-gray-500 hover:text-gray-700"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        e.preventDefault();
+                                        setCommentDialog({
+                                          isOpen: true,
+                                          item: {
+                                            id: candidate.id,
+                                            name: candidate.name,
+                                            itemType: "candidate",
+                                          },
+                                        });
+                                      }}
+                                    >
+                                      <MessageSquare className="h-4 w-4" />
+                                    </Button>
+                                  </div>
+                                </div>
+                                {candidate.jobs?.title && (
+                                  <div className="text-xs text-gray-600 mt-1">
+                                    {candidate.jobs.title}
+                                  </div>
+                                )}
+                                {candidate.updated_at && (
+                                  <div className="text-xs text-gray-500 mt-1">
+                                    Last updated:{" "}
+                                    {new Date(
+                                      candidate.updated_at,
+                                    ).toLocaleString()}
+                                  </div>
+                                )}
+                              </div>
+                            </TooltipTrigger>
+                            {candidate.move_reason && (
+                              <TooltipContent>
+                                <p className="font-semibold">Move Reason:</p>
+                                <p>{candidate.move_reason}</p>
+                              </TooltipContent>
+                            )}
+                          </Tooltip>
+                        </TooltipProvider>
                       ))
                     )}
                   </div>
@@ -367,6 +424,17 @@ export default function InterviewFlow() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Comments Dialog */}
+      {commentDialog.item && (
+        <CommentDialog
+          isOpen={commentDialog.isOpen}
+          onClose={() => setCommentDialog({ isOpen: false, item: null })}
+          itemId={commentDialog.item.id}
+          itemType={commentDialog.item.itemType}
+          itemName={commentDialog.item.name}
+        />
+      )}
     </div>
   );
 }
