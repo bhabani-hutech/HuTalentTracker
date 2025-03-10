@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
-import { Dialog, DialogContent } from "../components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader } from "../components/ui/dialog";
 import { InterviewFeedbackForm } from "../components/interview-feedback/feedback-form";
 import { CandidateList } from "../components/interview-feedback/candidate-list";
 import { useFeedback } from "@/lib/api/hooks/useFeedback";
@@ -9,6 +9,7 @@ import { useInterviews } from "@/lib/api/hooks/useInterviews";
 import { Icons } from "@/components/icons";
 import { FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { DialogTitle } from "@radix-ui/react-dialog";
 
 export default function InterviewFeedback() {
   const location = useLocation();
@@ -29,7 +30,7 @@ export default function InterviewFeedback() {
   } = useInterviews(interviewId || undefined);
 
   const [selectedInterviewId, setSelectedInterviewId] = useState<string | null>(
-    null,
+    null
   );
 
   const [selectedInterview, setSelectedInterview] = useState<any>(null);
@@ -46,7 +47,7 @@ export default function InterviewFeedback() {
               *,
               candidate:candidates!candidate_id(*),
               interviewer:users!interviewer_id(*)
-              `,
+              `
             )
             .eq("id", interviewId)
             .single();
@@ -61,7 +62,7 @@ export default function InterviewFeedback() {
               await supabase
                 .from("feedback")
                 .select(
-                  "*, interview:interviews(*), candidate:candidates(*), interviewer:users(*)",
+                  "*, interview:interviews(*), candidate:candidates(*), interviewer:users(*)"
                 )
                 .eq("interview_id", interviewId)
                 .order("created_at", { ascending: false })
@@ -124,6 +125,9 @@ export default function InterviewFeedback() {
         }}
       >
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-background">
+          <DialogHeader>
+            <DialogTitle>Edit Candidate</DialogTitle>
+          </DialogHeader>
           <InterviewFeedbackForm
             existingFeedback={selectedFeedback}
             selectedInterviewId={selectedInterviewId}

@@ -17,6 +17,7 @@ import { useCandidates } from "@/lib/api/hooks/useCandidates";
 import { useInterviews } from "@/lib/api/hooks/useInterviews";
 import { format } from "date-fns";
 import { useSkills } from "@/lib/api/hooks/useSkills";
+import { Console } from "console";
 
 interface Props {
   existingFeedback?: InterviewFeedback;
@@ -74,7 +75,7 @@ export function InterviewFeedbackForm({
           interview: selectedInterview,
           candidate: selectedInterview?.candidate,
           interviewer: selectedInterview?.interviewer,
-        },
+        }
   );
 
   // Initialize skill ratings based on candidate skills
@@ -191,7 +192,7 @@ export function InterviewFeedbackForm({
       ))}
     </div>
   );
-
+  console.log(skillRatings);
   return (
     <div className="grid gap-4 py-4">
       <div className="grid gap-4 md:grid-cols-2">
@@ -220,7 +221,9 @@ export function InterviewFeedbackForm({
           type="text"
           value={
             formData.interview
-              ? `${format(new Date(formData.interview.date), "PPp")} - ${formData.interview.type}`
+              ? `${format(new Date(formData.interview.date), "PPp")} - ${
+                  formData.interview.type
+                }`
               : ""
           }
           disabled
@@ -237,50 +240,15 @@ export function InterviewFeedbackForm({
               key={skillName}
               className="flex items-center justify-between border p-3 rounded-md"
             >
-              <span className="font-medium">{skillName}</span>
+              <span className="font-medium"> {skillName}</span>
               {renderSkillRatingButtons(skillName)}
             </div>
           ))}
-
-          {/* Add skill button */}
-          <div className="mt-2">
-            <Select
-              onValueChange={(value) => {
-                if (!skillRatings[value]) {
-                  setSkillRatings({ ...skillRatings, [value]: 0 });
-                }
-              }}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Add another skill to rate" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="" disabled>
-                  Select a skill
-                </SelectItem>
-                {technicalSkills.map((skill) => (
-                  <SelectItem key={`tech-${skill.id}`} value={skill.name}>
-                    {skill.name} (Technical)
-                  </SelectItem>
-                ))}
-                {domainSkills.map((skill) => (
-                  <SelectItem key={`domain-${skill.id}`} value={skill.name}>
-                    {skill.name} (Domain)
-                  </SelectItem>
-                ))}
-                {softSkills.map((skill) => (
-                  <SelectItem key={`soft-${skill.id}`} value={skill.name}>
-                    {skill.name} (Soft)
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
         </div>
       </div>
 
       {/* Overall ratings */}
-      <div className="space-y-2 mt-4">
+      {/* <div className="space-y-2 mt-4">
         <Label>Overall Domain Skills</Label>
         {renderRatingButtons("domain_skills")}
       </div>
@@ -291,7 +259,7 @@ export function InterviewFeedbackForm({
       <div className="space-y-2">
         <Label>Overall Soft Skills</Label>
         {renderRatingButtons("soft_skills")}
-      </div>
+      </div> */}
 
       <div className="space-y-2">
         <Label>Key Strengths</Label>
