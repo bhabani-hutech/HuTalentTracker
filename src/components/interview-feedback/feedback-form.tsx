@@ -17,7 +17,6 @@ import { useCandidates } from "@/lib/api/hooks/useCandidates";
 import { useInterviews } from "@/lib/api/hooks/useInterviews";
 import { format } from "date-fns";
 import { useSkills } from "@/lib/api/hooks/useSkills";
-import { Console } from "console";
 
 interface Props {
   existingFeedback?: InterviewFeedback;
@@ -47,8 +46,13 @@ export function InterviewFeedbackForm({
       ? {
           ...existingFeedback,
           technical_skills: existingFeedback.technical_skills || 0,
+          communication_skills: existingFeedback.communication_skills || 0,
+          problem_solving: existingFeedback.problem_solving || 0,
+          experience_fit: existingFeedback.experience_fit || 0,
+          cultural_fit: existingFeedback.cultural_fit || 0,
           soft_skills: existingFeedback.soft_skills || 0,
           domain_skills: existingFeedback.domain_skills || 0,
+          skill_set: existingFeedback.skill_set || 0,
           strengths: existingFeedback.strengths || "",
           improvements: existingFeedback.improvements || "",
           recommendation: existingFeedback.recommendation || "Maybe",
@@ -63,8 +67,13 @@ export function InterviewFeedbackForm({
         }
       : {
           technical_skills: 0,
+          communication_skills: 0,
+          problem_solving: 0,
+          experience_fit: 0,
+          cultural_fit: 0,
           soft_skills: 0,
           domain_skills: 0,
+          skill_set: 0,
           strengths: "",
           improvements: "",
           recommendation: "Maybe",
@@ -75,42 +84,82 @@ export function InterviewFeedbackForm({
           interview: selectedInterview,
           candidate: selectedInterview?.candidate,
           interviewer: selectedInterview?.interviewer,
-        }
+        },
   );
 
-  // Initialize skill ratings based on candidate skills
+  // Initialize skill ratings based on existing feedback or candidate skills
   useEffect(() => {
-    if (formData.candidate?.skills) {
-      try {
-        const candidateSkills =
-          typeof formData.candidate.skills === "string"
-            ? formData.candidate.skills.split(",").map((s) => s.trim())
-            : [];
+    try {
+      // First check if we have existing feedback with skill ratings
+      if (existingFeedback?.skill_ratings) {
+        setSkillRatings(existingFeedback.skill_ratings);
+        return;
+      }
 
-        const initialRatings: Record<string, number> = {};
-        candidateSkills.forEach((skill) => {
-          initialRatings[skill] = 0;
-        });
+      // If no existing ratings, initialize from candidate skills
+      const initialRatings: Record<string, number> = {};
 
-        // Add some default skills if none found
-        if (candidateSkills.length === 0) {
-          if (technicalSkills.length > 0) {
-            initialRatings[technicalSkills[0].name] = 0;
-          }
-          if (domainSkills.length > 0) {
-            initialRatings[domainSkills[0].name] = 0;
-          }
-          if (softSkills.length > 0) {
-            initialRatings[softSkills[0].name] = 0;
-          }
+      // Process candidate skills if available
+      if (formData.candidate?.skills) {
+        let candidateSkills = [];
+        if (typeof formData.candidate.skills === "string") {
+          candidateSkills = formData.candidate.skills
+            .split(",")
+            .map((s) => s.trim());
+        } else if (Array.isArray(formData.candidate.skills)) {
+          candidateSkills = formData.candidate.skills;
         }
 
-        setSkillRatings(initialRatings);
-      } catch (error) {
-        console.error("Error parsing candidate skills:", error);
+        // Add candidate skills to ratings
+        candidateSkills.forEach((skill) => {
+          if (skill && typeof skill === "string") {
+            initialRatings[skill] = 0;
+          }
+        });
       }
+
+      // Add default skills from each category if no candidate skills found
+      if (Object.keys(initialRatings).length === 0) {
+        // Add technical skills
+        if (technicalSkills && technicalSkills.length > 0) {
+          technicalSkills.slice(0, 2).forEach((skill) => {
+            if (skill && skill.name) {
+              initialRatings[skill.name] = 0;
+            }
+          });
+        }
+
+        // Add domain skills
+        if (domainSkills && domainSkills.length > 0) {
+          domainSkills.slice(0, 2).forEach((skill) => {
+            if (skill && skill.name) {
+              initialRatings[skill.name] = 0;
+            }
+          });
+        }
+
+        // Add soft skills
+        if (softSkills && softSkills.length > 0) {
+          softSkills.slice(0, 2).forEach((skill) => {
+            if (skill && skill.name) {
+              initialRatings[skill.name] = 0;
+            }
+          });
+        }
+      }
+
+      setSkillRatings(initialRatings);
+    } catch (error) {
+      console.error("Error initializing skill ratings:", error);
+      setSkillRatings({});
     }
-  }, [formData.candidate, technicalSkills, domainSkills, softSkills]);
+  }, [
+    existingFeedback,
+    formData.candidate,
+    technicalSkills,
+    domainSkills,
+    softSkills,
+  ]);
 
   const handleSubmit = async () => {
     try {
@@ -135,8 +184,13 @@ export function InterviewFeedbackForm({
         candidate_id: formData.candidate_id,
         interviewer_id: formData.interviewer_id,
         technical_skills: formData.technical_skills || 0,
+        communication_skills: formData.communication_skills || 0,
+        problem_solving: formData.problem_solving || 0,
+        experience_fit: formData.experience_fit || 0,
+        cultural_fit: formData.cultural_fit || 0,
         soft_skills: formData.soft_skills || 0,
         domain_skills: formData.domain_skills || 0,
+        skill_set: formData.skill_set || 0,
         skill_ratings: skillRatings, // Store the detailed skill ratings
         strengths: formData.strengths || "",
         improvements: formData.improvements || "",
@@ -192,7 +246,7 @@ export function InterviewFeedbackForm({
       ))}
     </div>
   );
-  console.log(skillRatings);
+
   return (
     <div className="grid gap-4 py-4">
       <div className="grid gap-4 md:grid-cols-2">
@@ -235,31 +289,117 @@ export function InterviewFeedbackForm({
       <div className="space-y-4">
         <Label className="text-lg font-semibold">Skill-Specific Ratings</Label>
         <div className="grid gap-4">
-          {Object.keys(skillRatings).map((skillName) => (
-            <div
-              key={skillName}
-              className="flex items-center justify-between border p-3 rounded-md"
-            >
-              <span className="font-medium"> {skillName}</span>
-              {renderSkillRatingButtons(skillName)}
+          {Object.keys(skillRatings).length > 0 ? (
+            Object.keys(skillRatings).map((skillName) => (
+              <div
+                key={skillName}
+                className="flex items-center justify-between border p-3 rounded-md"
+              >
+                <span className="font-medium">{skillName}</span>
+                {renderSkillRatingButtons(skillName)}
+              </div>
+            ))
+          ) : (
+            <div className="text-sm text-gray-500 italic p-3 border rounded-md">
+              No specific skills to rate. Add skills from the dropdown below.
             </div>
-          ))}
+          )}
+        </div>
+
+        {/* Add skill dropdown */}
+        <div className="mt-4">
+          <Label>Add Skill to Rate</Label>
+          <div className="flex gap-2 mt-2">
+            <Select
+              onValueChange={(value) => {
+                if (value && !skillRatings[value]) {
+                  setSkillRatings({ ...skillRatings, [value]: 0 });
+                }
+              }}
+            >
+              <SelectTrigger className="flex-1">
+                <SelectValue placeholder="Select a skill to rate" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="" disabled>
+                  Select a skill
+                </SelectItem>
+                {technicalSkills &&
+                  technicalSkills.map((skill) =>
+                    skill && skill.id && skill.name ? (
+                      <SelectItem key={`tech-${skill.id}`} value={skill.name}>
+                        {skill.name} (Technical)
+                      </SelectItem>
+                    ) : null,
+                  )}
+                {domainSkills &&
+                  domainSkills.map((skill) =>
+                    skill && skill.id && skill.name ? (
+                      <SelectItem key={`domain-${skill.id}`} value={skill.name}>
+                        {skill.name} (Domain)
+                      </SelectItem>
+                    ) : null,
+                  )}
+                {softSkills &&
+                  softSkills.map((skill) =>
+                    skill && skill.id && skill.name ? (
+                      <SelectItem key={`soft-${skill.id}`} value={skill.name}>
+                        {skill.name} (Soft)
+                      </SelectItem>
+                    ) : null,
+                  )}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
       </div>
 
       {/* Overall ratings */}
-      {/* <div className="space-y-2 mt-4">
-        <Label>Overall Domain Skills</Label>
-        {renderRatingButtons("domain_skills")}
+      <div className="space-y-6 mt-6 border-t pt-6">
+        <h3 className="text-lg font-semibold">Overall Ratings</h3>
+
+        <div className="grid md:grid-cols-2 gap-6">
+          <div className="space-y-2">
+            <Label>Technical Skills</Label>
+            {renderRatingButtons("technical_skills")}
+          </div>
+
+          <div className="space-y-2">
+            <Label>Communication Skills</Label>
+            {renderRatingButtons("communication_skills")}
+          </div>
+
+          <div className="space-y-2">
+            <Label>Problem Solving</Label>
+            {renderRatingButtons("problem_solving")}
+          </div>
+
+          <div className="space-y-2">
+            <Label>Experience Fit</Label>
+            {renderRatingButtons("experience_fit")}
+          </div>
+
+          <div className="space-y-2">
+            <Label>Cultural Fit</Label>
+            {renderRatingButtons("cultural_fit")}
+          </div>
+
+          <div className="space-y-2">
+            <Label>Skill Set Match</Label>
+            {renderRatingButtons("skill_set")}
+          </div>
+
+          <div className="space-y-2">
+            <Label>Domain Knowledge</Label>
+            {renderRatingButtons("domain_skills")}
+          </div>
+
+          <div className="space-y-2">
+            <Label>Soft Skills</Label>
+            {renderRatingButtons("soft_skills")}
+          </div>
+        </div>
       </div>
-      <div className="space-y-2">
-        <Label>Overall Technical Skills</Label>
-        {renderRatingButtons("technical_skills")}
-      </div>
-      <div className="space-y-2">
-        <Label>Overall Soft Skills</Label>
-        {renderRatingButtons("soft_skills")}
-      </div> */}
 
       <div className="space-y-2">
         <Label>Key Strengths</Label>
