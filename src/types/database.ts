@@ -74,9 +74,6 @@ export interface InterviewFeedback {
   experience_fit: number;
   cultural_fit: number;
   skill_set: number;
-  soft_skills: number;
-  domain_skills: number;
-  skill_ratings?: Record<string, number>;
   strengths: string;
   improvements: string;
   recommendation: string;

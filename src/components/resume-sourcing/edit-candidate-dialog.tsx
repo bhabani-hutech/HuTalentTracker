@@ -113,7 +113,7 @@ export function EditCandidateDialog({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Edit Candidate</DialogTitle>
+          // <DialogTitle>Edit Candidate</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit(submitForm)} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">

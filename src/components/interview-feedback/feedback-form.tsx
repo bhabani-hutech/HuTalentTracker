@@ -81,15 +81,10 @@ export function InterviewFeedbackForm({
   useEffect(() => {
     if (formData.candidate?.skills) {
       try {
-        // Handle different formats of skills data
-        let candidateSkills = [];
-        if (typeof formData.candidate.skills === "string") {
-          candidateSkills = formData.candidate.skills
-            .split(",")
-            .map((s) => s.trim());
-        } else if (Array.isArray(formData.candidate.skills)) {
-          candidateSkills = formData.candidate.skills;
-        }
+        const candidateSkills =
+          typeof formData.candidate.skills === "string"
+            ? formData.candidate.skills.split(",").map((s) => s.trim())
+            : [];
 
         const initialRatings: Record<string, number> = {};
         candidateSkills.forEach((skill) => {
@@ -98,48 +93,23 @@ export function InterviewFeedbackForm({
 
         // Add some default skills if none found
         if (candidateSkills.length === 0) {
-          // Add default technical skills
           if (technicalSkills.length > 0) {
-            technicalSkills.slice(0, 2).forEach((skill) => {
-              initialRatings[skill.name] = 0;
-            });
+            initialRatings[technicalSkills[0].name] = 0;
           }
-
-          // Add default domain skills
           if (domainSkills.length > 0) {
-            domainSkills.slice(0, 2).forEach((skill) => {
-              initialRatings[skill.name] = 0;
-            });
+            initialRatings[domainSkills[0].name] = 0;
           }
-
-          // Add default soft skills
           if (softSkills.length > 0) {
-            softSkills.slice(0, 2).forEach((skill) => {
-              initialRatings[skill.name] = 0;
-            });
+            initialRatings[softSkills[0].name] = 0;
           }
         }
 
-        // If we have existing ratings from feedback, use those
-        if (existingFeedback?.skill_ratings) {
-          setSkillRatings({
-            ...initialRatings,
-            ...existingFeedback.skill_ratings,
-          });
-        } else {
-          setSkillRatings(initialRatings);
-        }
+        setSkillRatings(initialRatings);
       } catch (error) {
         console.error("Error parsing candidate skills:", error);
       }
     }
-  }, [
-    formData.candidate,
-    technicalSkills,
-    domainSkills,
-    softSkills,
-    existingFeedback,
-  ]);
+  }, [formData.candidate, technicalSkills, domainSkills, softSkills]);
 
   const handleSubmit = async () => {
     try {
@@ -205,6 +175,23 @@ export function InterviewFeedbackForm({
     </div>
   );
 
+  const renderSkillRatingButtons = (skillName: string) => (
+    <div className="flex gap-2">
+      {[1, 2, 3, 4, 5].map((rating) => (
+        <Button
+          key={rating}
+          variant={skillRatings[skillName] === rating ? "default" : "outline"}
+          className="h-8 w-8 text-xs"
+          onClick={() =>
+            setSkillRatings({ ...skillRatings, [skillName]: rating })
+          }
+        >
+          {rating}
+        </Button>
+      ))}
+    </div>
+  );
+
   return (
     <div className="grid gap-4 py-4">
       <div className="grid gap-4 md:grid-cols-2">
@@ -244,141 +231,51 @@ export function InterviewFeedbackForm({
       {/* Skill-specific ratings */}
       <div className="space-y-4">
         <Label className="text-lg font-semibold">Skill-Specific Ratings</Label>
+        <div className="grid gap-4">
+          {Object.keys(skillRatings).map((skillName) => (
+            <div
+              key={skillName}
+              className="flex items-center justify-between border p-3 rounded-md"
+            >
+              <span className="font-medium">{skillName}</span>
+              {renderSkillRatingButtons(skillName)}
+            </div>
+          ))}
 
-        {/* Technical Skills Section */}
-        <div className="border p-4 rounded-md">
-          <h3 className="font-medium mb-3">Technical Skills</h3>
-          <div className="space-y-3">
-            {Object.keys(skillRatings)
-              .filter((skill) =>
-                technicalSkills.some((ts) => ts.name === skill),
-              )
-              .map((skillName) => (
-                <div key={skillName} className="flex items-center gap-2">
-                  <span className="w-24 font-medium">{skillName}:</span>
-                  {[1, 2, 3, 4, 5].map((rating) => (
-                    <Button
-                      key={rating}
-                      variant={
-                        skillRatings[skillName] === rating
-                          ? "default"
-                          : "outline"
-                      }
-                      className="h-8 w-8 text-xs"
-                      onClick={() =>
-                        setSkillRatings({
-                          ...skillRatings,
-                          [skillName]: rating,
-                        })
-                      }
-                    >
-                      {rating}
-                    </Button>
-                  ))}
-                </div>
-              ))}
-          </div>
-        </div>
-
-        {/* Domain Skills Section */}
-        <div className="border p-4 rounded-md">
-          <h3 className="font-medium mb-3">Domain Skills</h3>
-          <div className="space-y-3">
-            {Object.keys(skillRatings)
-              .filter((skill) => domainSkills.some((ds) => ds.name === skill))
-              .map((skillName) => (
-                <div key={skillName} className="flex items-center gap-2">
-                  <span className="w-24 font-medium">{skillName}:</span>
-                  {[1, 2, 3, 4, 5].map((rating) => (
-                    <Button
-                      key={rating}
-                      variant={
-                        skillRatings[skillName] === rating
-                          ? "default"
-                          : "outline"
-                      }
-                      className="h-8 w-8 text-xs"
-                      onClick={() =>
-                        setSkillRatings({
-                          ...skillRatings,
-                          [skillName]: rating,
-                        })
-                      }
-                    >
-                      {rating}
-                    </Button>
-                  ))}
-                </div>
-              ))}
-          </div>
-        </div>
-
-        {/* Soft Skills Section */}
-        <div className="border p-4 rounded-md">
-          <h3 className="font-medium mb-3">Soft Skills</h3>
-          <div className="space-y-3">
-            {Object.keys(skillRatings)
-              .filter((skill) => softSkills.some((ss) => ss.name === skill))
-              .map((skillName) => (
-                <div key={skillName} className="flex items-center gap-2">
-                  <span className="w-24 font-medium">{skillName}:</span>
-                  {[1, 2, 3, 4, 5].map((rating) => (
-                    <Button
-                      key={rating}
-                      variant={
-                        skillRatings[skillName] === rating
-                          ? "default"
-                          : "outline"
-                      }
-                      className="h-8 w-8 text-xs"
-                      onClick={() =>
-                        setSkillRatings({
-                          ...skillRatings,
-                          [skillName]: rating,
-                        })
-                      }
-                    >
-                      {rating}
-                    </Button>
-                  ))}
-                </div>
-              ))}
-          </div>
-        </div>
-
-        {/* Add skill button */}
-        <div className="mt-2">
-          <Select
-            onValueChange={(value) => {
-              if (!skillRatings[value]) {
-                setSkillRatings({ ...skillRatings, [value]: 0 });
-              }
-            }}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Add another skill to rate" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="" disabled>
-                Select a skill
-              </SelectItem>
-              {technicalSkills.map((skill) => (
-                <SelectItem key={`tech-${skill.id}`} value={skill.name}>
-                  {skill.name} (Technical)
+          {/* Add skill button */}
+          <div className="mt-2">
+            <Select
+              onValueChange={(value) => {
+                if (!skillRatings[value]) {
+                  setSkillRatings({ ...skillRatings, [value]: 0 });
+                }
+              }}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Add another skill to rate" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="" disabled>
+                  Select a skill
                 </SelectItem>
-              ))}
-              {domainSkills.map((skill) => (
-                <SelectItem key={`domain-${skill.id}`} value={skill.name}>
-                  {skill.name} (Domain)
-                </SelectItem>
-              ))}
-              {softSkills.map((skill) => (
-                <SelectItem key={`soft-${skill.id}`} value={skill.name}>
-                  {skill.name} (Soft)
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+                {technicalSkills.map((skill) => (
+                  <SelectItem key={`tech-${skill.id}`} value={skill.name}>
+                    {skill.name} (Technical)
+                  </SelectItem>
+                ))}
+                {domainSkills.map((skill) => (
+                  <SelectItem key={`domain-${skill.id}`} value={skill.name}>
+                    {skill.name} (Domain)
+                  </SelectItem>
+                ))}
+                {softSkills.map((skill) => (
+                  <SelectItem key={`soft-${skill.id}`} value={skill.name}>
+                    {skill.name} (Soft)
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
       </div>
 
