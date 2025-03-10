@@ -92,7 +92,7 @@ export function CandidateList({
             <TableHeader>
               <TableRow>
                 <TableHead>Name</TableHead>
-                <TableHead>Position</TableHead>
+
                 <TableHead>Interview Date</TableHead>
                 <TableHead>Interviewer</TableHead>
                 <TableHead>Recommendation</TableHead>
@@ -105,7 +105,7 @@ export function CandidateList({
                   <TableCell className="font-medium">
                     {feedback.candidate?.name}
                   </TableCell>
-                  <TableCell>{feedback.candidate?.position}</TableCell>
+
                   <TableCell>
                     {feedback.interview?.date
                       ? format(new Date(feedback.interview.date), "PPp")

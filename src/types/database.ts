@@ -65,22 +65,27 @@ export interface User {
 
 export interface InterviewFeedback {
   id: string;
-  interview_id?: string;
-  candidate_id?: string;
-  interviewer_id?: string;
-  recommendation?: string;
-  comments?: string;
-  strengths?: string;
-  improvements?: string;
-  technical_skills?: number;
-  communication_skills?: number;
-  problem_solving?: number;
-  cultural_fit?: number;
-  experience_fit?: number;
+  interview_id: string;
+  candidate_id: string;
+  interviewer_id: string;
+  technical_skills: number;
+  communication_skills: number;
+  problem_solving: number;
+  experience_fit: number;
+  cultural_fit: number;
+  skill_set: number;
+  soft_skills: number;
+  domain_skills: number;
+  skill_ratings?: Record<string, number>;
+  strengths: string;
+  improvements: string;
+  recommendation: string;
+  comments: string;
   created_at?: string;
   updated_at?: string;
-  candidate?: Candidate;
-  interviewer?: User;
+  interview?: any;
+  candidate?: any;
+  interviewer?: any;
 }
 
 export interface Interview {

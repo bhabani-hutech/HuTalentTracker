@@ -25,7 +25,7 @@ export type Database = {
           notice_period: string | null
           phone: string | null
           position: string | null
-          skills: string | null
+          skills: Json | null
           source: string | null
           stage_id: number | null
           type: string | null
@@ -46,7 +46,7 @@ export type Database = {
           notice_period?: string | null
           phone?: string | null
           position?: string | null
-          skills?: string | null
+          skills?: Json | null
           source?: string | null
           stage_id?: number | null
           type?: string | null
@@ -67,7 +67,7 @@ export type Database = {
           notice_period?: string | null
           phone?: string | null
           position?: string | null
-          skills?: string | null
+          skills?: Json | null
           source?: string | null
           stage_id?: number | null
           type?: string | null
@@ -484,6 +484,7 @@ export type Database = {
           email_domain: string | null
           id: number
           industry: string | null
+          is_own_org: boolean | null
           locations: Json | null
           logo_url: string | null
           name: string
@@ -497,6 +498,7 @@ export type Database = {
           email_domain?: string | null
           id?: number
           industry?: string | null
+          is_own_org?: boolean | null
           locations?: Json | null
           logo_url?: string | null
           name: string
@@ -510,6 +512,7 @@ export type Database = {
           email_domain?: string | null
           id?: number
           industry?: string | null
+          is_own_org?: boolean | null
           locations?: Json | null
           logo_url?: string | null
           name?: string

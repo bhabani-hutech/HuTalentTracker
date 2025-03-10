@@ -235,16 +235,29 @@ export function EditCandidateDialog({
                 onValueChange={(value) => {
                   try {
                     const currentSkills = watch("skills") || "";
-                    const skillsArray = currentSkills
-                      ? currentSkills
-                          .split(",")
-                          .map((s) => s.trim())
-                          .filter(Boolean)
-                      : [];
+                    let skillsArray = [];
 
-                    if (!skillsArray.includes(value)) {
-                      skillsArray.push(value);
-                      setValue("skills", skillsArray.join(", "));
+                    if (typeof currentSkills === "string") {
+                      skillsArray = currentSkills
+                        ? currentSkills
+                            .split(",")
+                            .map((s) => s.trim())
+                            .filter(Boolean)
+                        : [];
+
+                      if (!skillsArray.includes(value)) {
+                        skillsArray.push(value);
+                        setValue("skills", skillsArray.join(", "));
+                      }
+                    } else if (Array.isArray(currentSkills)) {
+                      skillsArray = [...currentSkills];
+                      if (!skillsArray.includes(value)) {
+                        skillsArray.push(value);
+                        setValue("skills", skillsArray);
+                      }
+                    } else {
+                      // Initialize as new array if skills is not in expected format
+                      setValue("skills", [value]);
                     }
                   } catch (error) {
                     console.error("Error adding skill:", error);
@@ -274,10 +287,15 @@ export function EditCandidateDialog({
                     const skillsString = watch("skills") || "";
                     if (!skillsString) return null;
 
-                    const skillsArray = skillsString
-                      .split(",")
-                      .map((s) => s.trim())
-                      .filter(Boolean);
+                    const skillsArray =
+                      typeof skillsString === "string"
+                        ? skillsString
+                            .split(",")
+                            .map((s) => s.trim())
+                            .filter(Boolean)
+                        : Array.isArray(skillsString)
+                          ? skillsString
+                          : [];
 
                     return skillsArray.map((skill, index) => (
                       <div
@@ -292,11 +310,20 @@ export function EditCandidateDialog({
                           onClick={() => {
                             try {
                               const currentSkills = watch("skills") || "";
-                              const updatedSkills = currentSkills
-                                .split(",")
-                                .map((s) => s.trim())
-                                .filter((s) => s && s !== skill);
-                              setValue("skills", updatedSkills.join(", "));
+                              let updatedSkills = [];
+
+                              if (typeof currentSkills === "string") {
+                                updatedSkills = currentSkills
+                                  .split(",")
+                                  .map((s) => s.trim())
+                                  .filter((s) => s && s !== skill);
+                                setValue("skills", updatedSkills.join(", "));
+                              } else if (Array.isArray(currentSkills)) {
+                                updatedSkills = currentSkills.filter(
+                                  (s) => s !== skill,
+                                );
+                                setValue("skills", updatedSkills);
+                              }
                             } catch (error) {
                               console.error("Error removing skill:", error);
                             }

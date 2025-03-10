@@ -62,11 +62,7 @@ const navigationItems: NavItem[] = [
     href: "/interview-feedback",
     icon: MessageSquare,
   },
-  {
-    title: "Interview Pipeline",
-    href: "/interview-kanban",
-    icon: ListTodo,
-  },
+
   {
     title: "Interview Flow",
     href: "/interview-flow",
@@ -123,6 +119,7 @@ function AppContent() {
               element={<InterviewSchedule />}
             />
             {/* Interview Feedback routes */}
+            {/* Route hidden from navigation but still accessible */}
             <Route path="/interview-kanban" element={<InterviewKanban />} />
             <Route path="/interview-flow" element={<InterviewFlow />} />
             <Route path="/interview-feedback" element={<InterviewFeedback />}>

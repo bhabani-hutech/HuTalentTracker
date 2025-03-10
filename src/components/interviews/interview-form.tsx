@@ -53,7 +53,7 @@ export function InterviewForm({
   const { data: interviewers } = useInterviewers();
   const { data: interviewRounds } = useInterviewRounds();
   useEffect(() => {
-    if (initialData) {
+    if (isOpen && initialData) {
       const parsedDate = new Date(initialData.date); // Convert timestamp to Date object
       setFormData({
         job_id: initialData.job_id || "",
@@ -64,7 +64,7 @@ export function InterviewForm({
         time: format(parsedDate, "HH:mm"), // Extract time
         type: initialData.type || "F2F",
       });
-    } else if (isOpen) {
+    } else if (isOpen && !initialData) {
       setFormData({
         job_id: "",
         candidate_id: "",
@@ -75,7 +75,7 @@ export function InterviewForm({
         type: "F2F",
       });
     }
-  }, [initialData, isOpen]);
+  }, [initialData]); // Depend only on `initialData`
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();

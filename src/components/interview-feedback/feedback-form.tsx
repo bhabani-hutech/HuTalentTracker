@@ -16,6 +16,7 @@ import { useInterviewers } from "@/lib/api/hooks/useInterviewers";
 import { useCandidates } from "@/lib/api/hooks/useCandidates";
 import { useInterviews } from "@/lib/api/hooks/useInterviews";
 import { format } from "date-fns";
+import { useSkills } from "@/lib/api/hooks/useSkills";
 
 interface Props {
   existingFeedback?: InterviewFeedback;
@@ -34,16 +35,19 @@ export function InterviewFeedbackForm({
   const { data: interviewers } = useInterviewers();
   const { data: candidates } = useCandidates();
   const { interviews } = useInterviews();
+  const { skills: technicalSkills } = useSkills("technical");
+  const { skills: domainSkills } = useSkills("domain");
+  const { skills: softSkills } = useSkills("soft");
+
+  const [skillRatings, setSkillRatings] = useState<Record<string, number>>({});
 
   const [formData, setFormData] = useState<Partial<InterviewFeedback>>(
     existingFeedback
       ? {
           ...existingFeedback,
           technical_skills: existingFeedback.technical_skills || 0,
-          communication_skills: existingFeedback.communication_skills || 0,
-          problem_solving: existingFeedback.problem_solving || 0,
-          experience_fit: existingFeedback.experience_fit || 0,
-          cultural_fit: existingFeedback.cultural_fit || 0,
+          soft_skills: existingFeedback.soft_skills || 0,
+          domain_skills: existingFeedback.domain_skills || 0,
           strengths: existingFeedback.strengths || "",
           improvements: existingFeedback.improvements || "",
           recommendation: existingFeedback.recommendation || "Maybe",
@@ -58,10 +62,8 @@ export function InterviewFeedbackForm({
         }
       : {
           technical_skills: 0,
-          communication_skills: 0,
-          problem_solving: 0,
-          experience_fit: 0,
-          cultural_fit: 0,
+          soft_skills: 0,
+          domain_skills: 0,
           strengths: "",
           improvements: "",
           recommendation: "Maybe",
@@ -74,6 +76,70 @@ export function InterviewFeedbackForm({
           interviewer: selectedInterview?.interviewer,
         },
   );
+
+  // Initialize skill ratings based on candidate skills
+  useEffect(() => {
+    if (formData.candidate?.skills) {
+      try {
+        // Handle different formats of skills data
+        let candidateSkills = [];
+        if (typeof formData.candidate.skills === "string") {
+          candidateSkills = formData.candidate.skills
+            .split(",")
+            .map((s) => s.trim());
+        } else if (Array.isArray(formData.candidate.skills)) {
+          candidateSkills = formData.candidate.skills;
+        }
+
+        const initialRatings: Record<string, number> = {};
+        candidateSkills.forEach((skill) => {
+          initialRatings[skill] = 0;
+        });
+
+        // Add some default skills if none found
+        if (candidateSkills.length === 0) {
+          // Add default technical skills
+          if (technicalSkills.length > 0) {
+            technicalSkills.slice(0, 2).forEach((skill) => {
+              initialRatings[skill.name] = 0;
+            });
+          }
+
+          // Add default domain skills
+          if (domainSkills.length > 0) {
+            domainSkills.slice(0, 2).forEach((skill) => {
+              initialRatings[skill.name] = 0;
+            });
+          }
+
+          // Add default soft skills
+          if (softSkills.length > 0) {
+            softSkills.slice(0, 2).forEach((skill) => {
+              initialRatings[skill.name] = 0;
+            });
+          }
+        }
+
+        // If we have existing ratings from feedback, use those
+        if (existingFeedback?.skill_ratings) {
+          setSkillRatings({
+            ...initialRatings,
+            ...existingFeedback.skill_ratings,
+          });
+        } else {
+          setSkillRatings(initialRatings);
+        }
+      } catch (error) {
+        console.error("Error parsing candidate skills:", error);
+      }
+    }
+  }, [
+    formData.candidate,
+    technicalSkills,
+    domainSkills,
+    softSkills,
+    existingFeedback,
+  ]);
 
   const handleSubmit = async () => {
     try {
@@ -98,10 +164,9 @@ export function InterviewFeedbackForm({
         candidate_id: formData.candidate_id,
         interviewer_id: formData.interviewer_id,
         technical_skills: formData.technical_skills || 0,
-        communication_skills: formData.communication_skills || 0,
-        problem_solving: formData.problem_solving || 0,
-        experience_fit: formData.experience_fit || 0,
-        cultural_fit: formData.cultural_fit || 0,
+        soft_skills: formData.soft_skills || 0,
+        domain_skills: formData.domain_skills || 0,
+        skill_ratings: skillRatings, // Store the detailed skill ratings
         strengths: formData.strengths || "",
         improvements: formData.improvements || "",
         recommendation: formData.recommendation || "Maybe",
@@ -153,21 +218,6 @@ export function InterviewFeedbackForm({
         </div>
 
         <div className="space-y-2">
-          <Label>Position</Label>
-          <Input
-            value={
-              formData.candidate?.position ||
-              formData.candidate?.jobs?.title ||
-              ""
-            }
-            disabled
-            placeholder="Position will be shown here"
-          />
-        </div>
-      </div>
-
-      <div className="grid gap-4 md:grid-cols-2">
-        <div className="space-y-2">
           <Label>Interviewer</Label>
           <Input
             value={formData.interviewer?.name || ""}
@@ -175,45 +225,175 @@ export function InterviewFeedbackForm({
             placeholder="Interviewer name"
           />
         </div>
+      </div>
 
-        <div className="space-y-2">
-          <Label>Interview Date & Time</Label>
-          <Input
-            type="text"
-            value={
-              formData.interview
-                ? `${format(new Date(formData.interview.date), "PPp")} - ${formData.interview.type}`
-                : ""
-            }
-            disabled
-            placeholder="Interview details"
-          />
+      <div className="space-y-2">
+        <Label>Interview Date & Time</Label>
+        <Input
+          type="text"
+          value={
+            formData.interview
+              ? `${format(new Date(formData.interview.date), "PPp")} - ${formData.interview.type}`
+              : ""
+          }
+          disabled
+          placeholder="Interview details"
+        />
+      </div>
+
+      {/* Skill-specific ratings */}
+      <div className="space-y-4">
+        <Label className="text-lg font-semibold">Skill-Specific Ratings</Label>
+
+        {/* Technical Skills Section */}
+        <div className="border p-4 rounded-md">
+          <h3 className="font-medium mb-3">Technical Skills</h3>
+          <div className="space-y-3">
+            {Object.keys(skillRatings)
+              .filter((skill) =>
+                technicalSkills.some((ts) => ts.name === skill),
+              )
+              .map((skillName) => (
+                <div key={skillName} className="flex items-center gap-2">
+                  <span className="w-24 font-medium">{skillName}:</span>
+                  {[1, 2, 3, 4, 5].map((rating) => (
+                    <Button
+                      key={rating}
+                      variant={
+                        skillRatings[skillName] === rating
+                          ? "default"
+                          : "outline"
+                      }
+                      className="h-8 w-8 text-xs"
+                      onClick={() =>
+                        setSkillRatings({
+                          ...skillRatings,
+                          [skillName]: rating,
+                        })
+                      }
+                    >
+                      {rating}
+                    </Button>
+                  ))}
+                </div>
+              ))}
+          </div>
+        </div>
+
+        {/* Domain Skills Section */}
+        <div className="border p-4 rounded-md">
+          <h3 className="font-medium mb-3">Domain Skills</h3>
+          <div className="space-y-3">
+            {Object.keys(skillRatings)
+              .filter((skill) => domainSkills.some((ds) => ds.name === skill))
+              .map((skillName) => (
+                <div key={skillName} className="flex items-center gap-2">
+                  <span className="w-24 font-medium">{skillName}:</span>
+                  {[1, 2, 3, 4, 5].map((rating) => (
+                    <Button
+                      key={rating}
+                      variant={
+                        skillRatings[skillName] === rating
+                          ? "default"
+                          : "outline"
+                      }
+                      className="h-8 w-8 text-xs"
+                      onClick={() =>
+                        setSkillRatings({
+                          ...skillRatings,
+                          [skillName]: rating,
+                        })
+                      }
+                    >
+                      {rating}
+                    </Button>
+                  ))}
+                </div>
+              ))}
+          </div>
+        </div>
+
+        {/* Soft Skills Section */}
+        <div className="border p-4 rounded-md">
+          <h3 className="font-medium mb-3">Soft Skills</h3>
+          <div className="space-y-3">
+            {Object.keys(skillRatings)
+              .filter((skill) => softSkills.some((ss) => ss.name === skill))
+              .map((skillName) => (
+                <div key={skillName} className="flex items-center gap-2">
+                  <span className="w-24 font-medium">{skillName}:</span>
+                  {[1, 2, 3, 4, 5].map((rating) => (
+                    <Button
+                      key={rating}
+                      variant={
+                        skillRatings[skillName] === rating
+                          ? "default"
+                          : "outline"
+                      }
+                      className="h-8 w-8 text-xs"
+                      onClick={() =>
+                        setSkillRatings({
+                          ...skillRatings,
+                          [skillName]: rating,
+                        })
+                      }
+                    >
+                      {rating}
+                    </Button>
+                  ))}
+                </div>
+              ))}
+          </div>
+        </div>
+
+        {/* Add skill button */}
+        <div className="mt-2">
+          <Select
+            onValueChange={(value) => {
+              if (!skillRatings[value]) {
+                setSkillRatings({ ...skillRatings, [value]: 0 });
+              }
+            }}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Add another skill to rate" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="" disabled>
+                Select a skill
+              </SelectItem>
+              {technicalSkills.map((skill) => (
+                <SelectItem key={`tech-${skill.id}`} value={skill.name}>
+                  {skill.name} (Technical)
+                </SelectItem>
+              ))}
+              {domainSkills.map((skill) => (
+                <SelectItem key={`domain-${skill.id}`} value={skill.name}>
+                  {skill.name} (Domain)
+                </SelectItem>
+              ))}
+              {softSkills.map((skill) => (
+                <SelectItem key={`soft-${skill.id}`} value={skill.name}>
+                  {skill.name} (Soft)
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
       </div>
 
+      {/* Overall ratings */}
+      <div className="space-y-2 mt-4">
+        <Label>Overall Domain Skills</Label>
+        {renderRatingButtons("domain_skills")}
+      </div>
       <div className="space-y-2">
-        <Label>Technical Skills</Label>
+        <Label>Overall Technical Skills</Label>
         {renderRatingButtons("technical_skills")}
       </div>
-
       <div className="space-y-2">
-        <Label>Communication Skills</Label>
-        {renderRatingButtons("communication_skills")}
-      </div>
-
-      <div className="space-y-2">
-        <Label>Problem Solving</Label>
-        {renderRatingButtons("problem_solving")}
-      </div>
-
-      <div className="space-y-2">
-        <Label>Experience Fit</Label>
-        {renderRatingButtons("experience_fit")}
-      </div>
-
-      <div className="space-y-2">
-        <Label>Cultural Fit</Label>
-        {renderRatingButtons("cultural_fit")}
+        <Label>Overall Soft Skills</Label>
+        {renderRatingButtons("soft_skills")}
       </div>
 
       <div className="space-y-2">

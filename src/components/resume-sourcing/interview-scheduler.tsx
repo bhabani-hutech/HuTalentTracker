@@ -78,6 +78,40 @@ export function InterviewScheduler({
     "17:30",
   ];
 
+  useEffect(() => {
+    let isMounted = true;
+
+    const fetchJobTitle = async () => {
+      if (!candidate?.job_id) {
+        if (isMounted) setJobTitle("Unspecified Position");
+        return;
+      }
+
+      try {
+        const { data, error } = await supabase
+          .from("jobs")
+          .select("title")
+          .eq("id", candidate.job_id)
+          .single();
+
+        if (isMounted) {
+          setJobTitle(
+            error ? "Unknown Position" : data?.title || "Unknown Position",
+          );
+        }
+      } catch (err) {
+        console.error("Unexpected error fetching job title:", err);
+        if (isMounted) setJobTitle("Unknown Position");
+      }
+    };
+
+    fetchJobTitle();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [candidate?.job_id]);
+
   const handleSubmit = async () => {
     try {
       if (!candidate?.id) {
@@ -142,7 +176,7 @@ export function InterviewScheduler({
         round_id: roundId,
         date: new Date(`${format(date, "yyyy-MM-dd")}T${time}`).toISOString(),
         type: interviewType,
-        stage_id: defaultStageId, // Set default stage to Screening
+        //stage_id: defaultStageId, // Set default stage to Screening
       };
 
       await createInterview(interviewData);
@@ -163,40 +197,6 @@ export function InterviewScheduler({
   };
   if (!candidate) return null;
   // Fetch job title if job_id is available
-
-  useEffect(() => {
-    let isMounted = true;
-
-    const fetchJobTitle = async () => {
-      if (!candidate?.job_id) {
-        if (isMounted) setJobTitle("Unspecified Position");
-        return;
-      }
-
-      try {
-        const { data, error } = await supabase
-          .from("jobs")
-          .select("title")
-          .eq("id", candidate.job_id)
-          .single();
-
-        if (isMounted) {
-          setJobTitle(
-            error ? "Unknown Position" : data?.title || "Unknown Position",
-          );
-        }
-      } catch (err) {
-        console.error("Unexpected error fetching job title:", err);
-        if (isMounted) setJobTitle("Unknown Position");
-      }
-    };
-
-    fetchJobTitle();
-
-    return () => {
-      isMounted = false;
-    };
-  }, [candidate?.job_id]);
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
