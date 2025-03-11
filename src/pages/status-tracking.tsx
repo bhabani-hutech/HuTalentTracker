@@ -220,7 +220,10 @@ export default function StatusTracking() {
 
       <div className="grid gap-6 md:grid-cols-2">
         <StatusTimeline selectedCandidate={selectedCandidate} />
-        <StatusAnalytics selectedJobId={selectedJobId} />
+        <StatusAnalytics
+          selectedJobId={selectedJobId}
+          selectedCandidateId={selectedCandidateId}
+        />
       </div>
     </div>
   );

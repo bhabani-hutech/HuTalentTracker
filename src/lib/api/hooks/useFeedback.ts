@@ -48,7 +48,12 @@ export function useFeedback() {
       // Remove any undefined or null values to prevent database errors
       const cleanUpdates = Object.entries(updates).reduce(
         (acc, [key, value]) => {
-          if (value !== undefined && value !== null) {
+          if (
+            value !== undefined &&
+            value !== null &&
+            // Filter out nested objects that aren't meant to be columns
+            !["candidate", "interviewer", "interview"].includes(key)
+          ) {
             acc[key] = value;
           }
           return acc;

@@ -12,9 +12,13 @@ import { supabase } from "@/lib/supabase";
 
 interface StatusAnalyticsProps {
   selectedJobId?: string;
+  selectedCandidateId?: string;
 }
 
-export function StatusAnalytics({ selectedJobId }: StatusAnalyticsProps) {
+export function StatusAnalytics({
+  selectedJobId,
+  selectedCandidateId,
+}: StatusAnalyticsProps) {
   const [analyticsData, setAnalyticsData] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -22,42 +26,98 @@ export function StatusAnalytics({ selectedJobId }: StatusAnalyticsProps) {
     const fetchAnalyticsData = async () => {
       setIsLoading(true);
       try {
-        // Try to fetch feedback data with recommendations
-        let feedbackQuery = supabase
-          .from("feedback")
-          .select("recommendation, interviews!inner(job_id, candidate_id)")
-          .not("recommendation", "is", null);
+        if (selectedCandidateId) {
+          // If a candidate is selected, show their interview outcomes
+          const { data: candidateData, error: candidateError } = await supabase
+            .from("candidates")
+            .select("id, name, stage_id, stages(stage)")
+            .eq("id", selectedCandidateId)
+            .single();
 
-        // Apply job filter if provided
-        if (selectedJobId) {
-          feedbackQuery = feedbackQuery.eq("interviews.job_id", selectedJobId);
+          if (candidateError) {
+            console.error("Error fetching candidate data:", candidateError);
+            setAnalyticsData([]);
+            setIsLoading(false);
+            return;
+          }
+
+          // Get all feedback for this candidate
+          const { data: feedbackData, error: feedbackError } = await supabase
+            .from("feedback")
+            .select("recommendation, interview_id, interviews(id, type)")
+            .eq("candidate_id", selectedCandidateId)
+            .not("recommendation", "is", null);
+
+          if (feedbackError) {
+            console.error("Error fetching candidate feedback:", feedbackError);
+            setAnalyticsData([]);
+            setIsLoading(false);
+            return;
+          }
+
+          // Count recommendations for this candidate
+          const counts = {};
+          feedbackData.forEach((item) => {
+            const rec = item.recommendation;
+            counts[rec] = (counts[rec] || 0) + 1;
+          });
+
+          // Add current stage information
+          if (candidateData.stages?.stage) {
+            counts[`Current Stage: ${candidateData.stages.stage}`] = 1;
+          }
+
+          // Format data for chart
+          const chartData = Object.entries(counts).map(([name, value]) => ({
+            name,
+            value,
+            color: name.startsWith("Current Stage")
+              ? "#3b82f6" // blue for current stage
+              : getRecommendationColor(name),
+          }));
+
+          setAnalyticsData(chartData);
+        } else {
+          // If no candidate is selected, show overall job statistics
+          let feedbackQuery = supabase
+            .from("feedback")
+            .select("recommendation, interviews!inner(job_id, candidate_id)")
+            .not("recommendation", "is", null);
+
+          // Apply job filter if provided
+          if (selectedJobId) {
+            feedbackQuery = feedbackQuery.eq(
+              "interviews.job_id",
+              selectedJobId,
+            );
+          }
+
+          const { data: feedbackData, error: feedbackError } =
+            await feedbackQuery;
+
+          if (feedbackError) {
+            console.error("Error fetching feedback data:", feedbackError);
+            setAnalyticsData([]);
+            setIsLoading(false);
+            return;
+          }
+
+          // Count recommendations
+          const counts = {};
+          feedbackData.forEach((item) => {
+            const rec = item.recommendation;
+            counts[rec] = (counts[rec] || 0) + 1;
+          });
+
+          // Format data for chart
+          const chartData = Object.entries(counts).map(([name, value]) => ({
+            name,
+            value,
+            color: getRecommendationColor(name),
+          }));
+
+          setAnalyticsData(chartData);
         }
-
-        const { data: feedbackData, error: feedbackError } =
-          await feedbackQuery;
-
-        if (feedbackError) {
-          console.error("Error fetching feedback data:", feedbackError);
-          setAnalyticsData([]);
-          setIsLoading(false);
-          return;
-        }
-
-        // Count recommendations
-        const counts = {};
-        feedbackData.forEach((item) => {
-          const rec = item.recommendation;
-          counts[rec] = (counts[rec] || 0) + 1;
-        });
-
-        // Format data for chart
-        const chartData = Object.entries(counts).map(([name, value]) => ({
-          name,
-          value,
-          color: getRecommendationColor(name),
-        }));
-
-        setAnalyticsData(chartData);
       } catch (error) {
         console.error("Error in analytics:", error);
         setAnalyticsData([]);
@@ -67,7 +127,7 @@ export function StatusAnalytics({ selectedJobId }: StatusAnalyticsProps) {
     };
 
     fetchAnalyticsData();
-  }, [selectedJobId]);
+  }, [selectedJobId, selectedCandidateId]);
 
   // Get color based on recommendation
   function getRecommendationColor(recommendation) {
@@ -88,7 +148,11 @@ export function StatusAnalytics({ selectedJobId }: StatusAnalyticsProps) {
   return (
     <Card className="col-span-1">
       <CardHeader>
-        <CardTitle>Interview Outcomes</CardTitle>
+        <CardTitle>
+          {selectedCandidateId
+            ? "Candidate Interview Outcomes"
+            : "Overall Interview Outcomes"}
+        </CardTitle>
       </CardHeader>
       <CardContent>
         {isLoading ? (

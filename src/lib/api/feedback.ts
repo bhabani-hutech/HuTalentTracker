@@ -1,5 +1,5 @@
 import { supabase } from "../supabase";
-import { Feedback } from "@/types/database";
+import { InterviewFeedback } from "@/types/database";
 
 export async function getFeedback() {
   const { data, error } = await supabase
@@ -20,7 +20,7 @@ export async function getFeedback() {
   }
 
   console.log("Feedback data:", data);
-  return data as Feedback[];
+  return data as InterviewFeedback[];
 }
 
 export async function getFeedbackById(id: string) {
@@ -38,37 +38,33 @@ export async function getFeedbackById(id: string) {
     .single();
 
   if (error) throw error;
-  return data as Feedback;
+  return data as InterviewFeedback;
 }
 
-export async function createFeedback(
-  feedbackData: Omit<Feedback, "id" | "created_at" | "updated_at">,
-) {
-  console.log("Creating feedback with data:", feedbackData);
-  console.log("Creating feedback with data:", feedbackData);
-  const { data, error } = await supabase
-    .from("feedback")
-    .insert([
-      {
-        interview_id: feedbackData.interview_id,
-        candidate_id: feedbackData.candidate_id,
-        interviewer_id: feedbackData.interviewer_id,
-        technical_skills: feedbackData.technical_skills,
-        communication_skills: feedbackData.communication_skills,
-        problem_solving: feedbackData.problem_solving,
-        experience_fit: feedbackData.experience_fit,
-        cultural_fit: feedbackData.cultural_fit,
-        strengths: feedbackData.strengths,
-        improvements: feedbackData.improvements,
-        recommendation: feedbackData.recommendation,
-        comments: feedbackData.comments,
-      },
-    ])
-    .select()
-    .single();
+export async function createFeedback(feedback: Omit<InterviewFeedback, "id">) {
+  try {
+    // Filter out nested objects that aren't meant to be columns
+    const { candidate, interviewer, interview, ...cleanFeedback } =
+      feedback as any;
 
-  if (error) throw error;
-  return data as Feedback;
+    console.log("Creating feedback with data:", cleanFeedback);
+
+    const { data, error } = await supabase
+      .from("feedback")
+      .insert([cleanFeedback])
+      .select()
+      .single();
+
+    if (error) {
+      console.error("Error creating feedback:", error);
+      throw error;
+    }
+
+    return data;
+  } catch (error) {
+    console.error("Error in createFeedback:", error);
+    throw error;
+  }
 }
 
 export async function deleteFeedback(id: string) {
@@ -87,53 +83,40 @@ export async function updateFeedback({
   updates,
 }: {
   id: string;
-  updates: Partial<Omit<Feedback, "id" | "created_at" | "updated_at">>;
+  updates: Partial<Omit<InterviewFeedback, "id" | "created_at" | "updated_at">>;
 }) {
-  const candidate = updates.candidate;
-  const interviewer = updates.interviewer;
-  const interview = updates.interview;
-  updates.candidate = undefined;
-  updates.interviewer = undefined;
-  updates.interview = undefined;
+  try {
+    // Filter out nested objects that aren't meant to be columns
+    const { candidate, interviewer, interview, ...cleanUpdates } =
+      updates as any;
 
-  // Filter out undefined values and excluded keys
-  const filteredUpdates = Object.fromEntries(
-    Object.entries(updates).filter(
-      ([key, value]) =>
-        value !== undefined &&
-        !["candidate_id", "interview_id", "interviewer_id"].includes(key),
-    ),
-  );
+    // Filter out undefined values and excluded keys
+    const filteredUpdates = Object.fromEntries(
+      Object.entries(cleanUpdates).filter(
+        ([key, value]) => value !== undefined,
+      ),
+    );
 
-  // Check if feedback exists
-  const { data: existingFeedback, error: fetchError } = await supabase
-    .from("feedback")
-    .select("*")
-    .eq("id", id)
-    .single();
+    console.log("Updating feedback with ID:", id);
+    console.log("Clean updates:", filteredUpdates);
 
-  if (fetchError) {
-    console.error("Feedback not found:", fetchError);
-    throw fetchError;
-  }
+    // Perform the update
+    const { data, error } = await supabase
+      .from("feedback")
+      .update(filteredUpdates)
+      .eq("id", id)
+      .select("*")
+      .single();
 
-  // Perform the update
-  const { data, error } = await supabase
-    .from("feedback")
-    .update(filteredUpdates)
-    .eq("id", id)
-    .select("*")
-    .single();
+    if (error) {
+      console.error("Error updating feedback:", error);
+      throw error;
+    }
 
-  data.candidate = candidate;
-  data.interview = interview;
-  data.interviewer = interviewer;
-
-  if (error) {
-    console.error("Error updating feedback:", error);
+    console.log("Feedback updated successfully:", data);
+    return data as InterviewFeedback;
+  } catch (error) {
+    console.error("Error in updateFeedback:", error);
     throw error;
   }
-
-  console.log("Feedback updated successfully:", data);
-  return data as Feedback;
 }

@@ -48,11 +48,9 @@ export function InterviewFeedbackForm({
       ? {
           ...existingFeedback,
           technical_skills: existingFeedback.technical_skills || 0,
-          communication_skills: existingFeedback.communication_skills || 0,
-          problem_solving: existingFeedback.problem_solving || 0,
-          experience_fit: existingFeedback.experience_fit || 0,
-          cultural_fit: existingFeedback.cultural_fit || 0,
-          skill_set: existingFeedback.skill_set || 0,
+          domain_skills: existingFeedback.domain_skills || 0,
+          soft_skills: existingFeedback.soft_skills || 0,
+
           strengths: existingFeedback.strengths || "",
           improvements: existingFeedback.improvements || "",
           recommendation: existingFeedback.recommendation || "Maybe",
@@ -62,16 +60,13 @@ export function InterviewFeedbackForm({
           interview_id:
             existingFeedback.interview_id || selectedInterviewId || "",
           interview: existingFeedback.interview,
-          candidate: existingFeedback.candidate,
+
           interviewer: existingFeedback.interviewer,
         }
       : {
           technical_skills: 0,
-          communication_skills: 0,
-          problem_solving: 0,
-          experience_fit: 0,
-          cultural_fit: 0,
-          skill_set: 0,
+          domain_skills: 0,
+          soft_skills: 0,
           strengths: "",
           improvements: "",
           recommendation: "Maybe",
@@ -80,7 +75,6 @@ export function InterviewFeedbackForm({
           interviewer_id: selectedInterview?.interviewer_id || "",
           interview_id: selectedInterview?.id || selectedInterviewId || "",
           interview: selectedInterview,
-          candidate: selectedInterview?.candidate,
           interviewer: selectedInterview?.interviewer,
         },
   );
@@ -188,17 +182,14 @@ export function InterviewFeedbackForm({
         return;
       }
 
+      // Create a clean feedback data object without nested objects
       const feedbackData = {
-        ...formData,
         interview_id: formData.interview_id,
         candidate_id: formData.candidate_id,
         interviewer_id: formData.interviewer_id,
         technical_skills: formData.technical_skills || 0,
-        communication_skills: formData.communication_skills || 0,
-        problem_solving: formData.problem_solving || 0,
-        experience_fit: formData.experience_fit || 0,
-        cultural_fit: formData.cultural_fit || 0,
-        skill_set: formData.skill_set || 0,
+        domain_skills: formData.domain_skills || 0,
+        soft_skills: formData.soft_skills || 0,
         skill_ratings: skillRatings, // Store the detailed skill ratings
         strengths: formData.strengths || "",
         improvements: formData.improvements || "",
@@ -207,13 +198,10 @@ export function InterviewFeedbackForm({
       };
 
       if (existingFeedback?.id) {
-        // Make sure to include the ID in the update
+        // Make sure to include the ID in the update but exclude nested objects
         await updateFeedback({
           id: existingFeedback.id,
-          updates: {
-            ...feedbackData,
-            id: existingFeedback.id, // Ensure ID is included
-          },
+          updates: feedbackData,
         });
       } else {
         await createFeedback(feedbackData as any);
@@ -331,53 +319,6 @@ export function InterviewFeedbackForm({
         </div>
       </div>
 
-      {/* Add skill dropdown */}
-      <div className="mt-4">
-        <Label>Add Skill to Rate</Label>
-        <div className="flex gap-2 mt-2">
-          <Select
-            onValueChange={(value) => {
-              if (value && !skillRatings[value]) {
-                setSkillRatings({ ...skillRatings, [value]: 0 });
-              }
-            }}
-          >
-            <SelectTrigger className="flex-1">
-              <SelectValue placeholder="Select a skill to rate" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="" disabled>
-                Select a skill
-              </SelectItem>
-              {technicalSkills &&
-                technicalSkills.map((skill) =>
-                  skill && skill.id && skill.name ? (
-                    <SelectItem key={`tech-${skill.id}`} value={skill.name}>
-                      {skill.name} (Technical)
-                    </SelectItem>
-                  ) : null,
-                )}
-              {domainSkills &&
-                domainSkills.map((skill) =>
-                  skill && skill.id && skill.name ? (
-                    <SelectItem key={`domain-${skill.id}`} value={skill.name}>
-                      {skill.name} (Domain)
-                    </SelectItem>
-                  ) : null,
-                )}
-              {softSkills &&
-                softSkills.map((skill) =>
-                  skill && skill.id && skill.name ? (
-                    <SelectItem key={`soft-${skill.id}`} value={skill.name}>
-                      {skill.name} (Soft)
-                    </SelectItem>
-                  ) : null,
-                )}
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
-
       {/* Overall ratings */}
       <div className="space-y-4 mt-6 border-t pt-6">
         <Label className="text-lg font-semibold">Overall Ratings</Label>
@@ -388,28 +329,13 @@ export function InterviewFeedbackForm({
           </div>
 
           <div className="flex items-center justify-between border p-3 rounded-md">
-            <span className="font-medium">Communication Skills</span>
-            {renderRatingButtons("communication_skills")}
+            <span className="font-medium">Domain Skills</span>
+            {renderRatingButtons("domain_skills")}
           </div>
 
           <div className="flex items-center justify-between border p-3 rounded-md">
-            <span className="font-medium">Problem Solving</span>
-            {renderRatingButtons("problem_solving")}
-          </div>
-
-          <div className="flex items-center justify-between border p-3 rounded-md">
-            <span className="font-medium">Experience Fit</span>
-            {renderRatingButtons("experience_fit")}
-          </div>
-
-          <div className="flex items-center justify-between border p-3 rounded-md">
-            <span className="font-medium">Cultural Fit</span>
-            {renderRatingButtons("cultural_fit")}
-          </div>
-
-          <div className="flex items-center justify-between border p-3 rounded-md">
-            <span className="font-medium">Skill Set Match</span>
-            {renderRatingButtons("skill_set")}
+            <span className="font-medium">Soft Skills</span>
+            {renderRatingButtons("soft_skills")}
           </div>
         </div>
       </div>
