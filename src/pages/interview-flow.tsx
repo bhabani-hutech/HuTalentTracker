@@ -154,10 +154,21 @@ export default function InterviewFlow() {
 
   // Handle drag start
   const handleDragStart = (e, candidate, fromStage) => {
-    e.dataTransfer.setData("text/plain", candidate.id); // For compatibility
+    // Store candidate ID and stage ID in multiple formats for compatibility
+    e.dataTransfer.setData("text/plain", candidate.id);
+    e.dataTransfer.setData(
+      "application/json",
+      JSON.stringify({
+        candidateId: candidate.id,
+        fromStageId: fromStage.id,
+      }),
+    );
     e.dataTransfer.setData("candidateId", candidate.id);
     e.dataTransfer.setData("fromStageId", fromStage.id);
     e.dataTransfer.effectAllowed = "move";
+
+    // Set a class on the element being dragged
+    e.currentTarget.classList.add("dragging");
 
     // Create a simple drag image
     const dragImage = document.createElement("div");
@@ -177,27 +188,54 @@ export default function InterviewFlow() {
   // Handle drag over
   const handleDragOver = (e) => {
     e.preventDefault();
+    e.stopPropagation();
+    // Set the dropEffect to move
+    e.dataTransfer.dropEffect = "move";
   };
 
   // Handle drop
   const handleDrop = (e, toStage) => {
     e.preventDefault();
+    console.log("Drop event triggered on stage:", toStage.stage);
+
+    // Remove dragging class from all elements
+    document.querySelectorAll(".dragging").forEach((el) => {
+      el.classList.remove("dragging");
+    });
 
     // Try to get the data in different ways to ensure compatibility
     let candidateId;
     let fromStageId;
 
     try {
-      candidateId = e.dataTransfer.getData("candidateId");
-      fromStageId = e.dataTransfer.getData("fromStageId");
+      // Try to get JSON data first (most reliable)
+      const jsonData = e.dataTransfer.getData("application/json");
+      if (jsonData) {
+        const parsedData = JSON.parse(jsonData);
+        candidateId = parsedData.candidateId;
+        fromStageId = parsedData.fromStageId;
+        console.log("Retrieved data from JSON:", { candidateId, fromStageId });
+      }
 
-      // If we couldn't get the data, try the plain text version
+      // If that fails, try individual properties
+      if (!candidateId) {
+        candidateId = e.dataTransfer.getData("candidateId");
+        fromStageId = e.dataTransfer.getData("fromStageId");
+        console.log("Retrieved data from individual properties:", {
+          candidateId,
+          fromStageId,
+        });
+      }
+
+      // If that still fails, try plain text and look up the stage
       if (!candidateId) {
         candidateId = e.dataTransfer.getData("text/plain");
+        console.log("Retrieved candidateId from text/plain:", candidateId);
         // We'll need to find the candidate's current stage
         const candidate = candidates.find((c) => c.id === candidateId);
         if (candidate) {
           fromStageId = candidate.stage_id;
+          console.log("Found fromStageId from candidate object:", fromStageId);
         }
       }
     } catch (error) {
@@ -212,7 +250,10 @@ export default function InterviewFlow() {
     }
 
     // Don't do anything if dropping in the same stage
-    if (fromStageId === toStage.id) return;
+    if (fromStageId === toStage.id) {
+      console.log("Dropping in same stage, ignoring");
+      return;
+    }
 
     // Find the candidate and from stage
     const candidate = candidates.find((c) => c.id === candidateId);
@@ -225,8 +266,28 @@ export default function InterviewFlow() {
 
     if (!fromStage) {
       console.error("From stage not found:", fromStageId);
+      // If we can't find the stage, use a fallback
+      const fallbackStage = stages[0];
+      if (fallbackStage) {
+        console.log("Using fallback stage:", fallbackStage.stage);
+        // Open the move dialog with fallback stage
+        setMoveDialog({
+          isOpen: true,
+          candidate,
+          fromStage: fallbackStage,
+          toStage,
+          comment: "",
+        });
+        return;
+      }
       return;
     }
+
+    console.log("Opening move dialog for:", {
+      candidate: candidate.name,
+      fromStage: fromStage.stage,
+      toStage: toStage.stage,
+    });
 
     // Open the move dialog
     setMoveDialog({
@@ -350,12 +411,20 @@ export default function InterviewFlow() {
             <Card
               key={stage.id}
               className="w-full bg-gray-50 shadow-md rounded-lg drop-target"
-              onDragOver={handleDragOver}
+              onDragOver={(e) => {
+                e.preventDefault(); // This is critical for the drop event to fire
+                e.stopPropagation();
+                e.currentTarget.classList.add("bg-gray-100");
+              }}
               onDrop={(e) => handleDrop(e, stage)}
-              onDragEnter={(e) => e.currentTarget.classList.add("bg-gray-100")}
-              onDragLeave={(e) =>
-                e.currentTarget.classList.remove("bg-gray-100")
-              }
+              onDragEnter={(e) => {
+                e.preventDefault();
+                e.currentTarget.classList.add("bg-gray-100");
+              }}
+              onDragLeave={(e) => {
+                e.preventDefault();
+                e.currentTarget.classList.remove("bg-gray-100");
+              }}
               data-stage-id={stage.id}
             >
               <CardHeader className="py-3 bg-gray-200 rounded-t-lg">
@@ -391,6 +460,8 @@ export default function InterviewFlow() {
                                     .forEach((el) =>
                                       el.classList.remove("bg-gray-100"),
                                     );
+                                  // Remove dragging class
+                                  e.currentTarget.classList.remove("dragging");
                                 }}
                               >
                                 <div className="font-medium text-gray-900">
