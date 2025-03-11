@@ -14,102 +14,42 @@ export type Database = {
           created_at: string | null
           department: string | null
           email: string
-          experience: string | null
-          file_url: string | null
           id: string
-          job_id: string | null
-          location: string | null
           match_score: number | null
-          move_reason: string | null
           name: string
           notice_period: string | null
           phone: string | null
-          position: string | null
-          skills: Json | null
+          position: string
           source: string | null
-          stage_id: number | null
-          type: string | null
+          status: Database["public"]["Enums"]["interview_status"] | null
           updated_at: string | null
         }
         Insert: {
           created_at?: string | null
           department?: string | null
           email: string
-          experience?: string | null
-          file_url?: string | null
           id?: string
-          job_id?: string | null
-          location?: string | null
           match_score?: number | null
-          move_reason?: string | null
           name: string
           notice_period?: string | null
           phone?: string | null
-          position?: string | null
-          skills?: Json | null
+          position: string
           source?: string | null
-          stage_id?: number | null
-          type?: string | null
+          status?: Database["public"]["Enums"]["interview_status"] | null
           updated_at?: string | null
         }
         Update: {
           created_at?: string | null
           department?: string | null
           email?: string
-          experience?: string | null
-          file_url?: string | null
           id?: string
-          job_id?: string | null
-          location?: string | null
           match_score?: number | null
-          move_reason?: string | null
           name?: string
           notice_period?: string | null
           phone?: string | null
-          position?: string | null
-          skills?: Json | null
+          position?: string
           source?: string | null
-          stage_id?: number | null
-          type?: string | null
-          updated_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "candidates_job_id_fkey"
-            columns: ["job_id"]
-            isOneToOne: false
-            referencedRelation: "jobs"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "candidates_stage_id_fkey"
-            columns: ["stage_id"]
-            isOneToOne: false
-            referencedRelation: "stages"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      departments: {
-        Row: {
-          created_at: string | null
-          description: string | null
-          id: number
-          name: string
-          updated_at: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          description?: string | null
-          id?: number
-          name: string
-          updated_at?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          description?: string | null
-          id?: number
-          name?: string
+          status?: Database["public"]["Enums"]["interview_status"] | null
           updated_at?: string | null
         }
         Relationships: []
@@ -158,147 +98,41 @@ export type Database = {
           },
         ]
       }
-      feedback: {
-        Row: {
-          candidate_id: string | null
-          comments: string | null
-          communication_skills: number | null
-          created_at: string | null
-          cultural_fit: number | null
-          experience_fit: number | null
-          id: string
-          improvements: string | null
-          interview_id: string | null
-          interviewer_id: string | null
-          problem_solving: number | null
-          recommendation: string | null
-          strengths: string | null
-          technical_skills: number | null
-          updated_at: string | null
-        }
-        Insert: {
-          candidate_id?: string | null
-          comments?: string | null
-          communication_skills?: number | null
-          created_at?: string | null
-          cultural_fit?: number | null
-          experience_fit?: number | null
-          id?: string
-          improvements?: string | null
-          interview_id?: string | null
-          interviewer_id?: string | null
-          problem_solving?: number | null
-          recommendation?: string | null
-          strengths?: string | null
-          technical_skills?: number | null
-          updated_at?: string | null
-        }
-        Update: {
-          candidate_id?: string | null
-          comments?: string | null
-          communication_skills?: number | null
-          created_at?: string | null
-          cultural_fit?: number | null
-          experience_fit?: number | null
-          id?: string
-          improvements?: string | null
-          interview_id?: string | null
-          interviewer_id?: string | null
-          problem_solving?: number | null
-          recommendation?: string | null
-          strengths?: string | null
-          technical_skills?: number | null
-          updated_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "feedback_candidate_id_fkey"
-            columns: ["candidate_id"]
-            isOneToOne: false
-            referencedRelation: "candidates"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "feedback_interview_id_fkey"
-            columns: ["interview_id"]
-            isOneToOne: false
-            referencedRelation: "interviews"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "feedback_interviewer_id_fkey"
-            columns: ["interviewer_id"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      interview_rounds: {
-        Row: {
-          created_at: string
-          description: string | null
-          duration: number
-          id: number
-          is_active: boolean | null
-          name: string
-          round_order: number | null
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          description?: string | null
-          duration?: number
-          id?: number
-          is_active?: boolean | null
-          name: string
-          round_order?: number | null
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          description?: string | null
-          duration?: number
-          id?: number
-          is_active?: boolean | null
-          name?: string
-          round_order?: number | null
-          updated_at?: string
-        }
-        Relationships: []
-      }
       interviews: {
         Row: {
           candidate_id: string | null
           created_at: string | null
           date: string
+          feedback: string | null
           id: string
           interviewer_id: string | null
-          job_id: string
-          round_id: number
-          type: Database["public"]["Enums"]["interview_type"]
+          rating: number | null
+          status: Database["public"]["Enums"]["interview_status"] | null
+          type: string
           updated_at: string | null
         }
         Insert: {
           candidate_id?: string | null
           created_at?: string | null
           date: string
+          feedback?: string | null
           id?: string
           interviewer_id?: string | null
-          job_id: string
-          round_id: number
-          type: Database["public"]["Enums"]["interview_type"]
+          rating?: number | null
+          status?: Database["public"]["Enums"]["interview_status"] | null
+          type: string
           updated_at?: string | null
         }
         Update: {
           candidate_id?: string | null
           created_at?: string | null
           date?: string
+          feedback?: string | null
           id?: string
           interviewer_id?: string | null
-          job_id?: string
-          round_id?: number
-          type?: Database["public"]["Enums"]["interview_type"]
+          rating?: number | null
+          status?: Database["public"]["Enums"]["interview_status"] | null
+          type?: string
           updated_at?: string | null
         }
         Relationships: [
@@ -316,301 +150,13 @@ export type Database = {
             referencedRelation: "users"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "interviews_job_id_fkey"
-            columns: ["job_id"]
-            isOneToOne: false
-            referencedRelation: "jobs"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "interviews_round_id_fkey"
-            columns: ["round_id"]
-            isOneToOne: false
-            referencedRelation: "interview_rounds"
-            referencedColumns: ["id"]
-          },
         ]
-      }
-      job_positions: {
-        Row: {
-          created_at: string
-          department: string
-          id: number
-          status: string
-          title: string
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          department: string
-          id?: number
-          status?: string
-          title: string
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          department?: string
-          id?: number
-          status?: string
-          title?: string
-          updated_at?: string
-        }
-        Relationships: []
-      }
-      jobs: {
-        Row: {
-          created_at: string
-          created_by: string | null
-          department: string
-          description: string
-          domain_skills: Json | null
-          experience_max: number | null
-          experience_min: number | null
-          id: string
-          interview_rounds: Json | null
-          level: Database["public"]["Enums"]["job_level"]
-          location: string
-          openings: number | null
-          requirements: string[]
-          responsibilities: string[]
-          skills: string[] | null
-          soft_skills: Json | null
-          status: Database["public"]["Enums"]["job_status"]
-          technical_skills: Json | null
-          title: string
-          type: Database["public"]["Enums"]["job_type"]
-          updated_at: string
-          updated_by: string | null
-        }
-        Insert: {
-          created_at?: string
-          created_by?: string | null
-          department: string
-          description: string
-          domain_skills?: Json | null
-          experience_max?: number | null
-          experience_min?: number | null
-          id?: string
-          interview_rounds?: Json | null
-          level?: Database["public"]["Enums"]["job_level"]
-          location: string
-          openings?: number | null
-          requirements?: string[]
-          responsibilities?: string[]
-          skills?: string[] | null
-          soft_skills?: Json | null
-          status?: Database["public"]["Enums"]["job_status"]
-          technical_skills?: Json | null
-          title: string
-          type?: Database["public"]["Enums"]["job_type"]
-          updated_at?: string
-          updated_by?: string | null
-        }
-        Update: {
-          created_at?: string
-          created_by?: string | null
-          department?: string
-          description?: string
-          domain_skills?: Json | null
-          experience_max?: number | null
-          experience_min?: number | null
-          id?: string
-          interview_rounds?: Json | null
-          level?: Database["public"]["Enums"]["job_level"]
-          location?: string
-          openings?: number | null
-          requirements?: string[]
-          responsibilities?: string[]
-          skills?: string[] | null
-          soft_skills?: Json | null
-          status?: Database["public"]["Enums"]["job_status"]
-          technical_skills?: Json | null
-          title?: string
-          type?: Database["public"]["Enums"]["job_type"]
-          updated_at?: string
-          updated_by?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "jobs_created_by_fkey"
-            columns: ["created_by"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "jobs_updated_by_fkey"
-            columns: ["updated_by"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      locations: {
-        Row: {
-          address: string | null
-          country: string | null
-          created_at: string | null
-          id: number
-          name: string
-          updated_at: string | null
-        }
-        Insert: {
-          address?: string | null
-          country?: string | null
-          created_at?: string | null
-          id?: number
-          name: string
-          updated_at?: string | null
-        }
-        Update: {
-          address?: string | null
-          country?: string | null
-          created_at?: string | null
-          id?: number
-          name?: string
-          updated_at?: string | null
-        }
-        Relationships: []
-      }
-      organizations: {
-        Row: {
-          created_at: string | null
-          departments: Json | null
-          description: string | null
-          email_domain: string | null
-          id: number
-          industry: string | null
-          is_own_org: boolean | null
-          locations: Json | null
-          logo_url: string | null
-          name: string
-          updated_at: string | null
-          website: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          departments?: Json | null
-          description?: string | null
-          email_domain?: string | null
-          id?: number
-          industry?: string | null
-          is_own_org?: boolean | null
-          locations?: Json | null
-          logo_url?: string | null
-          name: string
-          updated_at?: string | null
-          website?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          departments?: Json | null
-          description?: string | null
-          email_domain?: string | null
-          id?: number
-          industry?: string | null
-          is_own_org?: boolean | null
-          locations?: Json | null
-          logo_url?: string | null
-          name?: string
-          updated_at?: string | null
-          website?: string | null
-        }
-        Relationships: []
-      }
-      pipeline_comments: {
-        Row: {
-          comment: string
-          created_at: string | null
-          id: string
-          item_id: string
-          item_type: string
-          updated_at: string | null
-        }
-        Insert: {
-          comment: string
-          created_at?: string | null
-          id?: string
-          item_id: string
-          item_type: string
-          updated_at?: string | null
-        }
-        Update: {
-          comment?: string
-          created_at?: string | null
-          id?: string
-          item_id?: string
-          item_type?: string
-          updated_at?: string | null
-        }
-        Relationships: []
-      }
-      skills: {
-        Row: {
-          category: string
-          created_at: string | null
-          id: number
-          name: string
-          skill_order: number
-          skill_type: string | null
-          updated_at: string | null
-        }
-        Insert: {
-          category: string
-          created_at?: string | null
-          id?: number
-          name: string
-          skill_order: number
-          skill_type?: string | null
-          updated_at?: string | null
-        }
-        Update: {
-          category?: string
-          created_at?: string | null
-          id?: number
-          name?: string
-          skill_order?: number
-          skill_type?: string | null
-          updated_at?: string | null
-        }
-        Relationships: []
-      }
-      stages: {
-        Row: {
-          created_at: string
-          description: string | null
-          id: number
-          stage: string
-          stage_order: number | null
-          updated_at: string | null
-        }
-        Insert: {
-          created_at?: string
-          description?: string | null
-          id?: number
-          stage?: string
-          stage_order?: number | null
-          updated_at?: string | null
-        }
-        Update: {
-          created_at?: string
-          description?: string | null
-          id?: number
-          stage?: string
-          stage_order?: number | null
-          updated_at?: string | null
-        }
-        Relationships: []
       }
       users: {
         Row: {
           created_at: string | null
           department: string | null
           email: string
-          encrypted_password: string | null
           id: string
           is_active: boolean | null
           name: string
@@ -621,7 +167,6 @@ export type Database = {
           created_at?: string | null
           department?: string | null
           email: string
-          encrypted_password?: string | null
           id?: string
           is_active?: boolean | null
           name: string
@@ -632,7 +177,6 @@ export type Database = {
           created_at?: string | null
           department?: string | null
           email?: string
-          encrypted_password?: string | null
           id?: string
           is_active?: boolean | null
           name?: string
@@ -657,16 +201,6 @@ export type Database = {
         | "Cleared"
         | "HR round"
         | "Offered"
-      interview_type: "F2F" | "Online"
-      job_level:
-        | "Entry Level"
-        | "Mid Level"
-        | "Senior Level"
-        | "Lead"
-        | "Manager"
-        | "Director"
-      job_status: "Draft" | "Published" | "Closed" | "On Hold"
-      job_type: "Full Time" | "Part Time" | "Contract" | "Internship"
       user_role: "Admin" | "HR" | "Hiring Manager" | "Interviewer"
     }
     CompositeTypes: {

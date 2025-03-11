@@ -154,8 +154,24 @@ export default function InterviewFlow() {
 
   // Handle drag start
   const handleDragStart = (e, candidate, fromStage) => {
+    e.dataTransfer.setData("text/plain", candidate.id); // For compatibility
     e.dataTransfer.setData("candidateId", candidate.id);
     e.dataTransfer.setData("fromStageId", fromStage.id);
+    e.dataTransfer.effectAllowed = "move";
+
+    // Create a simple drag image
+    const dragImage = document.createElement("div");
+    dragImage.textContent = candidate.name;
+    dragImage.style.position = "absolute";
+    dragImage.style.top = "-1000px";
+    dragImage.style.backgroundColor = "white";
+    dragImage.style.padding = "8px";
+    dragImage.style.border = "1px solid #ccc";
+    dragImage.style.borderRadius = "4px";
+    dragImage.style.boxShadow = "0 2px 4px rgba(0,0,0,0.1)";
+    document.body.appendChild(dragImage);
+    e.dataTransfer.setDragImage(dragImage, 0, 0);
+    setTimeout(() => document.body.removeChild(dragImage), 0);
   };
 
   // Handle drag over
@@ -166,8 +182,34 @@ export default function InterviewFlow() {
   // Handle drop
   const handleDrop = (e, toStage) => {
     e.preventDefault();
-    const candidateId = e.dataTransfer.getData("candidateId");
-    const fromStageId = e.dataTransfer.getData("fromStageId");
+
+    // Try to get the data in different ways to ensure compatibility
+    let candidateId;
+    let fromStageId;
+
+    try {
+      candidateId = e.dataTransfer.getData("candidateId");
+      fromStageId = e.dataTransfer.getData("fromStageId");
+
+      // If we couldn't get the data, try the plain text version
+      if (!candidateId) {
+        candidateId = e.dataTransfer.getData("text/plain");
+        // We'll need to find the candidate's current stage
+        const candidate = candidates.find((c) => c.id === candidateId);
+        if (candidate) {
+          fromStageId = candidate.stage_id;
+        }
+      }
+    } catch (error) {
+      console.error("Error getting drag data:", error);
+      return;
+    }
+
+    // Don't do anything if we couldn't get the candidate ID
+    if (!candidateId) {
+      console.error("No candidate ID found in drop event");
+      return;
+    }
 
     // Don't do anything if dropping in the same stage
     if (fromStageId === toStage.id) return;
@@ -176,7 +218,15 @@ export default function InterviewFlow() {
     const candidate = candidates.find((c) => c.id === candidateId);
     const fromStage = stages.find((s) => s.id === fromStageId);
 
-    if (!candidate || !fromStage) return;
+    if (!candidate) {
+      console.error("Candidate not found:", candidateId);
+      return;
+    }
+
+    if (!fromStage) {
+      console.error("From stage not found:", fromStageId);
+      return;
+    }
 
     // Open the move dialog
     setMoveDialog({
@@ -194,11 +244,12 @@ export default function InterviewFlow() {
 
     try {
       // Update candidate stage
+      const timestamp = new Date().toISOString();
       await supabase
         .from("candidates")
         .update({
           stage_id: toStage.id,
-          updated_at: new Date().toISOString(),
+          updated_at: timestamp,
           move_reason: comment,
         })
         .eq("id", candidate.id);
@@ -209,6 +260,7 @@ export default function InterviewFlow() {
           item_id: candidate.id,
           item_type: "candidate",
           comment: `Moved from ${moveDialog.fromStage.stage} to ${toStage.stage}: ${comment}`,
+          created_at: timestamp,
         });
       }
 
@@ -216,6 +268,20 @@ export default function InterviewFlow() {
         title: "Success",
         description: `${candidate.name} moved to ${toStage.stage}`,
       });
+
+      // Update local state to reflect the change immediately
+      setCandidates((prevCandidates) =>
+        prevCandidates.map((c) =>
+          c.id === candidate.id
+            ? {
+                ...c,
+                stage_id: toStage.id,
+                updated_at: timestamp,
+                move_reason: comment,
+              }
+            : c,
+        ),
+      );
 
       // Close dialog
       setMoveDialog({
@@ -283,9 +349,14 @@ export default function InterviewFlow() {
           {stages.map((stage) => (
             <Card
               key={stage.id}
-              className="w-full bg-gray-50 shadow-md rounded-lg"
+              className="w-full bg-gray-50 shadow-md rounded-lg drop-target"
               onDragOver={handleDragOver}
               onDrop={(e) => handleDrop(e, stage)}
+              onDragEnter={(e) => e.currentTarget.classList.add("bg-gray-100")}
+              onDragLeave={(e) =>
+                e.currentTarget.classList.remove("bg-gray-100")
+              }
+              data-stage-id={stage.id}
             >
               <CardHeader className="py-3 bg-gray-200 rounded-t-lg">
                 <CardTitle className="text-sm font-medium flex items-center justify-between text-gray-700">
@@ -308,11 +379,19 @@ export default function InterviewFlow() {
                           <Tooltip>
                             <TooltipTrigger asChild>
                               <div
-                                className="p-3 cursor-move bg-white shadow-sm hover:shadow-md transition-all duration-200 rounded-md border border-gray-200 w-[200px] relative group"
-                                draggable
+                                className="p-3 cursor-move bg-white shadow-sm hover:shadow-md transition-all duration-200 rounded-md border border-gray-200 w-[200px] relative group drag-item"
+                                draggable="true"
                                 onDragStart={(e) =>
                                   handleDragStart(e, candidate, stage)
                                 }
+                                onDragEnd={(e) => {
+                                  // Reset any visual effects when drag ends
+                                  document
+                                    .querySelectorAll(".drop-target")
+                                    .forEach((el) =>
+                                      el.classList.remove("bg-gray-100"),
+                                    );
+                                }}
                               >
                                 <div className="font-medium text-gray-900">
                                   {candidate.name}
