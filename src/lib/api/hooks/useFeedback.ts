@@ -38,8 +38,46 @@ export function useFeedback() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: updateFeedback,
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["feedback"] }),
+    mutationFn: async ({
+      id,
+      updates,
+    }: {
+      id: string;
+      updates: Partial<InterviewFeedback>;
+    }) => {
+      // Remove any undefined or null values to prevent database errors
+      const cleanUpdates = Object.entries(updates).reduce(
+        (acc, [key, value]) => {
+          if (value !== undefined && value !== null) {
+            acc[key] = value;
+          }
+          return acc;
+        },
+        {} as Record<string, any>,
+      );
+
+      console.log("Updating feedback with ID:", id);
+      console.log("Update data:", cleanUpdates);
+
+      const { data, error } = await supabase
+        .from("feedback")
+        .update(cleanUpdates)
+        .eq("id", id)
+        .select();
+
+      if (error) {
+        console.error("Error updating feedback:", error);
+        throw error;
+      }
+      return data;
+    },
+    onSuccess: (data) => {
+      console.log("Feedback updated successfully:", data);
+      queryClient.invalidateQueries({ queryKey: ["feedback"] });
+    },
+    onError: (error) => {
+      console.error("Error in update mutation:", error);
+    },
   });
 
   // Set up real-time subscription

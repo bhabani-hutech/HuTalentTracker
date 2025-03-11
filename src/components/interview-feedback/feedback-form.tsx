@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useToast } from "@/components/ui/use-toast";
 import { Label } from "../ui/label";
 import { Button } from "../ui/button";
 import { Textarea } from "../ui/textarea";
@@ -32,6 +33,7 @@ export function InterviewFeedbackForm({
   selectedInterview,
 }: Props) {
   const { createFeedback, updateFeedback } = useFeedback();
+  const { toast } = useToast();
   const { data: interviewers } = useInterviewers();
   const { data: candidates } = useCandidates();
   const { interviews } = useInterviews();
@@ -46,10 +48,6 @@ export function InterviewFeedbackForm({
       ? {
           ...existingFeedback,
           technical_skills: existingFeedback.technical_skills || 0,
-          communication_skills: existingFeedback.communication_skills || 0,
-          problem_solving: existingFeedback.problem_solving || 0,
-          experience_fit: existingFeedback.experience_fit || 0,
-          cultural_fit: existingFeedback.cultural_fit || 0,
           soft_skills: existingFeedback.soft_skills || 0,
           domain_skills: existingFeedback.domain_skills || 0,
           skill_set: existingFeedback.skill_set || 0,
@@ -67,10 +65,6 @@ export function InterviewFeedbackForm({
         }
       : {
           technical_skills: 0,
-          communication_skills: 0,
-          problem_solving: 0,
-          experience_fit: 0,
-          cultural_fit: 0,
           soft_skills: 0,
           domain_skills: 0,
           skill_set: 0,
@@ -164,17 +158,29 @@ export function InterviewFeedbackForm({
   const handleSubmit = async () => {
     try {
       if (!formData.interviewer_id) {
-        alert("Please select an interviewer");
+        toast({
+          title: "Missing Information",
+          description: "Please select an interviewer",
+          variant: "destructive",
+        });
         return;
       }
 
       if (!formData.candidate_id) {
-        alert("Please select a candidate");
+        toast({
+          title: "Missing Information",
+          description: "Please select a candidate",
+          variant: "destructive",
+        });
         return;
       }
 
       if (!formData.interview_id) {
-        alert("Please select an interview");
+        toast({
+          title: "Missing Information",
+          description: "Please select an interview",
+          variant: "destructive",
+        });
         return;
       }
 
@@ -184,10 +190,6 @@ export function InterviewFeedbackForm({
         candidate_id: formData.candidate_id,
         interviewer_id: formData.interviewer_id,
         technical_skills: formData.technical_skills || 0,
-        communication_skills: formData.communication_skills || 0,
-        problem_solving: formData.problem_solving || 0,
-        experience_fit: formData.experience_fit || 0,
-        cultural_fit: formData.cultural_fit || 0,
         soft_skills: formData.soft_skills || 0,
         domain_skills: formData.domain_skills || 0,
         skill_set: formData.skill_set || 0,
@@ -199,29 +201,45 @@ export function InterviewFeedbackForm({
       };
 
       if (existingFeedback?.id) {
+        // Make sure to include the ID in the update
         await updateFeedback({
           id: existingFeedback.id,
-          updates: feedbackData,
+          updates: {
+            ...feedbackData,
+            id: existingFeedback.id, // Ensure ID is included
+          },
         });
       } else {
         await createFeedback(feedbackData as any);
       }
 
-      alert("Feedback saved successfully!");
+      // Use toast instead of alert for better UX
+      toast({
+        title: existingFeedback ? "Feedback Updated" : "Feedback Submitted",
+        description: existingFeedback
+          ? "Feedback has been updated successfully"
+          : "Feedback has been submitted successfully",
+        variant: "default",
+      });
+
       if (onClose) onClose();
     } catch (error) {
       console.error("Error saving feedback:", error);
-      alert("Error saving feedback");
+      toast({
+        title: "Error",
+        description: "Failed to save feedback. Please try again.",
+        variant: "destructive",
+      });
     }
   };
 
   const renderRatingButtons = (field: keyof InterviewFeedback) => (
-    <div className="flex gap-4">
+    <div className="flex gap-2">
       {[1, 2, 3, 4, 5].map((rating) => (
         <Button
           key={rating}
           variant={formData[field] === rating ? "default" : "outline"}
-          className="h-10 w-10"
+          className="h-8 w-8 text-xs"
           onClick={() => setFormData({ ...formData, [field]: rating })}
         >
           {rating}
@@ -305,97 +323,24 @@ export function InterviewFeedbackForm({
             </div>
           )}
         </div>
-
-        {/* Add skill dropdown */}
-        <div className="mt-4">
-          <Label>Add Skill to Rate</Label>
-          <div className="flex gap-2 mt-2">
-            <Select
-              onValueChange={(value) => {
-                if (value && !skillRatings[value]) {
-                  setSkillRatings({ ...skillRatings, [value]: 0 });
-                }
-              }}
-            >
-              <SelectTrigger className="flex-1">
-                <SelectValue placeholder="Select a skill to rate" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="" disabled>
-                  Select a skill
-                </SelectItem>
-                {technicalSkills &&
-                  technicalSkills.map((skill) =>
-                    skill && skill.id && skill.name ? (
-                      <SelectItem key={`tech-${skill.id}`} value={skill.name}>
-                        {skill.name} (Technical)
-                      </SelectItem>
-                    ) : null,
-                  )}
-                {domainSkills &&
-                  domainSkills.map((skill) =>
-                    skill && skill.id && skill.name ? (
-                      <SelectItem key={`domain-${skill.id}`} value={skill.name}>
-                        {skill.name} (Domain)
-                      </SelectItem>
-                    ) : null,
-                  )}
-                {softSkills &&
-                  softSkills.map((skill) =>
-                    skill && skill.id && skill.name ? (
-                      <SelectItem key={`soft-${skill.id}`} value={skill.name}>
-                        {skill.name} (Soft)
-                      </SelectItem>
-                    ) : null,
-                  )}
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
       </div>
 
       {/* Overall ratings */}
-      <div className="space-y-6 mt-6 border-t pt-6">
-        <h3 className="text-lg font-semibold">Overall Ratings</h3>
-
-        <div className="grid md:grid-cols-2 gap-6">
-          <div className="space-y-2">
-            <Label>Technical Skills</Label>
+      <div className="space-y-4 mt-6 border-t pt-6">
+        <Label className="text-lg font-semibold">Overall Ratings</Label>
+        <div className="grid gap-4">
+          <div className="flex items-center justify-between border p-3 rounded-md">
+            <span className="font-medium">Technical Skills</span>
             {renderRatingButtons("technical_skills")}
           </div>
 
-          <div className="space-y-2">
-            <Label>Communication Skills</Label>
-            {renderRatingButtons("communication_skills")}
-          </div>
-
-          <div className="space-y-2">
-            <Label>Problem Solving</Label>
-            {renderRatingButtons("problem_solving")}
-          </div>
-
-          <div className="space-y-2">
-            <Label>Experience Fit</Label>
-            {renderRatingButtons("experience_fit")}
-          </div>
-
-          <div className="space-y-2">
-            <Label>Cultural Fit</Label>
-            {renderRatingButtons("cultural_fit")}
-          </div>
-
-          <div className="space-y-2">
-            <Label>Skill Set Match</Label>
-            {renderRatingButtons("skill_set")}
-          </div>
-
-          <div className="space-y-2">
-            <Label>Domain Knowledge</Label>
+          <div className="flex items-center justify-between border p-3 rounded-md">
+            <span className="font-medium">Domain Skills</span>
             {renderRatingButtons("domain_skills")}
           </div>
 
-          <div className="space-y-2">
-            <Label>Soft Skills</Label>
+          <div className="flex items-center justify-between border p-3 rounded-md">
+            <span className="font-medium">Soft Skills</span>
             {renderRatingButtons("soft_skills")}
           </div>
         </div>
