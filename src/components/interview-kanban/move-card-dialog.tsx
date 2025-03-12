@@ -17,6 +17,7 @@ interface MoveCardDialogProps {
   fromStage: string;
   toStage: string;
   itemName: string;
+  isAutomatic?: boolean;
 }
 
 export function MoveCardDialog({
@@ -26,13 +27,14 @@ export function MoveCardDialog({
   fromStage,
   toStage,
   itemName,
+  isAutomatic = false,
 }: MoveCardDialogProps) {
-  const [reason, setReason] = useState("");
+  const [comment, setComment] = useState("");
 
   const handleSubmit = () => {
-    if (reason.trim()) {
-      onConfirm(reason);
-      setReason("");
+    if (comment.trim()) {
+      onConfirm(comment);
+      setComment("");
     }
   };
 
@@ -40,33 +42,56 @@ export function MoveCardDialog({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Move Confirmation</DialogTitle>
+          <DialogTitle>
+            {isAutomatic ? "Automatic Movement" : "Move Candidate"}
+          </DialogTitle>
         </DialogHeader>
         <div className="py-4">
-          <p className="mb-4 text-sm text-muted-foreground">
-            Moving <span className="font-medium">{itemName}</span> from{" "}
-            <span className="font-medium">{fromStage}</span> to{" "}
-            <span className="font-medium">{toStage}</span>
+          <p className="mb-2">
+            {isAutomatic ? (
+              <>
+                <span className="font-medium">{itemName}</span> was
+                automatically moved from{" "}
+                <span className="font-medium">{fromStage}</span> to{" "}
+                <span className="font-medium">{toStage}</span>
+              </>
+            ) : (
+              <>
+                Moving <span className="font-medium">{itemName}</span> from{" "}
+                <span className="font-medium">{fromStage}</span> to{" "}
+                <span className="font-medium">{toStage}</span>
+              </>
+            )}
           </p>
           <div className="space-y-2">
-            <Label htmlFor="reason">Reason for moving</Label>
+            <Label htmlFor="move-comment">
+              {isAutomatic ? "System-generated comment" : "Comments (optional)"}
+            </Label>
             <Textarea
-              id="reason"
-              value={reason}
-              onChange={(e) => setReason(e.target.value)}
-              placeholder="Please provide a reason for this move..."
-              className="min-h-[100px]"
-              required
+              id="move-comment"
+              placeholder={
+                isAutomatic
+                  ? "System-generated comment"
+                  : "Add comments about this stage change..."
+              }
+              value={comment}
+              onChange={(e) => setComment(e.target.value)}
+              readOnly={isAutomatic}
+              className={isAutomatic ? "bg-gray-50" : ""}
             />
           </div>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={onClose}>
-            Cancel
-          </Button>
-          <Button onClick={handleSubmit} disabled={!reason.trim()}>
-            Confirm Move
-          </Button>
+          {isAutomatic ? (
+            <Button onClick={onClose}>Close</Button>
+          ) : (
+            <>
+              <Button variant="outline" onClick={onClose}>
+                Cancel
+              </Button>
+              <Button onClick={() => onConfirm(comment)}>Confirm Move</Button>
+            </>
+          )}
         </DialogFooter>
       </DialogContent>
     </Dialog>

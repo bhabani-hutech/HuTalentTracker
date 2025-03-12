@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useCandidateMovement } from "@/lib/api/hooks/useCandidateMovement";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/lib/supabase";
@@ -32,6 +33,8 @@ import { CommentDialog } from "@/components/interview-kanban/comment-dialog";
 import { useComments } from "@/lib/api/hooks/useComments";
 
 export default function InterviewFlow() {
+  // Initialize the candidate movement system
+  useCandidateMovement();
   const [stages, setStages] = useState([]);
   const [candidates, setCandidates] = useState([]);
   const [isLoading, setIsLoading] = useState(true);

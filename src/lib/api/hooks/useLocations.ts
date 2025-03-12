@@ -1,33 +1,66 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { supabase } from "@/lib/supabase";
+import { useOwnOrganization } from "./useOwnOrganization";
 
 interface Location {
-  id: number;
+  id: string | number;
   name: string;
   address?: string;
+  city?: string;
+  state?: string;
+  country?: string;
+  postal_code?: string;
 }
 
 export function useLocations() {
   const queryClient = useQueryClient();
+  const { ownOrganization, isLoading: isLoadingOrg } = useOwnOrganization();
 
-  
   const {
     data: locations,
-    isLoading,
+    isLoading: isLoadingLocs,
     error,
   } = useQuery({
-    queryKey: ["locations"],
+    queryKey: ["locations", ownOrganization?.id],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("organizations")
-        .select("*")
-        .eq("is_own_org", true);
+      // If we have an own organization with locations, use those
+      if (
+        ownOrganization?.locations &&
+        Array.isArray(ownOrganization.locations)
+      ) {
+        return ownOrganization.locations.map((loc, index) => ({
+          id: `org-loc-${index}`,
+          name: loc.name,
+          address: loc.address,
+          city: loc.city,
+          state: loc.state,
+          country: loc.country,
+          postal_code: loc.postal_code,
+          from_organization: true,
+          // Format a display address for convenience
+          display_address: [
+            loc.address,
+            loc.city,
+            loc.state,
+            loc.country,
+            loc.postal_code,
+          ]
+            .filter(Boolean)
+            .join(", "),
+        }));
+      }
 
-        console.log(locations)
+      // Otherwise, fall back to the locations table
+      const { data, error } = await supabase
+        .from("locations")
+        .select("*")
+        .order("name");
+
       if (error) throw error;
-      return data as Location[];
+      return data;
     },
+    enabled: !isLoadingOrg, // Only run this query when we know about the organization
   });
 
   // Set up real-time subscription
@@ -49,5 +82,9 @@ export function useLocations() {
     };
   }, [queryClient]);
 
-  return { locations, isLoading, error };
+  return {
+    locations,
+    isLoading: isLoadingLocs || isLoadingOrg,
+    error,
+  };
 }

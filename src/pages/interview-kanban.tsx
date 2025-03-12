@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useCandidateMovement } from "@/lib/api/hooks/useCandidateMovement";
 import { KanbanBoard } from "@/components/interview-kanban/kanban-board";
 import { useJobs } from "@/lib/api/hooks/useJobs";
 import {
@@ -11,6 +12,8 @@ import {
 import { Badge } from "@/components/ui/badge";
 
 export default function InterviewKanban() {
+  // Initialize the candidate movement system
+  useCandidateMovement();
   const { jobs, isLoading } = useJobs();
   const [selectedJobId, setSelectedJobId] = useState<string>("");
 

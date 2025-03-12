@@ -62,9 +62,15 @@ export function JobApplicationForm({
         email: formData.email,
         phone: formData.phone,
         position: formData.position,
+        location: formData.location,
         notice_period: formData.notice_period,
         source: "Direct Application",
         match_score: 0, // This would be calculated based on job requirements
+        job_id: null,
+        stage_id: 1, // Default to screening stage
+        type: formData.type,
+        experience: formData.experience,
+        skills: formData.skills,
       });
 
       toast({

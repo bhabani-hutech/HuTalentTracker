@@ -102,7 +102,7 @@ export default function NewJob() {
         });
       }
     },
-    [id, createJob, updateJob, navigate, toast]
+    [id, createJob, updateJob, navigate, toast],
   );
 
   useEffect(() => {
@@ -245,14 +245,22 @@ export default function NewJob() {
                     <SelectValue placeholder="Select location" />
                   </SelectTrigger>
                   <SelectContent>
-                 
-                     {
-                      locations?.[0]?.locations?.map((location) => ( 
-                    <SelectItem key={location?.id} value={location?.name}>
-                      {location?.name} - {location?.address}
+                    {locations?.map((location) => (
+                      <SelectItem
+                        key={location?.id || location?.name}
+                        value={location?.name}
+                      >
+                        {location?.name}{" "}
+                        {location?.display_address
+                          ? `- ${location?.display_address}`
+                          : location?.address
+                            ? `- ${location?.address}`
+                            : ""}
+                      </SelectItem>
+                    ))}
+                    <SelectItem value="custom">
+                      Enter custom location
                     </SelectItem>
-                   ))
-                  }
                   </SelectContent>
                 </Select>
                 {form.watch("location") === "custom" && (
@@ -326,7 +334,7 @@ export default function NewJob() {
                           <SelectItem key={year} value={year.toString()}>
                             {year} {year === 1 ? "year" : "years"}
                           </SelectItem>
-                        )
+                        ),
                       )}
                     </SelectContent>
                   </Select>
@@ -357,7 +365,7 @@ export default function NewJob() {
                           >
                             {year} {year === 1 ? "year" : "years"}
                           </SelectItem>
-                        )
+                        ),
                       )}
                     </SelectContent>
                   </Select>
@@ -433,14 +441,14 @@ export default function NewJob() {
                     try {
                       const generated = await generateJobDescription(
                         title,
-                        level
+                        level,
                       );
 
                       form.setValue("description", generated.description);
                       form.setValue("requirements", generated.requirements);
                       form.setValue(
                         "responsibilities",
-                        generated.responsibilities
+                        generated.responsibilities,
                       );
                       form.setValue("skills", generated.skills);
 
@@ -557,7 +565,7 @@ export default function NewJob() {
                       const currentRequirements =
                         form.getValues("requirements");
                       const updatedRequirements = currentRequirements.filter(
-                        (_, i) => i !== index
+                        (_, i) => i !== index,
                       );
                       form.setValue("requirements", updatedRequirements);
                       form.trigger("requirements"); // Trigger validation
@@ -609,7 +617,7 @@ export default function NewJob() {
                         currentResponsibilities.filter((_, i) => i !== index);
                       form.setValue(
                         "responsibilities",
-                        updatedResponsibilities
+                        updatedResponsibilities,
                       );
                       form.trigger("responsibilities"); // Trigger validation
                     }}

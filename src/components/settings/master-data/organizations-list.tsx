@@ -38,6 +38,7 @@ export function OrganizationsList() {
 
   const loadOrganizations = async () => {
     try {
+      setIsLoading(true);
       const { data, error } = await supabase
         .from("organizations")
         .select("*")
@@ -111,6 +112,12 @@ export function OrganizationsList() {
         toast({
           title: "Success",
           description: `${org.name} is now set as your own organization`,
+        });
+
+        // Show additional message about departments and locations
+        toast({
+          title: "Organization Changed",
+          description: `Departments and locations from ${org.name} will now be available throughout the application.`,
         });
       } else {
         // Cannot unset the only own org
@@ -317,8 +324,9 @@ export function OrganizationsList() {
               }
             }
 
+            let result;
             if (selectedOrganization?.id) {
-              await supabase
+              result = await supabase
                 .from("organizations")
                 .update(data)
                 .eq("id", selectedOrganization.id);
@@ -333,15 +341,25 @@ export function OrganizationsList() {
                 data.is_own_org = true;
               }
 
-              await supabase.from("organizations").insert([data]);
+              result = await supabase.from("organizations").insert([data]);
             }
-            loadOrganizations();
-            setShowForm(false);
-            setSelectedOrganization(null);
+
+            if (result.error) {
+              throw result.error;
+            }
+
+            // First show success message
             toast({
               title: "Success",
               description: `Organization ${selectedOrganization ? "updated" : "added"} successfully`,
             });
+
+            // Then close the form
+            setShowForm(false);
+            setSelectedOrganization(null);
+
+            // Finally reload the organizations list
+            await loadOrganizations();
           } catch (error) {
             console.error("Error saving organization:", error);
             toast({

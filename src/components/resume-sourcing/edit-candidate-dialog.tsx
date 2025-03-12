@@ -21,6 +21,7 @@ import { Label } from "../ui/label";
 import { Candidate } from "@/lib/api/candidates";
 import { supabase } from "@/lib/supabase";
 import { useSkills } from "@/lib/api/hooks/useSkills";
+import { useLocations } from "@/lib/api/hooks/useLocations";
 
 interface EditCandidateDialogProps {
   isOpen: boolean;
@@ -46,44 +47,23 @@ export function EditCandidateDialog({
   const { skills: technicalSkills } = useSkills("technical");
   const { skills: softSkills } = useSkills("soft");
 
-  // Fetch locations from own organizations
+  // Use the locations hook instead of fetching directly
+  const { locations, isLoading: isLoadingLocations } = useLocations();
+
+  // Update ownOrgLocations when locations change
   useEffect(() => {
-    const fetchOwnOrgLocations = async () => {
-      try {
-        const { data: organizations, error } = await supabase
-          .from("organizations")
-          .select("*")
-          .eq("is_own_org", true);
-
-        if (error) throw error;
-
-        // Extract all locations from own organizations
-        const allLocations = [];
-        for (const org of organizations || []) {
-          if (org.locations && Array.isArray(org.locations)) {
-            for (const location of org.locations) {
-              allLocations.push({
-                name: location.name,
-                address: [
-                  location.address,
-                  location.city,
-                  location.state,
-                  location.country,
-                ]
-                  .filter(Boolean)
-                  .join(", "),
-              });
-            }
-          }
-        }
-        setOwnOrgLocations(allLocations);
-      } catch (error) {
-        console.error("Error fetching organization locations:", error);
-      }
-    };
-
-    fetchOwnOrgLocations();
-  }, []);
+    if (locations) {
+      const formattedLocations = locations.map((location) => ({
+        name: location.name,
+        address:
+          location.display_address ||
+          [location.address, location.city, location.state, location.country]
+            .filter(Boolean)
+            .join(", "),
+      }));
+      setOwnOrgLocations(formattedLocations);
+    }
+  }, [locations]);
 
   // Populate form when candidate data is available
   useEffect(() => {

@@ -113,33 +113,16 @@ export function OrganizationForm({
         return;
       }
 
-      if (initialData?.id) {
-        const { error } = await supabase
-          .from("organizations")
-          .update(formData)
-          .eq("id", initialData.id);
-
-        if (error) throw error;
-      } else {
-        const { error } = await supabase
-          .from("organizations")
-          .insert([formData]);
-
-        if (error) throw error;
-      }
-
-      toast({
-        title: "Success",
-        description: `Organization ${initialData ? "updated" : "created"} successfully`,
-      });
+      // Pass the form data to the parent component's onSubmit handler
+      // Let the parent component handle the API call and state updates
       onSubmit(formData);
       onClose();
     } catch (error) {
-      console.error("Error saving organization:", error);
+      console.error("Error in form submission:", error);
       toast({
         variant: "destructive",
         title: "Error",
-        description: `Failed to ${initialData ? "update" : "create"} organization`,
+        description: `Failed to submit organization form`,
       });
     }
   };

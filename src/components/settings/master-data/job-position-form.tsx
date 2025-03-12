@@ -17,6 +17,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { supabase } from "@/lib/supabase";
+import { useDepartments } from "@/lib/api/hooks/useDepartments";
 
 interface JobPosition {
   id?: number;
@@ -45,39 +46,25 @@ export function JobPositionForm({
   });
   const [departments, setDepartments] = useState<{ name: string }[]>([]);
 
-  // Fetch departments from own organizations
+  // Use the departments hook instead of fetching directly
+  const { departments: deptData, isLoading: isLoadingDepts } = useDepartments();
+
+  // Update departments when deptData changes
   useEffect(() => {
-    const fetchDepartments = async () => {
-      try {
-        const { data: organizations, error } = await supabase
-          .from("organizations")
-          .select("*")
-          .eq("is_own_org", true);
-
-        if (error) throw error;
-
-        // Extract all departments from own organizations
-        const allDepartments: { name: string }[] = [];
-        for (const org of organizations || []) {
-          if (org.departments && Array.isArray(org.departments)) {
-            for (const dept of org.departments) {
-              if (
-                dept.name &&
-                !allDepartments.some((d) => d.name === dept.name)
-              ) {
-                allDepartments.push({ name: dept.name });
-              }
-            }
+    if (deptData) {
+      const uniqueDepartments = deptData.reduce(
+        (acc, dept) => {
+          if (!acc.some((d) => d.name === dept.name)) {
+            acc.push({ name: dept.name });
           }
-        }
-        setDepartments(allDepartments);
-      } catch (error) {
-        console.error("Error fetching organization departments:", error);
-      }
-    };
+          return acc;
+        },
+        [] as { name: string }[],
+      );
 
-    fetchDepartments();
-  }, []);
+      setDepartments(uniqueDepartments);
+    }
+  }, [deptData]);
 
   useEffect(() => {
     if (initialData) {

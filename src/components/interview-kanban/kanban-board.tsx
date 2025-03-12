@@ -51,12 +51,14 @@ export function KanbanBoard({ selectedJobId }: KanbanBoardProps) {
     fromStage: string;
     toStage: string;
     targetStageId: string;
+    isAutomatic: boolean;
   }>({
     isOpen: false,
     item: null,
     fromStage: "",
     toStage: "",
     targetStageId: "",
+    isAutomatic: false,
   });
 
   const [commentDialog, setCommentDialog] = useState<{
@@ -96,6 +98,76 @@ export function KanbanBoard({ selectedJobId }: KanbanBoardProps) {
     };
     loadStages();
   }, []);
+
+  // Listen for automatic stage changes to show the dialog
+  useEffect(() => {
+    const handleCandidateUpdate = async (payload: any) => {
+      // Only proceed if this is a stage change with a move_reason
+      if (
+        !payload.new ||
+        !payload.old ||
+        payload.new.stage_id === payload.old.stage_id ||
+        !payload.new.move_reason
+      ) {
+        return;
+      }
+
+      try {
+        // Get the candidate details
+        const { data: candidate, error: candidateError } = await supabase
+          .from("candidates")
+          .select("id, name, stage_id, stages(stage)")
+          .eq("id", payload.new.id)
+          .single();
+
+        if (candidateError) throw candidateError;
+
+        // Get the old stage details
+        const { data: oldStage, error: oldStageError } = await supabase
+          .from("stages")
+          .select("id, stage")
+          .eq("id", payload.old.stage_id)
+          .single();
+
+        if (oldStageError) throw oldStageError;
+
+        // Only show the dialog if this candidate belongs to the currently selected job
+        if (candidate.job_id === selectedJobId) {
+          // Show the automatic move dialog
+          setMoveDialog({
+            isOpen: true,
+            item: {
+              id: candidate.id,
+              name: candidate.name,
+              stage_id: candidate.stage_id,
+              itemType: "candidate",
+              move_reason: payload.new.move_reason,
+            },
+            fromStage: oldStage.stage,
+            toStage: candidate.stages.stage,
+            targetStageId: candidate.stage_id,
+            isAutomatic: true,
+          });
+        }
+      } catch (error) {
+        console.error("Error handling automatic stage change:", error);
+      }
+    };
+
+    // Subscribe to candidate updates
+    const subscription = supabase
+      .channel("candidate-stage-changes")
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "candidates" },
+        handleCandidateUpdate,
+      )
+      .subscribe();
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [selectedJobId]);
 
   useEffect(() => {
     const loadData = async () => {
@@ -220,6 +292,7 @@ export function KanbanBoard({ selectedJobId }: KanbanBoardProps) {
       fromStage,
       toStage,
       targetStageId,
+      isAutomatic: false,
     });
   };
 
@@ -292,6 +365,7 @@ export function KanbanBoard({ selectedJobId }: KanbanBoardProps) {
         fromStage: "",
         toStage: "",
         targetStageId: "",
+        isAutomatic: false,
       });
     } catch (error) {
       console.error("Error updating stage:", error);
@@ -463,6 +537,7 @@ export function KanbanBoard({ selectedJobId }: KanbanBoardProps) {
         fromStage={moveDialog.fromStage}
         toStage={moveDialog.toStage}
         itemName={moveDialog.item?.name || ""}
+        isAutomatic={moveDialog.isAutomatic}
       />
 
       {commentDialog.item && (
