@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { EditCandidateDialog } from "./edit-candidate-dialog";
 import { Input } from "../ui/input";
 import { Button } from "../ui/button";
+import { v4 as uuidv4 } from "uuid";
 import {
   Search,
   Filter,
@@ -25,7 +26,7 @@ import { Badge } from "../ui/badge";
 import { ResumePreview } from "./resume-preview";
 import { ResumeFilters } from "./resume-filters";
 import { InterviewScheduler } from "./interview-scheduler";
-import { Candidate } from "@/lib/api/candidates";
+import { Candidate, createCandidate } from "@/lib/api/candidates";
 import { getJobs } from "@/lib/api/jobs"; // Ensure this is correctly imported
 
 // Define the Job interface
@@ -138,7 +139,7 @@ export function ResumeList({
             <Button
               onClick={() =>
                 setEditingCandidate({
-                  id: "",
+                  id: uuidv4(), // Generate unique ID
                   name: "",
                   email: "",
                   phone: "",
@@ -151,6 +152,9 @@ export function ResumeList({
                   location: "",
                   match_score: 0,
                   created_at: new Date().toISOString(),
+                  file_url: "",
+                  job_id: null,
+                  stage_id: 1, // Default to Screening stage
                 })
               }
             >
@@ -252,12 +256,31 @@ export function ResumeList({
         isOpen={!!editingCandidate}
         onClose={() => setEditingCandidate(null)}
         onSubmit={async (id, updates) => {
-          await onEdit(id, updates);
+          if (!id) {
+            // Create new candidate if ID is empty (Apply Directly case)
+            await createCandidate({
+              ...updates,
+              name: updates.name || "Unnamed Candidate",
+              email: updates.email || "noemail@example.com",
+              stage_id: 1,
+              experience: updates.experience || "0-1 years",
+              type: updates.type || "Full Time",
+              skills: updates.skills || "",
+              location: updates.location || "Remote",
+              position: updates.position || "Unspecified Position",
+              job_id: updates.job_id ?? null, // Ensure job_id is explicitly defined
+              source: updates.source || "Direct Application", // Ensure source is provided
+            });
+          } else {
+            // Otherwise, update candidate
+            await onEdit(id, updates);
+          }
           setEditingCandidate(null);
         }}
         candidate={editingCandidate}
         jobs={jobs}
       />
+
       <ResumePreview
         isOpen={!!selectedCandidate}
         onClose={() => setSelectedCandidate(null)}
