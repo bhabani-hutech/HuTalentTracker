@@ -139,7 +139,6 @@ export function ResumeList({
             <Button
               onClick={() =>
                 setEditingCandidate({
-                  id: uuidv4(), // Generate unique ID
                   name: "",
                   email: "",
                   phone: "",
