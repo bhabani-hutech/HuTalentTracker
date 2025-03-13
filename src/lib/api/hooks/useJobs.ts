@@ -14,9 +14,9 @@ export function useJobs() {
   } = useQuery({
     queryKey: ["jobs"],
     queryFn: getJobs,
-    onSuccess: (data) => {
-      console.log("Job data in hook:", data);
-    },
+    staleTime: 60000, // Data stays fresh for 60 seconds
+    cacheTime: 3600000, // Cache persists for 1 hour
+    refetchOnWindowFocus: false,
     onError: (error) => {
       console.error("Error in job hook:", error);
     },
@@ -35,7 +35,6 @@ export function useJobs() {
     mutationFn: ({ id, updates }: { id: string; updates: Partial<Job> }) =>
       updateJob(id, updates),
     onSuccess: () => {
-      console.log("Job updated successfully");
       queryClient.invalidateQueries({ queryKey: ["jobs"] });
     },
     onError: (error) => {

@@ -14,6 +14,9 @@ export function useSkills(type?: "domain" | "technical" | "soft") {
   const { data, isLoading, error } = useQuery({
     queryKey,
     queryFn: () => getSkills(type),
+    staleTime: 300000, // Data stays fresh for 5 minutes (skills change less frequently)
+    cacheTime: 3600000, // Cache persists for 1 hour
+    refetchOnWindowFocus: false,
   });
 
   const createMutation = useMutation({

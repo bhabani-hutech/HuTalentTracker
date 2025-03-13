@@ -19,9 +19,9 @@ export function useFeedback() {
   } = useQuery({
     queryKey: ["feedback"],
     queryFn: getFeedback,
-    onSuccess: (data) => {
-      console.log("Feedback data in hook:", data);
-    },
+    staleTime: 60000, // Data stays fresh for 60 seconds
+    cacheTime: 3600000, // Cache persists for 1 hour
+    refetchOnWindowFocus: false,
     onError: (error) => {
       console.error("Error in feedback hook:", error);
     },
@@ -61,8 +61,7 @@ export function useFeedback() {
         {} as Record<string, any>,
       );
 
-      console.log("Updating feedback with ID:", id);
-      console.log("Update data:", cleanUpdates);
+      // Removed console logs to reduce unnecessary operations
 
       const { data, error } = await supabase
         .from("feedback")
@@ -76,8 +75,7 @@ export function useFeedback() {
       }
       return data;
     },
-    onSuccess: (data) => {
-      console.log("Feedback updated successfully:", data);
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["feedback"] });
     },
     onError: (error) => {

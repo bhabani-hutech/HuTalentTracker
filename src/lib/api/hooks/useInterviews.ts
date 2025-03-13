@@ -153,14 +153,15 @@ export function useInterviews(interviewId?: string) {
         "postgres_changes",
         { event: "*", schema: "public", table: "interviews" },
         (payload) => {
-          // console.log("Realtime update received:", payload);
-          queryClient.invalidateQueries({ queryKey: ["interviews"] });
+          // Only invalidate if the change affects the current interview or all interviews
+          if (!interviewId || (payload.new && payload.new.id === interviewId)) {
+            queryClient.invalidateQueries({ queryKey: ["interviews"] });
 
-          // Also invalidate specific interview if ID matches
-          if (interviewId) {
-            queryClient.invalidateQueries({
-              queryKey: ["interview", interviewId],
-            });
+            if (interviewId) {
+              queryClient.invalidateQueries({
+                queryKey: ["interview", interviewId],
+              });
+            }
           }
         },
       )

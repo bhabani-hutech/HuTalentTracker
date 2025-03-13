@@ -28,7 +28,7 @@ export function useCandidates() {
     mutationFn: createCandidate,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["candidates"] });
-      // Also invalidate interviews to update the kanban board
+      // Only invalidate interviews when explicitly creating a candidate
       queryClient.invalidateQueries({ queryKey: ["interviews"] });
     },
   });
@@ -62,9 +62,9 @@ export function useCandidates() {
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "candidates" },
-        (payload) => {
+        () => {
+          // Only invalidate candidates query, not interviews on every change
           queryClient.invalidateQueries({ queryKey: ["candidates"] });
-          queryClient.invalidateQueries({ queryKey: ["interviews"] });
         },
       )
       .subscribe();
