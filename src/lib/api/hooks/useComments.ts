@@ -15,6 +15,11 @@ export function useComments(itemId?: string) {
     queryKey,
     queryFn: () => (itemId ? getComments(itemId) : Promise.resolve([])),
     enabled: !!itemId,
+    staleTime: 300000, // 5 minutes
+    cacheTime: 3600000, // 1 hour
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    refetchOnReconnect: false,
   });
 
   const createMutation = useMutation({

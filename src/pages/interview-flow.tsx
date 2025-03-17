@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useCandidateMovement } from "@/lib/api/hooks/useCandidateMovement";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -110,12 +110,27 @@ export default function InterviewFlow() {
     fetchData();
   }, [selectedJobId]);
 
+  // Use a ref to prevent multiple subscriptions
+  const subscriptionRef = useRef(null);
+
   // Set up real-time subscription for candidates
   useEffect(() => {
     if (!selectedJobId) return;
 
+    // Skip if already subscribed for this job
+    if (subscriptionRef.current === selectedJobId) return;
+
+    // Unsubscribe from previous subscription if exists
+    if (
+      subscriptionRef.current &&
+      typeof subscriptionRef.current === "object" &&
+      subscriptionRef.current.subscription
+    ) {
+      subscriptionRef.current.subscription.unsubscribe();
+    }
+
     const subscription = supabase
-      .channel("candidates-changes")
+      .channel(`candidates-changes-${selectedJobId}`)
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "candidates" },
@@ -142,8 +157,20 @@ export default function InterviewFlow() {
       }
     };
 
+    // Store subscription reference with job ID
+    subscriptionRef.current = {
+      jobId: selectedJobId,
+      subscription,
+    };
+
     return () => {
-      subscription.unsubscribe();
+      if (
+        subscriptionRef.current &&
+        typeof subscriptionRef.current === "object" &&
+        subscriptionRef.current.subscription
+      ) {
+        subscriptionRef.current.subscription.unsubscribe();
+      }
     };
   }, [selectedJobId]);
 

@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Interview } from "@/types/database";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { supabase } from "@/lib/supabase";
 
 // Function to fetch all interviews
@@ -61,9 +61,12 @@ export function useInterviews(interviewId?: string) {
   } = useQuery({
     queryKey: ["interviews"],
     queryFn: fetchInterviews,
-    refetchOnWindowFocus: false, // Optional: prevents unnecessary refetching
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    refetchOnReconnect: false,
     retry: 3,
-    staleTime: 30000, // 30 seconds
+    staleTime: 300000, // 5 minutes
+    cacheTime: 3600000, // 1 hour
   });
 
   // React Query to get specific interview by ID
@@ -145,8 +148,13 @@ export function useInterviews(interviewId?: string) {
     },
   });
 
+  // Use a ref to prevent multiple subscriptions
+  const subscriptionRef = useRef(null);
+
   // Real-time subscription to listen for database changes
   useEffect(() => {
+    // Skip if already subscribed for this interview
+    if (subscriptionRef.current === interviewId) return;
     const subscription = supabase
       .channel("interviews-changes")
       .on(
@@ -167,8 +175,12 @@ export function useInterviews(interviewId?: string) {
       )
       .subscribe();
 
+    // Store subscription reference with interview ID
+    subscriptionRef.current = interviewId || "all";
+
     return () => {
       subscription.unsubscribe();
+      subscriptionRef.current = null;
     };
   }, [queryClient, interviewId]);
 

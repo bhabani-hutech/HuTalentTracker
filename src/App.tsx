@@ -32,7 +32,11 @@ import {
   Briefcase,
   GitBranch,
 } from "lucide-react";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import {
+  QueryClient,
+  QueryClientProvider,
+  useQueryClient,
+} from "@tanstack/react-query";
 import { Toaster } from "./components/ui/toaster";
 import MasterData from "./pages/masterdata";
 
@@ -90,7 +94,18 @@ const navigationItems: NavItem[] = [
   },
 ];
 
-const queryClient = new QueryClient();
+// Configure with optimized defaults to prevent excessive API calls
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      refetchOnWindowFocus: false,
+      refetchOnMount: true,
+      refetchOnReconnect: false,
+      retry: 0,
+      staleTime: 300000, // 5 minutes
+    },
+  },
+});
 
 function AppContent() {
   return (

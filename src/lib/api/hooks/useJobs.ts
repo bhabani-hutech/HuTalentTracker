@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getJobs, createJob, updateJob, deleteJob } from "../jobs";
 import { Job } from "@/types/database";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { supabase } from "@/lib/supabase";
 
 export function useJobs() {
@@ -14,9 +14,11 @@ export function useJobs() {
   } = useQuery({
     queryKey: ["jobs"],
     queryFn: getJobs,
-    staleTime: 60000, // Data stays fresh for 60 seconds
+    staleTime: 300000, // Data stays fresh for 5 minutes
     cacheTime: 3600000, // Cache persists for 1 hour
     refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    refetchOnReconnect: false,
     onError: (error) => {
       console.error("Error in job hook:", error);
     },
@@ -52,8 +54,13 @@ export function useJobs() {
     },
   });
 
+  // Use a ref to prevent multiple subscriptions
+  const subscriptionRef = useRef(null);
+
   // Set up real-time subscription
   useEffect(() => {
+    // Skip if already subscribed
+    if (subscriptionRef.current) return;
     const subscription = supabase
       .channel("jobs-changes")
       .on(
@@ -65,8 +72,14 @@ export function useJobs() {
       )
       .subscribe();
 
+    // Store subscription reference
+    subscriptionRef.current = subscription;
+
     return () => {
-      subscription.unsubscribe();
+      if (subscriptionRef.current) {
+        subscription.unsubscribe();
+        subscriptionRef.current = null;
+      }
     };
   }, [queryClient]);
 

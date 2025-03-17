@@ -6,7 +6,7 @@ import {
   deleteFeedback,
 } from "../feedback";
 import { InterviewFeedback } from "@/types/database";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { supabase } from "@/lib/supabase";
 
 export function useFeedback() {
@@ -19,9 +19,11 @@ export function useFeedback() {
   } = useQuery({
     queryKey: ["feedback"],
     queryFn: getFeedback,
-    staleTime: 60000, // Data stays fresh for 60 seconds
+    staleTime: 300000, // Data stays fresh for 5 minutes
     cacheTime: 3600000, // Cache persists for 1 hour
     refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    refetchOnReconnect: false,
     onError: (error) => {
       console.error("Error in feedback hook:", error);
     },
@@ -83,8 +85,13 @@ export function useFeedback() {
     },
   });
 
+  // Use a ref to prevent multiple subscriptions
+  const subscriptionRef = useRef(null);
+
   // Set up real-time subscription
   useEffect(() => {
+    // Skip if already subscribed
+    if (subscriptionRef.current) return;
     const subscription = supabase
       .channel("feedback-changes")
       .on(
@@ -96,8 +103,14 @@ export function useFeedback() {
       )
       .subscribe();
 
+    // Store subscription reference
+    subscriptionRef.current = subscription;
+
     return () => {
-      subscription.unsubscribe();
+      if (subscriptionRef.current) {
+        subscription.unsubscribe();
+        subscriptionRef.current = null;
+      }
     };
   }, [queryClient]);
 

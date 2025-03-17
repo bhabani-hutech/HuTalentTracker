@@ -57,7 +57,7 @@ function Home() {
       }
     };
     fetchDashboardData();
-  }, [date]);
+  }, []);
 
   return (
     <div className="container py-8 space-y-8">

@@ -33,5 +33,8 @@ export default defineConfig({
       interval: 1000,
     },
     allowedHosts: process.env.TEMPO === "true" ? true : undefined,
+    headers: {
+      "Referrer-Policy": "no-referrer-when-downgrade",
+    },
   },
 });

@@ -1,5 +1,5 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { supabase } from "@/lib/supabase";
 
 export function useOwnOrganization() {
@@ -29,8 +29,13 @@ export function useOwnOrganization() {
     },
   });
 
+  // Use a ref to prevent multiple subscriptions
+  const subscriptionRef = useRef(null);
+
   // Set up real-time subscription
   useEffect(() => {
+    // Skip if already subscribed
+    if (subscriptionRef.current) return;
     const subscription = supabase
       .channel("own-organization-changes")
       .on(
@@ -45,8 +50,14 @@ export function useOwnOrganization() {
       )
       .subscribe();
 
+    // Store subscription reference
+    subscriptionRef.current = subscription;
+
     return () => {
-      subscription.unsubscribe();
+      if (subscriptionRef.current) {
+        subscription.unsubscribe();
+        subscriptionRef.current = null;
+      }
     };
   }, [queryClient]);
 

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Plus, Search } from "lucide-react";
@@ -43,8 +43,14 @@ export default function InterviewSchedule() {
     }
   };
 
+  // Use a ref to prevent multiple subscriptions
+  const subscriptionRef = useRef(null);
+
   useEffect(() => {
     fetchInterviews();
+
+    // Skip if already subscribed
+    if (subscriptionRef.current) return;
 
     // Set up real-time subscription
     const subscription = supabase
@@ -58,8 +64,14 @@ export default function InterviewSchedule() {
       )
       .subscribe();
 
+    // Store subscription reference
+    subscriptionRef.current = subscription;
+
     return () => {
-      subscription.unsubscribe();
+      if (subscriptionRef.current) {
+        subscription.unsubscribe();
+        subscriptionRef.current = null;
+      }
     };
   }, []);
 

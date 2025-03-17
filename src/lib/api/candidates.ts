@@ -57,6 +57,16 @@ export async function uploadResume(file: File): Promise<string> {
 export async function createCandidate(
   candidate: Omit<Candidate, "id" | "created_at" | "updated_at">,
 ) {
+  // Convert skills from string to array if needed for match score calculation
+  const skillsArray =
+    typeof candidate.skills === "string"
+      ? candidate.skills
+          .split(",")
+          .map((s) => s.trim())
+          .filter(Boolean)
+      : Array.isArray(candidate.skills)
+        ? candidate.skills
+        : [];
   const candidateWithDefaults = {
     ...candidate,
     source: candidate.source || "Manual Upload",
@@ -69,6 +79,7 @@ export async function createCandidate(
     position:
       candidate.position ||
       (candidate.job_id ? undefined : "Unspecified Position"),
+    match_score: candidate.match_score || 0, // Ensure match_score has a default
   };
 
   // If job_id is provided but position isn't, try to get the job title

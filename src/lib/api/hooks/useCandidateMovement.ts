@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { supabase } from "@/lib/supabase";
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -9,7 +9,12 @@ export function useCandidateMovement() {
   const queryClient = useQueryClient();
 
   // Listen for interview creation/updates to move candidates automatically
+  // Using a ref to prevent multiple subscriptions
+  const subscriptionRef = useRef(null);
+
   useEffect(() => {
+    // Skip if already subscribed
+    if (subscriptionRef.current) return;
     const handleInterviewChange = async (payload: any) => {
       try {
         // Get the interview details
@@ -192,10 +197,19 @@ export function useCandidateMovement() {
       )
       .subscribe();
 
+    // Store subscription references
+    subscriptionRef.current = {
+      interviewSubscription,
+      candidateSubscription,
+    };
+
     // Cleanup subscriptions on unmount
     return () => {
-      interviewSubscription.unsubscribe();
-      candidateSubscription.unsubscribe();
+      if (subscriptionRef.current) {
+        interviewSubscription.unsubscribe();
+        candidateSubscription.unsubscribe();
+        subscriptionRef.current = null;
+      }
     };
   }, [queryClient]);
 

@@ -43,10 +43,11 @@ interface ResumeListProps {
 }
 
 const getScoreColor = (score?: number): string => {
-  if (!score) return "bg-gray-500 hover:bg-gray-600 text-white";
+  if (!score && score !== 0) return "bg-gray-500 hover:bg-gray-600 text-white";
   if (score >= 90) return "bg-green-500 hover:bg-green-600 text-white";
   if (score >= 80) return "bg-blue-500 hover:bg-blue-600 text-white";
   if (score >= 70) return "bg-yellow-500 hover:bg-yellow-600 text-white";
+  if (score >= 50) return "bg-orange-500 hover:bg-orange-600 text-white";
   return "bg-red-500 hover:bg-red-600 text-white";
 };
 
@@ -59,14 +60,14 @@ export function ResumeList({
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedCandidate, setSelectedCandidate] = useState<Candidate | null>(
-    null
+    null,
   );
   const [editingCandidate, setEditingCandidate] = useState<Candidate | null>(
-    null
+    null,
   );
   const [showFilters, setShowFilters] = useState(false);
   const [scheduleInterview, setScheduleInterview] = useState<Candidate | null>(
-    null
+    null,
   );
   const resultsPerPage = 10;
 
@@ -99,19 +100,18 @@ export function ResumeList({
       </Card>
     );
   }
-  console.log(candidates);
 
   const filteredCandidates = candidates.filter(
     (candidate) =>
       candidate.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       candidate.position?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (candidate.email || "").toLowerCase().includes(searchTerm.toLowerCase())
+      (candidate.email || "").toLowerCase().includes(searchTerm.toLowerCase()),
   );
 
   const totalPages = Math.ceil(filteredCandidates.length / resultsPerPage);
   const paginatedCandidates = filteredCandidates.slice(
     (currentPage - 1) * resultsPerPage,
-    currentPage * resultsPerPage
+    currentPage * resultsPerPage,
   );
 
   return (
@@ -188,6 +188,7 @@ export function ResumeList({
                   <TableCell>{candidate.name}</TableCell>
                   <TableCell>
                     {jobs.find((job) => job.id === candidate.job_id)?.title ||
+                      candidate.position ||
                       "N/A"}
                   </TableCell>
                   <TableCell>
@@ -198,7 +199,9 @@ export function ResumeList({
                   </TableCell>
                   <TableCell>
                     <Badge className={getScoreColor(candidate.match_score)}>
-                      {candidate.match_score || 0}%
+                      {candidate.match_score !== undefined
+                        ? `${candidate.match_score}%`
+                        : "N/A"}
                     </Badge>
                   </TableCell>
                   <TableCell>{candidate.notice_period || "N/A"}</TableCell>
@@ -250,6 +253,43 @@ export function ResumeList({
           </TableBody>
         </Table>
       </CardContent>
+
+      {/* Pagination Controls */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-center space-x-2 py-4">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+            disabled={currentPage === 1}
+          >
+            Previous
+          </Button>
+          <div className="flex items-center space-x-1">
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+              <Button
+                key={page}
+                variant={currentPage === page ? "default" : "outline"}
+                size="sm"
+                className="w-8 h-8 p-0"
+                onClick={() => setCurrentPage(page)}
+              >
+                {page}
+              </Button>
+            ))}
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() =>
+              setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+            }
+            disabled={currentPage === totalPages}
+          >
+            Next
+          </Button>
+        </div>
+      )}
 
       <EditCandidateDialog
         isOpen={!!editingCandidate}

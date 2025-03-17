@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { StatusTimeline } from "@/components/status-tracking/status-timeline";
 import { StatusAnalytics } from "@/components/status-tracking/status-analytics";
@@ -41,8 +41,16 @@ export default function StatusTracking() {
     fetchJobPositions();
   }, []);
 
+  // Use a ref to track previous job ID
+  const prevJobIdRef = useRef(null);
+
   // Fetch stages and candidates
   useEffect(() => {
+    // Skip if job ID hasn't changed
+    if (prevJobIdRef.current === selectedJobId) return;
+
+    // Update previous job ID
+    prevJobIdRef.current = selectedJobId;
     const fetchData = async () => {
       setIsLoading(true);
       try {

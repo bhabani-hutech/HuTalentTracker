@@ -1,5 +1,5 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { supabase } from "@/lib/supabase";
 import { useOwnOrganization } from "./useOwnOrganization";
 
@@ -63,8 +63,13 @@ export function useLocations() {
     enabled: !isLoadingOrg, // Only run this query when we know about the organization
   });
 
+  // Use a ref to prevent multiple subscriptions
+  const subscriptionRef = useRef(null);
+
   // Set up real-time subscription
   useEffect(() => {
+    // Skip if already subscribed
+    if (subscriptionRef.current) return;
     const subscription = supabase
       .channel("locations-changes")
       .on(
@@ -77,8 +82,14 @@ export function useLocations() {
       )
       .subscribe();
 
+    // Store subscription reference
+    subscriptionRef.current = subscription;
+
     return () => {
-      subscription.unsubscribe();
+      if (subscriptionRef.current) {
+        subscription.unsubscribe();
+        subscriptionRef.current = null;
+      }
     };
   }, [queryClient]);
 
