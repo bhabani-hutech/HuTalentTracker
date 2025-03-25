@@ -22,6 +22,8 @@ export async function getJobs() {
 
 export async function getJobById(id: string) {
   try {
+    console.log("Fetching job by ID:", id);
+
     const { data, error } = await supabase
       .from("jobs")
       .select("*")
@@ -33,6 +35,25 @@ export async function getJobById(id: string) {
       throw error;
     }
 
+    console.log("Job data retrieved:", data);
+
+    // Ensure skills is always an array
+    if (data && !data.skills) {
+      data.skills = [];
+    } else if (data && typeof data.skills === "string") {
+      // Handle case where skills might be stored as a string
+      try {
+        data.skills = JSON.parse(data.skills);
+      } catch (e) {
+        // If it's not valid JSON, split by comma
+        data.skills = data.skills
+          .split(",")
+          .map((s) => s.trim())
+          .filter(Boolean);
+      }
+    }
+
+    console.log("Processed job data:", data);
     return data as Job;
   } catch (error) {
     console.error("Error in getJobById:", error);

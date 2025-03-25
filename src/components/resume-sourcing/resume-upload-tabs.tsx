@@ -3,8 +3,15 @@ import { Card, CardContent } from "../ui/card";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
-import { Upload, FileUp, Link as LinkIcon, AlertCircle } from "lucide-react";
+import {
+  Upload,
+  FileUp,
+  Link as LinkIcon,
+  AlertCircle,
+  UserPlus,
+} from "lucide-react";
 import { JobApplicationForm } from "./job-application-form";
+import { ApplyDirectlyModal } from "./apply-directly-modal";
 import { useState } from "react";
 import {
   Select,
@@ -30,15 +37,22 @@ export function ResumeUploadTabs({
   onJobSelect,
 }: ResumeUploadTabsProps) {
   const [showApplicationForm, setShowApplicationForm] = useState(false);
+  const [showApplyDirectlyModal, setShowApplyDirectlyModal] = useState(false);
   const [uploadStatus, setUploadStatus] = useState<{
     success: boolean;
     message: string;
   } | null>(null);
 
+  // Check if upload buttons should be enabled based on job selection
+  const isUploadEnabled = !!selectedJobId;
+
   const handleFileUpload = async (files: FileList) => {
     setUploadStatus(null);
     try {
-      await onFileUpload(files, selectedJobId || undefined);
+      if (!selectedJobId) {
+        throw new Error("Please select a position before uploading resumes");
+      }
+      await onFileUpload(files, selectedJobId);
       setUploadStatus({
         success: true,
         message: "Resume(s) uploaded successfully.",
@@ -58,22 +72,38 @@ export function ResumeUploadTabs({
         <Label htmlFor="job-position" className="min-w-32">
           Filter by Position:
         </Label>
-        <Select
-          value={selectedJobId || ""}
-          onValueChange={(value) => onJobSelect(value === "all" ? null : value)}
-        >
-          <SelectTrigger id="job-position" className="w-full">
-            <SelectValue placeholder="Select a position" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Positions</SelectItem>
-            {jobs.map((job) => (
-              <SelectItem key={job.id} value={job.id}>
-                {job.title}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <div className="flex-1 flex gap-2">
+          <div className="flex-1">
+            <Select
+              value={selectedJobId || ""}
+              onValueChange={(value) =>
+                onJobSelect(value === "all" ? null : value)
+              }
+            >
+              <SelectTrigger id="job-position" className="w-full">
+                <SelectValue placeholder="Select a position" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Positions</SelectItem>
+                {jobs.map((job) => (
+                  <SelectItem key={job.id} value={job.id}>
+                    {job.title}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          {selectedJobId && (
+            <Button
+              variant="outline"
+              onClick={() => setShowApplyDirectlyModal(true)}
+              className="whitespace-nowrap"
+            >
+              <UserPlus className="mr-2 h-4 w-4" />
+              Apply Directly
+            </Button>
+          )}
+        </div>
       </div>
 
       {uploadStatus && (
@@ -120,13 +150,22 @@ export function ResumeUploadTabs({
                       handleFileUpload(e.target.files);
                     }
                   }}
+                  disabled={!isUploadEnabled}
                 />
-                <Button asChild>
-                  <label htmlFor="cv-upload" className="cursor-pointer">
+                <Button asChild disabled={!isUploadEnabled}>
+                  <label
+                    htmlFor="cv-upload"
+                    className={`cursor-pointer ${!isUploadEnabled ? "opacity-50 pointer-events-none" : ""}`}
+                  >
                     <FileUp className="mr-2 h-4 w-4" />
                     Upload CV
                   </label>
                 </Button>
+                {!isUploadEnabled && (
+                  <p className="text-xs text-muted-foreground mt-2">
+                    Please select a position to enable upload
+                  </p>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -163,13 +202,22 @@ export function ResumeUploadTabs({
                       handleFileUpload(e.target.files);
                     }
                   }}
+                  disabled={!isUploadEnabled}
                 />
-                <Button asChild>
-                  <label htmlFor="bulk-upload" className="cursor-pointer">
+                <Button asChild disabled={!isUploadEnabled}>
+                  <label
+                    htmlFor="bulk-upload"
+                    className={`cursor-pointer ${!isUploadEnabled ? "opacity-50 pointer-events-none" : ""}`}
+                  >
                     <FileUp className="mr-2 h-4 w-4" />
                     Upload Files
                   </label>
                 </Button>
+                {!isUploadEnabled && (
+                  <p className="text-xs text-muted-foreground mt-2">
+                    Please select a position to enable upload
+                  </p>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -206,6 +254,16 @@ export function ResumeUploadTabs({
         <JobApplicationForm
           isOpen={showApplicationForm}
           onClose={() => setShowApplicationForm(false)}
+        />
+
+        <ApplyDirectlyModal
+          isOpen={showApplyDirectlyModal}
+          onClose={() => setShowApplyDirectlyModal(false)}
+          selectedJob={
+            selectedJobId
+              ? jobs.find((job) => job.id === selectedJobId) || null
+              : null
+          }
         />
       </Tabs>
     </div>

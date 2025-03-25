@@ -9,7 +9,6 @@ import {
 } from "../ui/dialog";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
-import { Textarea } from "../ui/textarea";
 import {
   Select,
   SelectContent,
@@ -19,9 +18,9 @@ import {
 } from "../ui/select";
 import { Label } from "../ui/label";
 import { Candidate } from "@/lib/api/candidates";
-import { supabase } from "@/lib/supabase";
 import { useSkills } from "@/lib/api/hooks/useSkills";
 import { useLocations } from "@/lib/api/hooks/useLocations";
+import { useJobs } from "@/lib/api/hooks/useJobs";
 
 interface EditCandidateDialogProps {
   isOpen: boolean;
@@ -46,9 +45,13 @@ export function EditCandidateDialog({
   const { skills: domainSkills } = useSkills("domain");
   const { skills: technicalSkills } = useSkills("technical");
   const { skills: softSkills } = useSkills("soft");
+  const { jobs: allJobs } = useJobs();
 
   // Use the locations hook instead of fetching directly
   const { locations, isLoading: isLoadingLocations } = useLocations();
+
+  // State to store the selected job details
+  const [selectedJob, setSelectedJob] = useState<any>(null);
 
   // Update ownOrgLocations when locations change
   useEffect(() => {
@@ -69,13 +72,31 @@ export function EditCandidateDialog({
   useEffect(() => {
     if (candidate) {
       reset(candidate); // Reset the form with candidate details
+
+      // Find the job associated with this candidate
+      if (candidate.job_id && allJobs) {
+        const job = allJobs.find((job) => job.id === candidate.job_id);
+        if (job) {
+          setSelectedJob(job);
+        }
+      }
     }
-  }, [candidate, reset]);
+  }, [candidate, reset, allJobs]);
 
   const submitForm = async (data: Partial<Candidate>) => {
     if (!candidate) return;
     try {
-      await onSubmit(candidate.id, data);
+      // Only submit the fields that are editable
+      const updates: Partial<Candidate> = {
+        name: data.name,
+        notice_period: data.notice_period,
+        skills:
+          typeof data.skills === "string"
+            ? data.skills
+            : data.skills?.join(", "),
+      };
+
+      await onSubmit(candidate.id, updates);
       onClose();
     } catch (error) {
       console.error("Error updating candidate:", error);
@@ -89,123 +110,125 @@ export function EditCandidateDialog({
     ...softSkills.map((skill) => ({ ...skill, category: "Soft" })),
   ];
 
+  // Helper function to get skills array
+  const getSkillsArray = () => {
+    const skillsValue = watch("skills");
+    if (!skillsValue) return [];
+
+    if (typeof skillsValue === "string") {
+      return skillsValue
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean);
+    }
+
+    return Array.isArray(skillsValue) ? skillsValue : [];
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent>
+      <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
-          <DialogTitle>Edit Candidate</DialogTitle>
+          <DialogTitle>Edit Candidate: {candidate?.name}</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit(submitForm)} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
+            {/* Position - Auto-populated and disabled */}
             <div className="space-y-2">
-              <Label>Job</Label>
-              <Select
-                value={watch("job_id") || ""}
-                onValueChange={(value) => setValue("job_id", value)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select a job" />
-                </SelectTrigger>
-                <SelectContent>
-                  {jobs.length > 0 ? (
-                    jobs.map((job) => (
-                      <SelectItem key={job.id} value={job.id}>
-                        {job.title}
-                      </SelectItem>
-                    ))
-                  ) : (
-                    <SelectItem disabled>No jobs available</SelectItem>
-                  )}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label>Type</Label>
-              <Select
-                value={watch("type") || ""}
-                onValueChange={(value) => setValue("type", value)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select employment type" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Full Time">Full Time</SelectItem>
-                  <SelectItem value="Part Time">Part Time</SelectItem>
-                  <SelectItem value="Contract">Contract</SelectItem>
-                  <SelectItem value="Internship">Internship</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label>Experience</Label>
-            <Select
-              value={watch("experience") || ""}
-              onValueChange={(value) => setValue("experience", value)}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select experience level" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="0-1 years">0-1 years</SelectItem>
-                <SelectItem value="1-3 years">1-3 years</SelectItem>
-                <SelectItem value="3-5 years">3-5 years</SelectItem>
-                <SelectItem value="5+ years">5+ years</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="space-y-2">
-            <Label>Location</Label>
-            <Select
-              value={watch("location") || ""}
-              onValueChange={(value) => setValue("location", value)}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select location" />
-              </SelectTrigger>
-              <SelectContent>
-                {ownOrgLocations.length > 0 && (
-                  <>
-                    {ownOrgLocations.map((location, index) => (
-                      <SelectItem key={index} value={location.name}>
-                        {location.name} - {location.address}
-                      </SelectItem>
-                    ))}
-                  </>
-                )}
-              </SelectContent>
-            </Select>
-            {watch("location") === "Other" && (
+              <Label>Position</Label>
               <Input
-                className="mt-2"
-                {...register("location")}
-                placeholder="Enter custom location"
+                value={
+                  jobs.find((job) => job.id === watch("job_id"))?.title ||
+                  watch("position") ||
+                  ""
+                }
+                disabled
+                className="bg-muted"
               />
-            )}
+            </div>
+
+            {/* Location - Auto-populated and disabled */}
+            <div className="space-y-2">
+              <Label>Location</Label>
+              <Input
+                value={watch("location") || ""}
+                disabled
+                className="bg-muted"
+              />
+            </div>
           </div>
 
-          <div className="space-y-2">
-            <Label>Full Name</Label>
-            <Input {...register("name")} placeholder="Enter full name" />
+          <div className="grid grid-cols-2 gap-4">
+            {/* Full Name - Editable */}
+            <div className="space-y-2">
+              <Label>Full Name</Label>
+              <Input
+                required
+                {...register("name")}
+                placeholder="Enter full name"
+              />
+            </div>
+
+            {/* Email - Auto-populated and disabled */}
+            <div className="space-y-2">
+              <Label>Email</Label>
+              <Input
+                value={watch("email") || ""}
+                disabled
+                className="bg-muted"
+                type="email"
+                placeholder="Enter email"
+              />
+            </div>
           </div>
 
-          <div className="space-y-2">
-            <Label>Email</Label>
-            <Input
-              {...register("email")}
-              type="email"
-              placeholder="Enter email"
-            />
+          <div className="grid grid-cols-2 gap-4">
+            {/* Phone Number - Auto-populated and disabled */}
+            <div className="space-y-2">
+              <Label>Phone Number</Label>
+              <Input
+                value={watch("phone") || ""}
+                disabled
+                className="bg-muted"
+                type="tel"
+                placeholder="Phone number"
+              />
+            </div>
+
+            {/* Notice Period - Editable */}
+            <div className="space-y-2">
+              <Label>Notice Period</Label>
+              <Input
+                required
+                {...register("notice_period")}
+                placeholder="e.g. 30 days"
+              />
+            </div>
           </div>
 
-          <div className="space-y-2">
-            <Label>Notice Period</Label>
-            <Input {...register("notice_period")} placeholder="e.g. 30 days" />
+          <div className="grid grid-cols-2 gap-4">
+            {/* Employment Type - Auto-populated and disabled */}
+            <div className="space-y-2">
+              <Label>Employment Type</Label>
+              <Input
+                value={watch("type") || "Full Time"}
+                disabled
+                className="bg-muted"
+              />
+            </div>
+
+            {/* Experience - Auto-populated and disabled */}
+            <div className="space-y-2">
+              <Label>Experience Range</Label>
+              <Input
+                value={watch("experience") || ""}
+                disabled
+                className="bg-muted"
+              />
+            </div>
           </div>
 
+          {/* Skills - Editable */}
           <div className="space-y-2">
             <Label>Skills</Label>
             <div className="flex flex-col gap-2">
@@ -214,30 +237,16 @@ export function EditCandidateDialog({
                 value=""
                 onValueChange={(value) => {
                   try {
-                    const currentSkills = watch("skills") || "";
-                    let skillsArray = [];
+                    const skillsArray = getSkillsArray();
 
-                    if (typeof currentSkills === "string") {
-                      skillsArray = currentSkills
-                        ? currentSkills
-                            .split(",")
-                            .map((s) => s.trim())
-                            .filter(Boolean)
-                        : [];
-
-                      if (!skillsArray.includes(value)) {
-                        skillsArray.push(value);
-                        setValue("skills", skillsArray.join(", "));
-                      }
-                    } else if (Array.isArray(currentSkills)) {
-                      skillsArray = [...currentSkills];
-                      if (!skillsArray.includes(value)) {
-                        skillsArray.push(value);
-                        setValue("skills", skillsArray);
-                      }
-                    } else {
-                      // Initialize as new array if skills is not in expected format
-                      setValue("skills", [value]);
+                    if (!skillsArray.includes(value)) {
+                      const newSkillsArray = [...skillsArray, value];
+                      setValue(
+                        "skills",
+                        typeof watch("skills") === "string"
+                          ? newSkillsArray.join(", ")
+                          : newSkillsArray,
+                      );
                     }
                   } catch (error) {
                     console.error("Error adding skill:", error);
@@ -262,62 +271,38 @@ export function EditCandidateDialog({
 
               {/* Display Selected Skills */}
               <div className="flex flex-wrap gap-2 mt-2">
-                {(() => {
-                  try {
-                    const skillsString = watch("skills") || "";
-                    if (!skillsString) return null;
+                {getSkillsArray().map((skill, index) => (
+                  <div
+                    key={index}
+                    className="bg-gray-100 text-gray-800 px-2 py-1 rounded-md flex items-center gap-1"
+                  >
+                    <span>{skill}</span>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      className="h-4 w-4 p-0 hover:bg-transparent"
+                      onClick={() => {
+                        try {
+                          const skillsArray = getSkillsArray();
+                          const updatedSkills = skillsArray.filter(
+                            (s) => s !== skill,
+                          );
 
-                    const skillsArray =
-                      typeof skillsString === "string"
-                        ? skillsString
-                            .split(",")
-                            .map((s) => s.trim())
-                            .filter(Boolean)
-                        : Array.isArray(skillsString)
-                          ? skillsString
-                          : [];
-
-                    return skillsArray.map((skill, index) => (
-                      <div
-                        key={index}
-                        className="bg-gray-100 text-gray-800 px-2 py-1 rounded-md flex items-center gap-1"
-                      >
-                        <span>{skill}</span>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          className="h-4 w-4 p-0 hover:bg-transparent"
-                          onClick={() => {
-                            try {
-                              const currentSkills = watch("skills") || "";
-                              let updatedSkills = [];
-
-                              if (typeof currentSkills === "string") {
-                                updatedSkills = currentSkills
-                                  .split(",")
-                                  .map((s) => s.trim())
-                                  .filter((s) => s && s !== skill);
-                                setValue("skills", updatedSkills.join(", "));
-                              } else if (Array.isArray(currentSkills)) {
-                                updatedSkills = currentSkills.filter(
-                                  (s) => s !== skill,
-                                );
-                                setValue("skills", updatedSkills);
-                              }
-                            } catch (error) {
-                              console.error("Error removing skill:", error);
-                            }
-                          }}
-                        >
-                          <span className="text-xs">×</span>
-                        </Button>
-                      </div>
-                    ));
-                  } catch (error) {
-                    console.error("Error rendering skills:", error);
-                    return null;
-                  }
-                })()}
+                          setValue(
+                            "skills",
+                            typeof watch("skills") === "string"
+                              ? updatedSkills.join(", ")
+                              : updatedSkills,
+                          );
+                        } catch (error) {
+                          console.error("Error removing skill:", error);
+                        }
+                      }}
+                    >
+                      <span className="text-xs">×</span>
+                    </Button>
+                  </div>
+                ))}
               </div>
             </div>
           </div>

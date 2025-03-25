@@ -57,6 +57,7 @@ export async function uploadResume(file: File): Promise<string> {
 export async function createCandidate(
   candidate: Omit<Candidate, "id" | "created_at" | "updated_at">,
 ) {
+  console.log("Creating candidate with data:", candidate);
   // Convert skills from string to array if needed for match score calculation
   const skillsArray =
     typeof candidate.skills === "string"
@@ -79,7 +80,8 @@ export async function createCandidate(
     position:
       candidate.position ||
       (candidate.job_id ? undefined : "Unspecified Position"),
-    match_score: candidate.match_score || 0, // Ensure match_score has a default
+    match_score:
+      candidate.match_score !== undefined ? candidate.match_score : 0, // Use provided match_score if available
   };
 
   // If job_id is provided but position isn't, try to get the job title
@@ -87,12 +89,48 @@ export async function createCandidate(
     try {
       const { data: job } = await supabase
         .from("jobs")
-        .select("title")
+        .select("title, skills")
         .eq("id", candidate.job_id)
         .single();
 
       if (job) {
         candidateWithDefaults.position = job.title;
+
+        // If match_score isn't provided and we have job skills, calculate a basic match score
+        if (
+          candidate.match_score === undefined &&
+          job.skills &&
+          skillsArray.length > 0
+        ) {
+          const jobSkills = Array.isArray(job.skills)
+            ? job.skills.map((s) =>
+                typeof s === "string" ? s.toLowerCase() : "",
+              )
+            : [];
+
+          if (jobSkills.length > 0) {
+            let matchCount = 0;
+            for (const skill of skillsArray) {
+              const skillLower = skill.toLowerCase();
+              if (
+                jobSkills.some(
+                  (js) =>
+                    js === skillLower ||
+                    js.includes(skillLower) ||
+                    skillLower.includes(js),
+                )
+              ) {
+                matchCount++;
+              }
+            }
+
+            // Calculate percentage match
+            const matchScore = Math.round(
+              (matchCount / jobSkills.length) * 100,
+            );
+            candidateWithDefaults.match_score = Math.min(matchScore, 100); // Cap at 100%
+          }
+        }
       }
     } catch (err) {
       console.error("Error fetching job title:", err);
@@ -104,13 +142,20 @@ export async function createCandidate(
     candidateWithDefaults.stage_id = 1; // Default to screening stage
   }
 
+  console.log("Final candidate data to insert:", candidateWithDefaults);
+
   const { data, error } = await supabase
     .from("candidates")
     .insert([candidateWithDefaults])
     .select()
     .single();
 
-  if (error) throw error;
+  if (error) {
+    console.error("Error creating candidate:", error);
+    throw error;
+  }
+
+  console.log("Created candidate:", data);
   return data;
 }
 

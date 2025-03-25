@@ -90,9 +90,29 @@ export default function ResumeSourcing() {
 
       if (jobId) {
         try {
+          console.log("Fetching job details for ID:", jobId);
           jobDetails = await getJobById(jobId);
-          requiredSkills = jobDetails.skills || [];
+          console.log("Job details fetched:", jobDetails);
+
+          // Ensure skills is an array
+          if (jobDetails.skills && Array.isArray(jobDetails.skills)) {
+            requiredSkills = jobDetails.skills;
+          } else if (
+            jobDetails.skills &&
+            typeof jobDetails.skills === "string"
+          ) {
+            // Handle case where skills might be a string
+            requiredSkills = jobDetails.skills
+              .split(",")
+              .map((s) => s.trim())
+              .filter(Boolean);
+          } else {
+            requiredSkills = [];
+          }
+
           jobTitle = jobDetails.title || "";
+          console.log("Required skills from job:", requiredSkills);
+          console.log("Job title from job:", jobTitle);
         } catch (error) {
           console.error("Error fetching job details:", error);
           // Continue with default skills if job fetch fails
@@ -127,6 +147,11 @@ export default function ResumeSourcing() {
 
         try {
           // Parse the resume first to check match score
+          console.log("Parsing resume:", file.name);
+          console.log("Job ID:", jobId);
+          console.log("Required skills:", requiredSkills);
+          console.log("Job title:", jobTitle);
+
           const parsedData = await parseResume(
             file,
             jobId,
@@ -134,10 +159,11 @@ export default function ResumeSourcing() {
             jobTitle,
           );
 
-          // Log match score
+          console.log("Parsed resume data:", parsedData);
           console.log(
-            `Match score for ${file.name}: ${parsedData.matchScore}%`,
+            `Match score for ${file.name}: ${parsedData.matchScore || 0}%`,
           );
+          console.log("Skill matches:", parsedData.skillMatches || []);
 
           // Upload the file
           const fileUrl = await uploadResume(file);
@@ -147,7 +173,7 @@ export default function ResumeSourcing() {
           }
 
           // Create candidate entry with parsed data
-          await createCandidate({
+          const candidateData = {
             name: parsedData.name || file.name.split(".")[0],
             email: parsedData.email || "",
             phone: parsedData.phone,
@@ -155,14 +181,17 @@ export default function ResumeSourcing() {
             position: jobTitle || parsedData.position || "Unspecified Position",
             source: file.type.includes("pdf") ? "PDF Upload" : "Word Upload",
             file_url: fileUrl,
-            match_score: parsedData.matchScore,
+            match_score: parsedData.matchScore || 0, // Ensure match_score is always defined
             notice_period: "",
             stage_id: 1, // Default to screening stage
             type: "Full Time",
             experience: parsedData.experience?.join(", ") || "0-1 years",
             skills: parsedData.skills?.join(", ") || "",
             location: parsedData.location || "Remote",
-          });
+          };
+
+          console.log("Creating candidate with data:", candidateData);
+          await createCandidate(candidateData);
 
           successCount++;
         } catch (error) {
@@ -175,9 +204,9 @@ export default function ResumeSourcing() {
       if (successCount > 0) {
         toast({
           title: "Upload Complete",
-          description: `Successfully processed ${successCount} file(s). ${failedCount} file(s) failed.`,
+          description: `Successfully processed ${successCount} file(s). ${failedCount > 0 ? `${failedCount} file(s) failed.` : ""}`,
         });
-      } else {
+      } else if (failedCount > 0) {
         toast({
           variant: "destructive",
           title: "Upload Failed",

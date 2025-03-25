@@ -136,7 +136,7 @@ export function ResumeList({
             >
               <Filter className="h-4 w-4" />
             </Button>
-            <Button
+            {/* <Button
               onClick={() =>
                 setEditingCandidate({
                   name: "",
@@ -158,7 +158,7 @@ export function ResumeList({
               }
             >
               <UserPlus className="h-4 w-4 mr-2" /> Apply Directly
-            </Button>
+            </Button>*/}
           </div>
         </div>
       </CardHeader>
@@ -227,17 +227,19 @@ export function ResumeList({
                     >
                       <CalendarPlus className="h-4 w-4" />
                     </Button>
-                    {candidate.file_url && (
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() =>
-                          window.open(candidate.file_url, "_blank")
-                        }
-                      >
-                        <Download className="h-4 w-4" />
-                      </Button>
-                    )}
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() =>
+                        candidate.file_url
+                          ? window.open(candidate.file_url, "_blank")
+                          : null
+                      }
+                      disabled={!candidate.file_url}
+                      className={!candidate.file_url ? "opacity-50" : ""}
+                    >
+                      <Download className="h-4 w-4" />
+                    </Button>
                     <Button
                       variant="ghost"
                       size="icon"
