@@ -74,7 +74,6 @@ export function PanelsList() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Panel Name</TableHead>
-                  <TableHead>Department</TableHead>
                   <TableHead>Members</TableHead>
                   <TableHead className="w-[100px]">Actions</TableHead>
                 </TableRow>
@@ -83,12 +82,6 @@ export function PanelsList() {
                 {panels.map((panel) => (
                   <TableRow key={panel.id}>
                     <TableCell className="font-medium">{panel.name}</TableCell>
-                    <TableCell>
-                      {panel.department_name ||
-                        (panel.department_id
-                          ? `Department ID: ${panel.department_id}`
-                          : "N/A")}
-                    </TableCell>
                     <TableCell>
                       <Badge variant="secondary">
                         {panel.member_names?.length ||

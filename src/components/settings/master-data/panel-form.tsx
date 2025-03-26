@@ -7,7 +7,6 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -18,7 +17,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { usePanels } from "@/lib/api/hooks/usePanels";
-import { useDepartments } from "@/lib/api/hooks/useDepartments";
 import { useUsers } from "@/lib/api/hooks/useUsers";
 import { usePipelineStages } from "@/lib/api/hooks/usePipelineStages";
 import { InterviewPanel } from "@/lib/api/panels";
@@ -46,66 +44,36 @@ interface PanelFormProps {
 
 export function PanelForm({ isOpen, onClose, initialData }: PanelFormProps) {
   const { createPanel, updatePanel, isCreating, isUpdating } = usePanels();
-  const {
-    departments,
-    isLoading: isLoadingDepartments,
-    refetch: refetchDepartments,
-  } = useDepartments();
   const { users } = useUsers();
   const { stages, isLoading: isLoadingStages } = usePipelineStages();
 
   const [name, setName] = useState("");
-  const [departmentId, setDepartmentId] = useState("");
   const [selectedMembers, setSelectedMembers] = useState<string[]>([]);
   const [openMembers, setOpenMembers] = useState(false);
-  const isSubmitting =
-    isCreating || isUpdating || isLoadingStages || isLoadingDepartments;
+  const isSubmitting = isCreating || isUpdating || isLoadingStages;
 
   // Debug logs
   console.log("Initial data:", initialData);
-  console.log("Departments:", departments);
-  console.log("Loading departments:", isLoadingDepartments);
-
-  // Fetch departments when the form opens
-  useEffect(() => {
-    if (isOpen) {
-      refetchDepartments();
-    }
-  }, [isOpen, refetchDepartments]);
 
   // Reset form when initialData changes or dialog opens/closes
   useEffect(() => {
     if (isOpen) {
       if (initialData) {
         setName(initialData.name || "");
-        setDepartmentId(
-          initialData.department_id ? String(initialData.department_id) : "",
-        );
         setSelectedMembers(initialData.members || []);
       } else {
         // Reset form for new panel
         setName("");
-        setDepartmentId("");
         setSelectedMembers([]);
       }
     }
   }, [isOpen, initialData]);
 
-  console.log("Form data:", { name, departmentId, departments });
+  console.log("Form data:", { name });
 
   const handleSubmit = () => {
-    // Convert departmentId to a number if it's a valid numeric string
-    let parsedDepartmentId = null;
-    if (departmentId && !departmentId.startsWith("org-dept-")) {
-      const parsed = parseInt(departmentId, 10);
-      if (!isNaN(parsed)) {
-        parsedDepartmentId = parsed;
-      }
-    }
-
     const panelData = {
       name,
-      department_id: parsedDepartmentId,
       members: selectedMembers,
     };
 
@@ -140,34 +108,23 @@ export function PanelForm({ isOpen, onClose, initialData }: PanelFormProps) {
         <div className="grid gap-4 py-4">
           <div className="space-y-2">
             <Label htmlFor="panel-name">Panel Name</Label>
-            <Input
-              id="panel-name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              disabled={isSubmitting}
-              placeholder="Enter panel name"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="department">Department</Label>
-            {console.log(departments)}
             <Select
-              value={departmentId}
-              onValueChange={setDepartmentId}
-              disabled={isSubmitting || isLoadingDepartments}
+              value={name}
+              onValueChange={setName}
+              disabled={isSubmitting || isLoadingStages}
             >
-              <SelectTrigger>
-                <SelectValue placeholder="Select a department" />
+              <SelectTrigger id="panel-name">
+                <SelectValue placeholder="Select a panel name" />
               </SelectTrigger>
               <SelectContent>
-                {departments?.length > 0 ? (
-                  departments.map((dept) => (
-                    <SelectItem key={dept.id} value={String(dept.id)}>
-                      {dept.name}
+                {stages?.length > 0 ? (
+                  stages.map((stage) => (
+                    <SelectItem key={stage.id} value={stage.name}>
+                      {stage.name}
                     </SelectItem>
                   ))
                 ) : (
-                  <SelectItem disabled>No departments available</SelectItem>
+                  <SelectItem disabled>No pipeline stages available</SelectItem>
                 )}
               </SelectContent>
             </Select>
@@ -242,12 +199,7 @@ export function PanelForm({ isOpen, onClose, initialData }: PanelFormProps) {
           </Button>
           <Button
             onClick={handleSubmit}
-            disabled={
-              !name ||
-              !departmentId ||
-              selectedMembers.length === 0 ||
-              isSubmitting
-            }
+            disabled={!name || selectedMembers.length === 0 || isSubmitting}
           >
             {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             Save
