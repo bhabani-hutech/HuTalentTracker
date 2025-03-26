@@ -21,6 +21,7 @@ export function useDepartments() {
     data: departments,
     isLoading: isLoadingDepts,
     error,
+    refetch,
   } = useQuery({
     queryKey: ["departments", ownOrganization?.id],
     queryFn: async () => {
@@ -44,6 +45,7 @@ export function useDepartments() {
         .order("name");
 
       if (error) throw error;
+      console.log("Fetched departments from API:", data);
       return data;
     },
     enabled: !isLoadingOrg, // Only run this query when we know about the organization
@@ -76,9 +78,15 @@ export function useDepartments() {
     };
   }, [queryClient]);
 
+  // Debug log
+  useEffect(() => {
+    console.log("Departments data:", departments);
+  }, [departments]);
+
   return {
     departments,
     isLoading: isLoadingDepts || isLoadingOrg,
     error,
+    refetch,
   };
 }

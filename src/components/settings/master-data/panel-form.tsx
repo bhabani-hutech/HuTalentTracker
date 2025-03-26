@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
 import {
   Select,
   SelectContent,
@@ -19,8 +20,9 @@ import {
 import { usePanels } from "@/lib/api/hooks/usePanels";
 import { useDepartments } from "@/lib/api/hooks/useDepartments";
 import { useUsers } from "@/lib/api/hooks/useUsers";
+import { usePipelineStages } from "@/lib/api/hooks/usePipelineStages";
 import { InterviewPanel } from "@/lib/api/panels";
-import { Check, ChevronsUpDown } from "lucide-react";
+import { Check, ChevronsUpDown, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   Command,
@@ -43,21 +45,42 @@ interface PanelFormProps {
 }
 
 export function PanelForm({ isOpen, onClose, initialData }: PanelFormProps) {
-  const { createPanel, updatePanel } = usePanels();
-  const { departments } = useDepartments();
+  const { createPanel, updatePanel, isCreating, isUpdating } = usePanels();
+  const {
+    departments,
+    isLoading: isLoadingDepartments,
+    refetch: refetchDepartments,
+  } = useDepartments();
   const { users } = useUsers();
+  const { stages, isLoading: isLoadingStages } = usePipelineStages();
 
   const [name, setName] = useState("");
   const [departmentId, setDepartmentId] = useState("");
   const [selectedMembers, setSelectedMembers] = useState<string[]>([]);
   const [openMembers, setOpenMembers] = useState(false);
+  const isSubmitting =
+    isCreating || isUpdating || isLoadingStages || isLoadingDepartments;
+
+  // Debug logs
+  console.log("Initial data:", initialData);
+  console.log("Departments:", departments);
+  console.log("Loading departments:", isLoadingDepartments);
+
+  // Fetch departments when the form opens
+  useEffect(() => {
+    if (isOpen) {
+      refetchDepartments();
+    }
+  }, [isOpen, refetchDepartments]);
 
   // Reset form when initialData changes or dialog opens/closes
   useEffect(() => {
     if (isOpen) {
       if (initialData) {
         setName(initialData.name || "");
-        setDepartmentId(initialData.department_id || "");
+        setDepartmentId(
+          initialData.department_id ? String(initialData.department_id) : "",
+        );
         setSelectedMembers(initialData.members || []);
       } else {
         // Reset form for new panel
@@ -68,12 +91,25 @@ export function PanelForm({ isOpen, onClose, initialData }: PanelFormProps) {
     }
   }, [isOpen, initialData]);
 
+  console.log("Form data:", { name, departmentId, departments });
+
   const handleSubmit = () => {
+    // Convert departmentId to a number if it's a valid numeric string
+    let parsedDepartmentId = null;
+    if (departmentId && !departmentId.startsWith("org-dept-")) {
+      const parsed = parseInt(departmentId, 10);
+      if (!isNaN(parsed)) {
+        parsedDepartmentId = parsed;
+      }
+    }
+
     const panelData = {
       name,
-      department_id: departmentId,
+      department_id: parsedDepartmentId,
       members: selectedMembers,
     };
+
+    console.log("Submitting panel data:", panelData);
 
     if (initialData) {
       updatePanel({ id: initialData.id, updates: panelData });
@@ -93,7 +129,10 @@ export function PanelForm({ isOpen, onClose, initialData }: PanelFormProps) {
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog
+      open={isOpen}
+      onOpenChange={(open) => !open && !isSubmitting && onClose()}
+    >
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>{initialData ? "Edit Panel" : "Add Panel"}</DialogTitle>
@@ -105,24 +144,35 @@ export function PanelForm({ isOpen, onClose, initialData }: PanelFormProps) {
               id="panel-name"
               value={name}
               onChange={(e) => setName(e.target.value)}
+              disabled={isSubmitting}
               placeholder="Enter panel name"
             />
           </div>
           <div className="space-y-2">
             <Label htmlFor="department">Department</Label>
-            <Select value={departmentId} onValueChange={setDepartmentId}>
+            {console.log(departments)}
+            <Select
+              value={departmentId}
+              onValueChange={setDepartmentId}
+              disabled={isSubmitting || isLoadingDepartments}
+            >
               <SelectTrigger>
                 <SelectValue placeholder="Select a department" />
               </SelectTrigger>
               <SelectContent>
-                {departments?.map((dept) => (
-                  <SelectItem key={dept.id} value={dept.id.toString()}>
-                    {dept.name}
-                  </SelectItem>
-                ))}
+                {departments?.length > 0 ? (
+                  departments.map((dept) => (
+                    <SelectItem key={dept.id} value={String(dept.id)}>
+                      {dept.name}
+                    </SelectItem>
+                  ))
+                ) : (
+                  <SelectItem disabled>No departments available</SelectItem>
+                )}
               </SelectContent>
             </Select>
           </div>
+
           <div className="space-y-2">
             <Label>Panel Members</Label>
             <Popover open={openMembers} onOpenChange={setOpenMembers}>
@@ -132,6 +182,7 @@ export function PanelForm({ isOpen, onClose, initialData }: PanelFormProps) {
                   role="combobox"
                   aria-expanded={openMembers}
                   className="w-full justify-between"
+                  disabled={isSubmitting}
                 >
                   {selectedMembers.length > 0
                     ? `${selectedMembers.length} members selected`
@@ -186,13 +237,19 @@ export function PanelForm({ isOpen, onClose, initialData }: PanelFormProps) {
           </div>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={onClose}>
+          <Button variant="outline" onClick={onClose} disabled={isSubmitting}>
             Cancel
           </Button>
           <Button
             onClick={handleSubmit}
-            disabled={!name || !departmentId || selectedMembers.length === 0}
+            disabled={
+              !name ||
+              !departmentId ||
+              selectedMembers.length === 0 ||
+              isSubmitting
+            }
           >
+            {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             Save
           </Button>
         </DialogFooter>

@@ -30,10 +30,13 @@ export function usePanels() {
       if (users && users.length > 0) {
         return panelsData.map((panel) => ({
           ...panel,
-          member_names: panel.members.map((memberId) => {
-            const user = users.find((u) => u.id === memberId);
-            return user ? user.name : "Unknown User";
-          }),
+          member_names:
+            panel.members && panel.members.length > 0
+              ? panel.members.map((memberId) => {
+                  const user = users.find((u) => u.id === memberId);
+                  return user ? user.name : "Unknown User";
+                })
+              : [],
         }));
       }
 
@@ -98,5 +101,8 @@ export function usePanels() {
     createPanel: createMutation.mutate,
     updatePanel: updateMutation.mutate,
     deletePanel: deleteMutation.mutate,
+    isCreating: createMutation.isPending,
+    isUpdating: updateMutation.isPending,
+    isDeleting: deleteMutation.isPending,
   };
 }

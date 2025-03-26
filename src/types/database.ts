@@ -66,7 +66,7 @@ export interface User {
 export interface InterviewPanel {
   id: string;
   name: string;
-  department_id: string;
+  department_id: number;
   department_name?: string;
   members: string[];
   member_names?: string[];

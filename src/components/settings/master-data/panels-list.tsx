@@ -10,7 +10,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Pencil, Trash2 } from "lucide-react";
+import { Plus, Pencil, Trash2, Loader2 } from "lucide-react";
 import { PanelForm } from "./panel-form";
 import { usePanels } from "@/lib/api/hooks/usePanels";
 import { InterviewPanel } from "@/lib/api/panels";
@@ -26,7 +26,7 @@ import {
 } from "@/components/ui/alert-dialog";
 
 export function PanelsList() {
-  const { panels, isLoading, deletePanel } = usePanels();
+  const { panels, isLoading, deletePanel, isDeleting } = usePanels();
   const [activePanel, setActivePanel] = useState<InterviewPanel | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [panelToDelete, setPanelToDelete] = useState<InterviewPanel | null>(
@@ -65,7 +65,10 @@ export function PanelsList() {
         </CardHeader>
         <CardContent>
           {isLoading ? (
-            <div className="text-center py-4">Loading panels...</div>
+            <div className="flex justify-center items-center py-8">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              <span className="ml-2">Loading panels...</span>
+            </div>
           ) : panels && panels.length > 0 ? (
             <Table>
               <TableHeader>
@@ -80,7 +83,12 @@ export function PanelsList() {
                 {panels.map((panel) => (
                   <TableRow key={panel.id}>
                     <TableCell className="font-medium">{panel.name}</TableCell>
-                    <TableCell>{panel.department_name || "N/A"}</TableCell>
+                    <TableCell>
+                      {panel.department_name ||
+                        (panel.department_id
+                          ? `Department ID: ${panel.department_id}`
+                          : "N/A")}
+                    </TableCell>
                     <TableCell>
                       <Badge variant="secondary">
                         {panel.member_names?.length ||
@@ -112,7 +120,7 @@ export function PanelsList() {
               </TableBody>
             </Table>
           ) : (
-            <div className="text-center py-4">
+            <div className="text-center py-8 text-muted-foreground">
               No interview panels found. Create one to get started.
             </div>
           )}
@@ -127,7 +135,7 @@ export function PanelsList() {
 
       <AlertDialog
         open={!!panelToDelete}
-        onOpenChange={() => setPanelToDelete(null)}
+        onOpenChange={(open) => !isDeleting && setPanelToDelete(null)}
       >
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -138,11 +146,13 @@ export function PanelsList() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={confirmDelete}
               className="bg-destructive text-destructive-foreground"
+              disabled={isDeleting}
             >
+              {isDeleting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Delete
             </AlertDialogAction>
           </AlertDialogFooter>
