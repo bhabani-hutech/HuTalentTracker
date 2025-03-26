@@ -1,4 +1,5 @@
 import { supabase } from "../supabase";
+import { parsePdf } from "./pdf-parser";
 
 interface SkillMatch {
   skill: string;
@@ -16,6 +17,9 @@ interface ParsedResume {
   location?: string;
   notice_period?: string;
   summary?: string;
+  pdfText?: string;
+  pdfMetadata?: any;
+  pdfFonts?: string[];
 }
 
 function calculateMatchScore(
@@ -125,8 +129,24 @@ export async function parseResume(
   jobTitle?: string,
 ): Promise<ParsedResume & { matchScore: number; skillMatches?: SkillMatch[] }> {
   try {
-    // Read the file content
-    const text = await file.text();
+    let text = "";
+    let pdfText = "";
+    let pdfMetadata = null;
+    let pdfFonts = [];
+
+    // Check if file is PDF
+    if (file.type === "application/pdf") {
+      // For PDF files, use our browser-compatible PDF parser
+      const buffer = await file.arrayBuffer();
+      const pdfData = await parsePdf(buffer);
+      text = pdfData.text || "";
+      pdfText = pdfData.text || "";
+      pdfMetadata = pdfData.metadata || null;
+      pdfFonts = pdfData.fonts || [];
+    } else {
+      // For other files, use the standard text extraction
+      text = await file.text();
+    }
 
     // Enhanced parsing logic with improved extraction
     const parsedData = {
@@ -140,6 +160,9 @@ export async function parseResume(
       location: extractLocation(text),
       summary: extractSummary(text),
       notice_period: extractNoticePeriod(text),
+      pdfText,
+      pdfMetadata,
+      pdfFonts,
     };
 
     console.log("Parsed resume data:", parsedData);
@@ -911,4 +934,7 @@ interface ParsedResume {
   summary?: string;
   matchScore?: number;
   skillMatches?: SkillMatch[];
+  pdfText?: string;
+  pdfMetadata?: any;
+  pdfFonts?: string[];
 }
