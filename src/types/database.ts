@@ -63,6 +63,17 @@ export interface User {
   updated_at?: string;
 }
 
+export interface InterviewPanel {
+  id: string;
+  name: string;
+  department_id: string;
+  department_name?: string;
+  members: string[];
+  member_names?: string[];
+  created_at?: string;
+  updated_at?: string;
+}
+
 export interface InterviewFeedback {
   id: string;
   interview_id: string;

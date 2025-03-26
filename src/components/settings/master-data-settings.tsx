@@ -13,7 +13,7 @@ import { TechnicalSkillsList } from "./master-data/technical-skills-list";
 import { SoftSkillsList } from "./master-data/soft-skills-list";
 import { InterviewRoundsList } from "./master-data/interview-rounds-list";
 import { DepartmentsList } from "./master-data/departments-list";
-import { PanelForm } from "./master-data/panel-form";
+import { PanelsList } from "./master-data/panels-list";
 import { RecruiterForm } from "./master-data/recruiter-form";
 import { DepartmentForm } from "./master-data/department-form";
 import { PipelineStageForm } from "./master-data/pipeline-stages-form";
@@ -111,45 +111,7 @@ export function MasterDataSettings() {
         <JobPositionsList />
       </TabsContent>
       <TabsContent value="panels" className="space-y-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle>Interview Panels</CardTitle>
-            <Button onClick={() => setActiveForm({ type: "panel" })}>
-              <Plus className="h-4 w-4 mr-2" /> Add Panel
-            </Button>
-          </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Panel Name</TableHead>
-                  <TableHead>Members</TableHead>
-                  <TableHead>Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {mockData.panels.map((panel) => (
-                  <TableRow key={panel.id}>
-                    <TableCell>{panel.name}</TableCell>
-                    <TableCell>
-                      <Badge variant="secondary">{panel.members} members</Badge>
-                    </TableCell>
-                    <TableCell>
-                      <Button
-                        variant="ghost"
-                        onClick={() =>
-                          setActiveForm({ type: "panel", data: panel })
-                        }
-                      >
-                        Edit
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
+        <PanelsList />
       </TabsContent>
       <TabsContent value="recruiters" className="space-y-4">
         <Card>
@@ -233,15 +195,7 @@ export function MasterDataSettings() {
         }}
         initialData={activeForm.data}
       />
-      <PanelForm
-        isOpen={activeForm.type === "panel"}
-        onClose={() => setActiveForm({ type: null })}
-        onSubmit={(data) => {
-          console.log("Panel data:", data);
-          setActiveForm({ type: null });
-        }}
-        initialData={activeForm.data}
-      />
+      {/* Panel form is now handled in the PanelsList component */}
       <RecruiterForm
         isOpen={activeForm.type === "recruiter"}
         onClose={() => setActiveForm({ type: null })}

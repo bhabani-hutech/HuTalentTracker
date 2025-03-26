@@ -231,6 +231,41 @@ export type Database = {
           },
         ]
       }
+      interview_panels: {
+        Row: {
+          created_at: string | null
+          department_id: number | null
+          id: string
+          members: string[] | null
+          name: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          department_id?: number | null
+          id?: string
+          members?: string[] | null
+          name: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          department_id?: number | null
+          id?: string
+          members?: string[] | null
+          name?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "interview_panels_department_id_fkey"
+            columns: ["department_id"]
+            isOneToOne: false
+            referencedRelation: "departments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       interview_rounds: {
         Row: {
           created_at: string
