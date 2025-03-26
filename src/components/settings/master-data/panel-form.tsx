@@ -38,7 +38,27 @@ export function PanelForm({
         <div className="grid gap-4 py-4">
           <div className="space-y-2">
             <Label>Panel Name</Label>
-            <Input placeholder="Enter panel name" />
+            <Select>
+              <SelectTrigger>
+                <SelectValue placeholder="Select a panel" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="member1">John Doe (Technical)</SelectItem>
+                <SelectItem value="member2">Jane Smith (HR)</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-2">
+            <Label>Department</Label>
+            <Select>
+              <SelectTrigger>
+                <SelectValue placeholder="Select a Department" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="member1">John Doe (Technical)</SelectItem>
+                <SelectItem value="member2">Jane Smith (HR)</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
           <div className="space-y-2">
             <Label>Panel Members</Label>
