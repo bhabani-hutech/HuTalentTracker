@@ -24,6 +24,7 @@ import { useJobs } from "@/lib/api/hooks/useJobs";
 import { useCandidates } from "@/lib/api/hooks/useCandidates";
 import { useInterviewers } from "@/lib/api/hooks/useInterviewers";
 import { useInterviewRounds } from "@/lib/api/interviewRounds";
+import { Input } from "../ui/input";
 
 interface InterviewFormProps {
   isOpen: boolean;
@@ -90,7 +91,7 @@ export function InterviewForm({
   };
 
   const filteredCandidates = candidates?.filter(
-    (c) => c.job_id === formData.job_id,
+    (c) => c.job_id === formData.job_id
   );
 
   const generateTimeOptions = () => {
@@ -104,7 +105,7 @@ export function InterviewForm({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent>
+      <DialogContent className="max-w-[800px] max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
             {initialData ? "Edit Interview" : "Schedule New Interview"}
@@ -164,7 +165,7 @@ export function InterviewForm({
               <SelectTrigger>
                 <SelectValue placeholder="Select interview round">
                   {interviewRounds?.find(
-                    (r) => r.id === Number(formData.round_id),
+                    (r) => r.id === Number(formData.round_id)
                   )?.name || "Select interview round"}
                 </SelectValue>
               </SelectTrigger>
@@ -230,7 +231,18 @@ export function InterviewForm({
                 <Calendar
                   mode="single"
                   selected={formData.date}
-                  onSelect={(date) => setFormData({ ...formData, date })}
+                  onSelect={(date) => {
+                    if (date) {
+                      const today = new Date();
+                      today.setHours(0, 0, 0, 0); // Normalize today's date
+                      if (date >= today) {
+                        setFormData({ ...formData, date });
+                      } else {
+                        alert("You cannot select a past date.");
+                      }
+                    }
+                  }}
+                  disabled={(date) => date.getTime() < new Date().setHours(0, 0, 0, 0)} // Disable past dates
                   initialFocus
                 />
               </PopoverContent>

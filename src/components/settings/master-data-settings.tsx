@@ -94,12 +94,12 @@ export function MasterDataSettings() {
 
   return (
     <Tabs defaultValue="organization" className="w-full">
-      <TabsList className="grid w-full grid-cols-7">
+      <TabsList className="grid w-full grid-cols-6">
         <TabsTrigger value="organization">Organizations</TabsTrigger>
         <TabsTrigger value="job-positions">Job Positions</TabsTrigger>
         <TabsTrigger value="pipeline">Pipeline Stages</TabsTrigger>
         <TabsTrigger value="panels">Interview Panels</TabsTrigger>
-        <TabsTrigger value="recruiters">Hiring Partners</TabsTrigger>
+        {/* <TabsTrigger value="recruiters">Hiring Partners</TabsTrigger> */}
         <TabsTrigger value="skills">Skills</TabsTrigger>
         <TabsTrigger value="interview-rounds">Interview Rounds</TabsTrigger>
         {/* <TabsTrigger value="departments">Departments</TabsTrigger> */}
