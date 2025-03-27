@@ -22,9 +22,14 @@ import {
 } from "../ui/select";
 import { Job } from "@/types/database";
 import { Alert, AlertDescription } from "../ui/alert";
+import { useOrganizations } from "@/lib/api/hooks/useOrganizations";
 
 interface ResumeUploadTabsProps {
-  onFileUpload: (files: FileList, jobId?: string) => Promise<void>;
+  onFileUpload: (
+    files: FileList,
+    jobId?: string,
+    hiringPartnerId?: string,
+  ) => Promise<void>;
   jobs: Job[];
   selectedJobId: string | null;
   onJobSelect: (jobId: string | null) => void;
@@ -42,6 +47,11 @@ export function ResumeUploadTabs({
     success: boolean;
     message: string;
   } | null>(null);
+  const [selectedHiringPartnerId, setSelectedHiringPartnerId] = useState<
+    string | null
+  >(null);
+  const { organizations } = useOrganizations();
+  const hiringPartners = organizations?.filter((org) => !org.is_own_org) || [];
 
   // Check if upload buttons should be enabled based on job selection
   const isUploadEnabled = !!selectedJobId;
@@ -52,7 +62,11 @@ export function ResumeUploadTabs({
       if (!selectedJobId) {
         throw new Error("Please select a position before uploading resumes");
       }
-      await onFileUpload(files, selectedJobId);
+      await onFileUpload(
+        files,
+        selectedJobId,
+        selectedHiringPartnerId || undefined,
+      );
       setUploadStatus({
         success: true,
         message: "Resume(s) uploaded successfully.",
@@ -106,6 +120,33 @@ export function ResumeUploadTabs({
         </div>
       </div>
 
+      {/* Hiring Partner Selection */}
+      <div className="flex items-center gap-4">
+        <Label htmlFor="hiring-partner" className="min-w-32">
+          Hiring Partner:
+        </Label>
+        <div className="flex-1">
+          <Select
+            value={selectedHiringPartnerId || ""}
+            onValueChange={(value) =>
+              setSelectedHiringPartnerId(value === "none" ? null : value)
+            }
+          >
+            <SelectTrigger id="hiring-partner" className="w-full">
+              <SelectValue placeholder="Select a hiring partner (optional)" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="none">None (Direct Apply)</SelectItem>
+              {hiringPartners.map((partner) => (
+                <SelectItem key={partner.id} value={partner.id.toString()}>
+                  {partner.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
       {uploadStatus && (
         <Alert variant={uploadStatus.success ? "default" : "destructive"}>
           <AlertCircle className="h-4 w-4" />
@@ -137,6 +178,14 @@ export function ResumeUploadTabs({
                       Uploading for:{" "}
                       {jobs.find((j) => j.id === selectedJobId)?.title ||
                         "Selected position"}
+                    </p>
+                  )}
+                  {selectedHiringPartnerId && (
+                    <p className="text-sm font-medium text-green-500 mt-1">
+                      Hiring Partner:{" "}
+                      {hiringPartners.find(
+                        (p) => p.id.toString() === selectedHiringPartnerId,
+                      )?.name || "Selected partner"}
                     </p>
                   )}
                 </div>
@@ -188,6 +237,14 @@ export function ResumeUploadTabs({
                       Uploading for:{" "}
                       {jobs.find((j) => j.id === selectedJobId)?.title ||
                         "Selected position"}
+                    </p>
+                  )}
+                  {selectedHiringPartnerId && (
+                    <p className="text-sm font-medium text-green-500 mt-1">
+                      Hiring Partner:{" "}
+                      {hiringPartners.find(
+                        (p) => p.id.toString() === selectedHiringPartnerId,
+                      )?.name || "Selected partner"}
                     </p>
                   )}
                 </div>

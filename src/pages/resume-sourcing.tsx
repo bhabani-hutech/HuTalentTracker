@@ -74,7 +74,11 @@ export default function ResumeSourcing() {
     }
   }, [candidates, selectedJobId]);
 
-  const handleFileUpload = async (files: FileList, jobId?: string) => {
+  const handleFileUpload = async (
+    files: FileList,
+    jobId?: string,
+    hiringPartnerId?: string,
+  ) => {
     const maxFileSize = 5 * 1024 * 1024; // 5MB
     const allowedTypes = [
       "application/pdf",
@@ -188,6 +192,10 @@ export default function ResumeSourcing() {
             experience: parsedData.experience?.join(", ") || "0-1 years",
             skills: parsedData.skills?.join(", ") || "",
             location: parsedData.location || "Remote",
+            candidate_source: hiringPartnerId
+              ? "Hiring Partner"
+              : "Direct Apply",
+            hiring_partner_id: hiringPartnerId,
           };
 
           console.log("Creating candidate with data:", candidateData);
