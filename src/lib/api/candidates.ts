@@ -18,6 +18,8 @@ export interface Candidate {
   file_url?: string;
   created_at?: string;
   updated_at?: string;
+  candidate_source?: "Direct Apply" | "Hiring Partner";
+  hiring_partner_id?: string; // UUID reference to organizations table
 }
 
 export async function uploadResume(file: File): Promise<string> {
@@ -57,6 +59,17 @@ export async function uploadResume(file: File): Promise<string> {
 export async function createCandidate(
   candidate: Omit<Candidate, "id" | "created_at" | "updated_at">,
 ) {
+  // Validate hiring_partner_id is only set when candidate_source is "Hiring Partner"
+  if (candidate.candidate_source === "Direct Apply") {
+    candidate.hiring_partner_id = undefined;
+  } else if (
+    candidate.candidate_source === "Hiring Partner" &&
+    !candidate.hiring_partner_id
+  ) {
+    console.warn(
+      "Hiring Partner source selected but no hiring_partner_id provided",
+    );
+  }
   console.log("Creating candidate with data:", candidate);
   // Convert skills from string to array if needed for match score calculation
   const skillsArray =
@@ -82,6 +95,11 @@ export async function createCandidate(
       (candidate.job_id ? undefined : "Unspecified Position"),
     match_score:
       candidate.match_score !== undefined ? candidate.match_score : 0, // Use provided match_score if available
+    candidate_source: candidate.candidate_source || "Direct Apply",
+    hiring_partner_id:
+      candidate.candidate_source === "Hiring Partner"
+        ? candidate.hiring_partner_id
+        : undefined,
   };
 
   // If job_id is provided but position isn't, try to get the job title
@@ -184,6 +202,18 @@ export async function getCandidates() {
 }
 
 export async function updateCandidate(id: string, updates: Partial<Candidate>) {
+  // Validate hiring_partner_id is only set when candidate_source is "Hiring Partner"
+  if (updates.candidate_source === "Direct Apply") {
+    updates.hiring_partner_id = undefined;
+  } else if (
+    updates.candidate_source === "Hiring Partner" &&
+    !updates.hiring_partner_id
+  ) {
+    console.warn(
+      "Hiring Partner source selected but no hiring_partner_id provided",
+    );
+  }
+
   const { data, error } = await supabase
     .from("candidates")
     .update(updates)
