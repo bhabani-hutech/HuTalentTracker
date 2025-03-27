@@ -89,7 +89,6 @@ const navigationItems: NavItem[] = [
     title: "Hiring Partners",
     href: "/hiring-partners",
     icon: Users,
-    role: "hiring_partner",
   },
   {
     title: "Master Data",
