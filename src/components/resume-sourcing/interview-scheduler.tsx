@@ -200,7 +200,7 @@ export function InterviewScheduler({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[425px]">
+       <DialogContent className="max-w-[800px] max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Schedule Interview</DialogTitle>
         </DialogHeader>
