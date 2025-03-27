@@ -21,6 +21,7 @@ import { Candidate } from "@/lib/api/candidates";
 import { useSkills } from "@/lib/api/hooks/useSkills";
 import { useLocations } from "@/lib/api/hooks/useLocations";
 import { useJobs } from "@/lib/api/hooks/useJobs";
+import { useOrganizations } from "@/lib/api/hooks/useOrganizations";
 
 interface EditCandidateDialogProps {
   isOpen: boolean;
@@ -46,6 +47,8 @@ export function EditCandidateDialog({
   const { skills: technicalSkills } = useSkills("technical");
   const { skills: softSkills } = useSkills("soft");
   const { jobs: allJobs } = useJobs();
+  const { organizations } = useOrganizations();
+  const hiringPartners = organizations?.filter((org) => !org.is_own_org) || [];
 
   // Use the locations hook instead of fetching directly
   const { locations, isLoading: isLoadingLocations } = useLocations();
@@ -94,6 +97,8 @@ export function EditCandidateDialog({
           typeof data.skills === "string"
             ? data.skills
             : data.skills?.join(", "),
+        candidate_source: data.candidate_source,
+        hiring_partner_id: data.hiring_partner_id,
       };
 
       await onSubmit(candidate.id, updates);
@@ -227,6 +232,57 @@ export function EditCandidateDialog({
               />
             </div>
           </div>
+
+          {/* Candidate Source */}
+          <div className="space-y-2">
+            <Label>How was this candidate sourced?</Label>
+            <Select
+              value={watch("candidate_source") || "Direct Apply"}
+              onValueChange={(value) => {
+                setValue(
+                  "candidate_source",
+                  value as "Direct Apply" | "Hiring Partner",
+                );
+                if (value === "Direct Apply") {
+                  setValue("hiring_partner_id", undefined);
+                }
+              }}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Direct Apply">Direct Apply</SelectItem>
+                <SelectItem value="Hiring Partner">
+                  Sourced by a Hiring Partner
+                </SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Hiring Partner Selection - Only show if candidate_source is Hiring Partner */}
+          {watch("candidate_source") === "Hiring Partner" && (
+            <div className="space-y-2">
+              <Label>Select Hiring Partner</Label>
+              <Select
+                value={watch("hiring_partner_id") || ""}
+                onValueChange={(value) => {
+                  setValue("hiring_partner_id", value);
+                }}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a hiring partner" />
+                </SelectTrigger>
+                <SelectContent>
+                  {hiringPartners.map((partner) => (
+                    <SelectItem key={partner.id} value={partner.id.toString()}>
+                      {partner.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
 
           {/* Skills - Editable */}
           <div className="space-y-2">

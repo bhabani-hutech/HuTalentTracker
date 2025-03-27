@@ -3,6 +3,7 @@ export interface NavItem {
   href: string;
   icon?: React.ComponentType;
   disabled?: boolean;
+  role?: string;
 }
 
 export interface NavSection {

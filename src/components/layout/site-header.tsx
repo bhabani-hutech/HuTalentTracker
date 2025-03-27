@@ -2,7 +2,9 @@ import { MainNav } from "./main-nav";
 import { Button } from "../ui/button";
 import { NavItem } from "../../types/navigation";
 import { LogOut, User, ChevronLeft, ChevronRight } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useOrganizations } from "@/lib/api/hooks/useOrganizations";
+import { useAuth } from "@/lib/auth/AuthContext";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -18,6 +20,33 @@ interface SiteHeaderProps {
 
 export function SiteHeader({ items }: SiteHeaderProps) {
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const { organizations, ownOrganization } = useOrganizations();
+  const { user } = useAuth();
+  const [filteredItems, setFilteredItems] = useState<NavItem[]>(items);
+
+  // Filter navigation items based on user role and organization type
+  useEffect(() => {
+    // Check if the user belongs to a hiring partner organization
+    const isHiringPartner = organizations?.some(
+      (org) => !org.is_own_org && user?.email?.endsWith(org.email_domain || ""),
+    );
+
+    // For debugging
+    console.log("User email:", user?.email);
+    console.log("Organizations:", organizations);
+    console.log("Is hiring partner:", isHiringPartner);
+
+    // Filter items based on role
+    const filtered = items.filter((item) => {
+      // If item has a role requirement, check if user meets it
+      if (item.role === "hiring_partner") {
+        return isHiringPartner;
+      }
+      return true;
+    });
+
+    setFilteredItems(filtered);
+  }, [items, organizations, user]);
 
   // Update CSS variable for sidebar width
   document.documentElement.style.setProperty(
@@ -44,7 +73,7 @@ export function SiteHeader({ items }: SiteHeaderProps) {
           )}
         </Button>
       </div>
-      <MainNav items={items} isCollapsed={isCollapsed} />
+      <MainNav items={filteredItems} isCollapsed={isCollapsed} />
       <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-white/10">
         <div className="flex items-center justify-between">
           <DropdownMenu>

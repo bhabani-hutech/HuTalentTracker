@@ -20,6 +20,7 @@ import { useToast } from "../ui/use-toast";
 import { createCandidate } from "@/lib/api/candidates";
 import { Job, JobType } from "@/types/database";
 import { useSkills } from "@/lib/api/hooks/useSkills";
+import { useOrganizations } from "@/lib/api/hooks/useOrganizations";
 
 interface ApplyDirectlyModalProps {
   isOpen: boolean;
@@ -37,6 +38,8 @@ interface ApplicationData {
   skills: string[];
   type: JobType;
   experience: string;
+  candidate_source: "Direct Apply" | "Hiring Partner";
+  hiring_partner_id?: string;
 }
 
 export function ApplyDirectlyModal({
@@ -48,6 +51,8 @@ export function ApplyDirectlyModal({
   const { skills: domainSkills } = useSkills("domain");
   const { skills: technicalSkills } = useSkills("technical");
   const { skills: softSkills } = useSkills("soft");
+  const { organizations } = useOrganizations();
+  const hiringPartners = organizations?.filter((org) => !org.is_own_org) || [];
 
   const [formData, setFormData] = useState<ApplicationData>({
     name: "",
@@ -62,6 +67,7 @@ export function ApplyDirectlyModal({
       selectedJob?.experience_min && selectedJob?.experience_max
         ? `${selectedJob.experience_min}-${selectedJob.experience_max} years`
         : "",
+    candidate_source: "Direct Apply",
   });
 
   // Update form data when selected job changes
@@ -137,6 +143,8 @@ export function ApplyDirectlyModal({
         type: formData.type,
         experience: formData.experience,
         skills: formData.skills.join(", "),
+        candidate_source: formData.candidate_source,
+        hiring_partner_id: formData.hiring_partner_id,
       });
 
       toast({
@@ -265,6 +273,62 @@ export function ApplyDirectlyModal({
               />
             </div>
           </div>
+
+          {/* Candidate Source */}
+          <div className="space-y-2">
+            <Label>How was this candidate sourced?</Label>
+            <Select
+              value={formData.candidate_source}
+              onValueChange={(value) => {
+                setFormData({
+                  ...formData,
+                  candidate_source: value as "Direct Apply" | "Hiring Partner",
+                  // Reset hiring partner if Direct Apply is selected
+                  hiring_partner_id:
+                    value === "Direct Apply"
+                      ? undefined
+                      : formData.hiring_partner_id,
+                });
+              }}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Direct Apply">Direct Apply</SelectItem>
+                <SelectItem value="Hiring Partner">
+                  Sourced by a Hiring Partner
+                </SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Hiring Partner Selection - Only show if candidate_source is Hiring Partner */}
+          {formData.candidate_source === "Hiring Partner" && (
+            <div className="space-y-2">
+              <Label>Select Hiring Partner</Label>
+              <Select
+                value={formData.hiring_partner_id || ""}
+                onValueChange={(value) => {
+                  setFormData({
+                    ...formData,
+                    hiring_partner_id: value,
+                  });
+                }}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a hiring partner" />
+                </SelectTrigger>
+                <SelectContent>
+                  {hiringPartners.map((partner) => (
+                    <SelectItem key={partner.id} value={partner.id.toString()}>
+                      {partner.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
 
           {/* Skills - Multi-selector dropdown */}
           <div className="space-y-2">

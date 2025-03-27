@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useOrganizations } from "@/lib/api/hooks/useOrganizations";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
 import { JobStagesSettings } from "./job-stages-settings";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
@@ -38,6 +39,8 @@ export function MasterDataSettings() {
       | null;
     data?: any;
   }>({ type: null });
+
+  const { organizations } = useOrganizations();
 
   // Mock data - replace with actual data from your API
   const mockData = {
@@ -99,7 +102,7 @@ export function MasterDataSettings() {
         <TabsTrigger value="job-positions">Job Positions</TabsTrigger>
         <TabsTrigger value="pipeline">Pipeline Stages</TabsTrigger>
         <TabsTrigger value="panels">Interview Panels</TabsTrigger>
-        {/* <TabsTrigger value="recruiters">Hiring Partners</TabsTrigger> */}
+        <TabsTrigger value="recruiters">Hiring Partners</TabsTrigger>
         <TabsTrigger value="skills">Skills</TabsTrigger>
         <TabsTrigger value="interview-rounds">Interview Rounds</TabsTrigger>
         {/* <TabsTrigger value="departments">Departments</TabsTrigger> */}
@@ -116,41 +119,48 @@ export function MasterDataSettings() {
       <TabsContent value="recruiters" className="space-y-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle>HR & Hiring Partners</CardTitle>
+            <CardTitle>Hiring Partners</CardTitle>
             <Button onClick={() => setActiveForm({ type: "recruiter" })}>
-              <Plus className="h-4 w-4 mr-2" /> Add Recruiter
+              <Plus className="h-4 w-4 mr-2" /> Add Hiring Partner
             </Button>
           </CardHeader>
           <CardContent>
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Role</TableHead>
-                  <TableHead>Email</TableHead>
+                  <TableHead>Organization</TableHead>
+                  <TableHead>Resumes Sourced</TableHead>
+                  <TableHead>Positions Filled</TableHead>
+                  <TableHead>Success Rate</TableHead>
                   <TableHead>Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {mockData.recruiters.map((recruiter) => (
-                  <TableRow key={recruiter.id}>
-                    <TableCell>{recruiter.name}</TableCell>
-                    <TableCell>
-                      <Badge variant="secondary">{recruiter.role}</Badge>
-                    </TableCell>
-                    <TableCell>{recruiter.email}</TableCell>
-                    <TableCell>
-                      <Button
-                        variant="ghost"
-                        onClick={() =>
-                          setActiveForm({ type: "recruiter", data: recruiter })
-                        }
-                      >
-                        Edit
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
+                {organizations
+                  ?.filter((org) => !org.is_own_org)
+                  .map((org) => (
+                    <TableRow key={org.id}>
+                      <TableCell>{org.name}</TableCell>
+                      <TableCell>
+                        <Badge variant="secondary">
+                          {Math.floor(Math.random() * 50)}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>{Math.floor(Math.random() * 10)}</TableCell>
+                      <TableCell>{Math.floor(Math.random() * 100)}%</TableCell>
+                      <TableCell>
+                        <Button
+                          variant="ghost"
+                          onClick={() =>
+                            (window.location.href =
+                              "/hiring-partners?id=" + org.id)
+                          }
+                        >
+                          View Details
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
               </TableBody>
             </Table>
           </CardContent>

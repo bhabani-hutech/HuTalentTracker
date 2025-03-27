@@ -1,5 +1,6 @@
 import { Suspense, lazy } from "react";
 import { Routes, Route } from "react-router-dom";
+import { AuthProvider } from "./lib/auth/AuthContext";
 import Home from "./components/home";
 import ResumeSourcing from "./pages/resume-sourcing";
 import InterviewFeedback from "./pages/interview-feedback";
@@ -15,6 +16,7 @@ import JobSelection from "./pages/jobs/select";
 
 const StatusTracking = lazy(() => import("./pages/status-tracking"));
 const AssociateOnboarding = lazy(() => import("./pages/associate-onboarding"));
+const HiringPartners = lazy(() => import("./pages/hiring-partners"));
 
 import { SiteHeader } from "./components/layout/site-header";
 import { SiteFooter } from "./components/layout/site-footer";
@@ -31,6 +33,7 @@ import {
   Settings as SettingsIcon,
   Briefcase,
   GitBranch,
+  Users,
 } from "lucide-react";
 import {
   QueryClient,
@@ -81,6 +84,12 @@ const navigationItems: NavItem[] = [
     title: "Associate Onboarding",
     href: "/associate-onboarding",
     icon: Briefcase,
+  },
+  {
+    title: "Hiring Partners",
+    href: "/hiring-partners",
+    icon: Users,
+    role: "hiring_partner",
   },
   {
     title: "Master Data",
@@ -149,6 +158,7 @@ function AppContent() {
               path="/associate-onboarding"
               element={<AssociateOnboarding />}
             />
+            <Route path="/hiring-partners" element={<HiringPartners />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="/master-data" element={<MasterData />} />
             {import.meta.env.VITE_TEMPO === "true" && (
@@ -172,8 +182,10 @@ function AppContent() {
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <AppContent />
-      <Toaster />
+      <AuthProvider>
+        <AppContent />
+        <Toaster />
+      </AuthProvider>
     </QueryClientProvider>
   );
 }

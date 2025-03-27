@@ -189,10 +189,10 @@ export function OrganizationsList() {
                         className={
                           org.is_own_org
                             ? "bg-green-500 hover:bg-green-600"
-                            : ""
+                            : "bg-blue-500 hover:bg-blue-600"
                         }
                       >
-                        {org.is_own_org ? "Own Organization" : "Partner"}
+                        {org.is_own_org ? "Own Organization" : "Hiring Partner"}
                       </Badge>
                     </TableCell>
                     <TableCell>{org.industry || "-"}</TableCell>

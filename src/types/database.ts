@@ -50,6 +50,8 @@ export interface Candidate {
   stage_id?: number;
   created_at?: string;
   updated_at?: string;
+  candidate_source?: "Direct Apply" | "Hiring Partner";
+  hiring_partner_id?: string;
 }
 
 export interface User {
