@@ -77,9 +77,11 @@ export function EditCandidateDialog({
       // Convert hiring_partner_id to string if it exists
       const candidateData = {
         ...candidate,
-        hiring_partner_id: candidate.hiring_partner_id ? candidate.hiring_partner_id.toString() : undefined
+        hiring_partner_id: candidate.hiring_partner_id
+          ? candidate.hiring_partner_id.toString()
+          : undefined,
       };
-      
+
       reset(candidateData); // Reset the form with candidate details
 
       // Find the job associated with this candidate
@@ -91,8 +93,11 @@ export function EditCandidateDialog({
       }
     }
   }, [candidate, reset, allJobs]);
-  const partenr_id=watch("hiring_partner_id")
-  console.log(partenr_id,"partenr_idpartenr_idpartenr_idpartenr_idpartenr_idpartenr_id")
+  const partenr_id = watch("hiring_partner_id");
+  console.log(
+    partenr_id,
+    "partenr_idpartenr_idpartenr_idpartenr_idpartenr_idpartenr_id",
+  );
   const submitForm = async (data: Partial<Candidate>) => {
     if (!candidate) return;
     try {
@@ -138,7 +143,7 @@ export function EditCandidateDialog({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[600px]">
+      <DialogContent className="max-w-[800px] max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Edit Candidate: {candidate?.name}</DialogTitle>
         </DialogHeader>
@@ -247,7 +252,7 @@ export function EditCandidateDialog({
               onValueChange={(value) => {
                 setValue(
                   "candidate_source",
-                  value as "Direct Apply" | "Hiring Partner"
+                  value as "Direct Apply" | "Hiring Partner",
                 );
                 if (value === "Direct Apply") {
                   setValue("hiring_partner_id", undefined);
@@ -300,14 +305,14 @@ export function EditCandidateDialog({
                 onValueChange={(value) => {
                   try {
                     const skillsArray = getSkillsArray();
-              
+
                     if (!skillsArray.includes(value)) {
                       const newSkillsArray = [...skillsArray, value];
                       setValue(
                         "skills",
                         typeof watch("skills") === "string"
                           ? newSkillsArray.join(", ")
-                          : newSkillsArray
+                          : newSkillsArray,
                       );
                     }
                   } catch (error) {
@@ -347,14 +352,14 @@ export function EditCandidateDialog({
                         try {
                           const skillsArray = getSkillsArray();
                           const updatedSkills = skillsArray.filter(
-                            (s) => s !== skill
+                            (s) => s !== skill,
                           );
 
                           setValue(
                             "skills",
                             typeof watch("skills") === "string"
                               ? updatedSkills.join(", ")
-                              : updatedSkills
+                              : updatedSkills,
                           );
                         } catch (error) {
                           console.error("Error removing skill:", error);

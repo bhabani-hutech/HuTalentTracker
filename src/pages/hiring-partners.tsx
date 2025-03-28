@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useOrganizations } from "@/lib/api/hooks/useOrganizations";
 import { useCandidates } from "@/lib/api/hooks/useCandidates";
 import { useJobs } from "@/lib/api/hooks/useJobs";
@@ -25,17 +25,89 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
-import { Download, RefreshCw } from "lucide-react";
+import {
+  Download,
+  RefreshCw,
+  Users,
+  Briefcase,
+  BarChart2,
+  Calendar,
+  DollarSign,
+} from "lucide-react";
+import axios from "axios";
+
+// Helper function to generate monthly performance data
+const generateMonthlyData = (candidates, partnerId, months = 6) => {
+  if (!candidates || !partnerId) return [];
+
+  const partnerCandidates = candidates.filter(
+    (c) =>
+      c.hiring_partner_id === partnerId.toString() ||
+      (c.candidate_source === "Hiring Partner" &&
+        c.hiring_partner_id === partnerId.toString()),
+  );
+
+  // Get current date and calculate the last 6 months
+  const currentDate = new Date();
+  const monthData = [];
+
+  for (let i = months - 1; i >= 0; i--) {
+    const monthDate = new Date(currentDate);
+    monthDate.setMonth(currentDate.getMonth() - i);
+    const monthName = monthDate.toLocaleString("default", { month: "short" });
+    const monthYear = monthDate.getFullYear();
+    const monthStart = new Date(monthYear, monthDate.getMonth(), 1);
+    const monthEnd = new Date(monthYear, monthDate.getMonth() + 1, 0);
+
+    // Filter candidates for this month
+    const monthCandidates = partnerCandidates.filter((candidate) => {
+      if (!candidate.created_at) return false;
+      const candidateDate = new Date(candidate.created_at);
+      return candidateDate >= monthStart && candidateDate <= monthEnd;
+    });
+
+    // Count joined candidates for this month
+    const monthJoined = monthCandidates.filter((c) => c.stage_id === 6).length;
+
+    monthData.push({
+      month: monthName,
+      candidates: monthCandidates.length,
+      joined: monthJoined,
+    });
+  }
+
+  return monthData;
+};
 
 export default function HiringPartners() {
   const [searchParams] = useSearchParams();
   const partnerId = searchParams.get("id");
-  const { organizations, queryClient } = useOrganizations();
-  const { data: candidates } = useCandidates();
-  const { jobs } = useJobs();
+  const {
+    organizations,
+    ownOrganization,
+    isLoading: isLoadingOrgs,
+    error: orgsError,
+    queryClient,
+  } = useOrganizations();
+  const {
+    data: candidates,
+    isLoading: isLoadingCandidates,
+    error: candidatesError,
+  } = useCandidates();
+  const { jobs, isLoading: isLoadingJobs, error: jobsError } = useJobs();
   const [selectedPartner, setSelectedPartner] = useState<any>(null);
   const [partnerStats, setPartnerStats] = useState<any>(null);
+  const [timeToHireData, setTimeToHireData] = useState<{
+    avg: number;
+    data: any[];
+  }>({ avg: 0, data: [] });
+  const [costPerHireData, setCostPerHireData] = useState<{
+    avg: number;
+    data: any[];
+  }>({ avg: 0, data: [] });
+  const [partnerDetails, setPartnerDetails] = useState<any>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isLoadingPartnerDetails, setIsLoadingPartnerDetails] = useState(false);
 
   // Filter to only hiring partners (non-own organizations)
   const hiringPartners = organizations?.filter((org) => !org.is_own_org) || [];
@@ -63,14 +135,75 @@ export default function HiringPartners() {
     }, 1000);
   };
 
+  // Fetch additional partner details when a partner is selected
+  useEffect(() => {
+    if (!selectedPartner) return;
+
+    const fetchPartnerDetails = async () => {
+      setIsLoadingPartnerDetails(true);
+      try {
+        // Simulate API call to get partner details
+        // In a real implementation, this would be an actual API call
+        // const response = await axios.get(`/api/partners/${selectedPartner.id}`);
+
+        // For now, simulate a response with mock data
+        setTimeout(() => {
+          setPartnerDetails({
+            name: selectedPartner.name,
+            industry: selectedPartner.industry || "Technology",
+            location: selectedPartner.location || "San Francisco, CA",
+            founded: selectedPartner.founded || "2010",
+            employees: selectedPartner.employees || "100-500",
+            website: selectedPartner.website || "https://example.com",
+            agreement: {
+              startDate: "2023-01-15",
+              endDate: "2024-01-14",
+              fee: "15%",
+              exclusivity: "Non-exclusive",
+            },
+            contactPerson: {
+              name: "John Smith",
+              email: "john@example.com",
+              phone: "+1 (555) 123-4567",
+            },
+          });
+          setIsLoadingPartnerDetails(false);
+        }, 500);
+      } catch (error) {
+        console.error("Error fetching partner details:", error);
+        setIsLoadingPartnerDetails(false);
+      }
+    };
+
+    fetchPartnerDetails();
+  }, [selectedPartner]);
+
   // Calculate statistics for the selected partner
   useEffect(() => {
     if (!selectedPartner || !candidates || !jobs) return;
 
     // Filter candidates sourced by this partner
+    // const partnerCandidates = candidates.filter(
+    //   (c) =>
+    //     c.hiring_partner_id === selectedPartner.id.toString() ||
+    //     (c.candidate_source === "Hiring Partner" &&
+    //       c.hiring_partner_id === selectedPartner.id.toString()),
+    // );
+
     const partnerCandidates = candidates.filter(
-      (c) => c.hiring_partner_id === selectedPartner.id.toString(),
+      (c) =>
+        c.hiring_partner_id === selectedPartner.id.toString() ||
+        c.candidate_source === "Hiring Partner",
     );
+    // Get unique job positions for this partner
+    const uniquePositions = new Set();
+    partnerCandidates.forEach((candidate) => {
+      if (candidate.job_id) {
+        uniquePositions.add(candidate.job_id);
+      }
+    });
+
+    const positionsCount = uniquePositions.size;
 
     // Group by job
     const jobStats = {};
@@ -108,10 +241,66 @@ export default function HiringPartners() {
     const totalJoined = partnerCandidates.filter(
       (c) => c.stage_id === 6,
     ).length;
+    const totalInterviewed = partnerCandidates.filter(
+      (c) => c.stage_id === 2 || c.stage_id === 3,
+    ).length;
     const successRate =
       totalCandidates > 0
         ? Math.round((totalJoined / totalCandidates) * 100)
         : 0;
+
+    // Calculate time to hire metrics
+    const joinedCandidates = partnerCandidates.filter(
+      (c) => c.stage_id === 6 && c.created_at && c.updated_at,
+    );
+    let totalDays = 0;
+    const timeData = [];
+
+    joinedCandidates.forEach((candidate) => {
+      const createdDate = new Date(candidate.created_at);
+      const joinedDate = new Date(candidate.updated_at);
+      const diffTime = Math.abs(joinedDate.getTime() - createdDate.getTime());
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+      totalDays += diffDays;
+      timeData.push({
+        name: candidate.name,
+        days: diffDays,
+        position:
+          jobs.find((j) => j.id === candidate.job_id)?.title ||
+          "Unknown Position",
+      });
+    });
+
+    const avgTimeToHire =
+      joinedCandidates.length > 0
+        ? Math.round(totalDays / joinedCandidates.length)
+        : 0;
+    setTimeToHireData({ avg: avgTimeToHire, data: timeData });
+
+    // Calculate cost per hire (using a placeholder average cost of $1000 per candidate)
+    const baseCost = 1000; // Base cost per candidate
+    const costMultiplier = 1.2; // Cost multiplier for different stages
+    const costData = [];
+
+    const totalCost = partnerCandidates.reduce((acc, candidate) => {
+      let candidateCost = baseCost;
+      if (candidate.stage_id >= 2) candidateCost *= costMultiplier; // Higher cost for candidates who reached interview
+
+      costData.push({
+        name: candidate.name,
+        cost: candidateCost,
+        position:
+          jobs.find((j) => j.id === candidate.job_id)?.title ||
+          "Unknown Position",
+      });
+
+      return acc + candidateCost;
+    }, 0);
+
+    const avgCostPerHire =
+      totalJoined > 0 ? Math.round(totalCost / totalJoined) : 0;
+    setCostPerHireData({ avg: avgCostPerHire, data: costData });
 
     // Prepare chart data
     const stageData = [
@@ -142,13 +331,18 @@ export default function HiringPartners() {
     setPartnerStats({
       totalCandidates,
       totalJoined,
+      totalInterviewed,
       successRate,
+      positionsCount,
       jobStats: Object.values(jobStats),
       stageData,
     });
   }, [selectedPartner, candidates, jobs]);
 
-  if (!organizations || organizations.length === 0) {
+  const isLoading = isLoadingOrgs || isLoadingCandidates || isLoadingJobs;
+  const hasError = orgsError || candidatesError || jobsError;
+
+  if (isLoading || !organizations) {
     return (
       <div className="container py-8 space-y-8">
         <div>
@@ -168,6 +362,33 @@ export default function HiringPartners() {
               </CardContent>
             </Card>
           ))}
+        </div>
+      </div>
+    );
+  }
+  console.log(selectedPartner);
+  if (hasError) {
+    return (
+      <div className="container py-8 space-y-8">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Hiring Partners</h1>
+          <p className="text-muted-foreground text-red-500">
+            Error loading data. Please try refreshing the page.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (organizations.length === 0) {
+    return (
+      <div className="container py-8 space-y-8">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Hiring Partners</h1>
+          <p className="text-muted-foreground">
+            No hiring partners found. Please add hiring partners to view their
+            performance.
+          </p>
         </div>
       </div>
     );
@@ -195,7 +416,7 @@ export default function HiringPartners() {
         </Button>
       </div>
 
-      <div className="grid grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
         {hiringPartners.map((partner) => (
           <Card
             key={partner.id}
@@ -226,10 +447,11 @@ export default function HiringPartners() {
             </Button>
           </div>
 
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium">
+                <CardTitle className="text-sm font-medium flex items-center gap-2">
+                  <Users className="h-4 w-4 text-primary" />
                   Total Candidates Sourced
                 </CardTitle>
               </CardHeader>
@@ -237,11 +459,17 @@ export default function HiringPartners() {
                 <div className="text-2xl font-bold">
                   {partnerStats.totalCandidates}
                 </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {partnerStats.totalCandidates > 0
+                    ? `${Math.round((partnerStats.totalInterviewed / partnerStats.totalCandidates) * 100)}% reached interview stage`
+                    : "No candidates yet"}
+                </p>
               </CardContent>
             </Card>
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium">
+                <CardTitle className="text-sm font-medium flex items-center gap-2">
+                  <Briefcase className="h-4 w-4 text-primary" />
                   Candidates Joined
                 </CardTitle>
               </CardHeader>
@@ -249,11 +477,17 @@ export default function HiringPartners() {
                 <div className="text-2xl font-bold">
                   {partnerStats.totalJoined}
                 </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {partnerStats.totalJoined > 0
+                    ? `${partnerStats.totalJoined} out of ${partnerStats.totalCandidates} candidates`
+                    : "No hires yet"}
+                </p>
               </CardContent>
             </Card>
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium">
+                <CardTitle className="text-sm font-medium flex items-center gap-2">
+                  <BarChart2 className="h-4 w-4 text-primary" />
                   Success Rate
                 </CardTitle>
               </CardHeader>
@@ -261,12 +495,35 @@ export default function HiringPartners() {
                 <div className="text-2xl font-bold">
                   {partnerStats.successRate}%
                 </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {partnerStats.successRate > 0
+                    ? `${partnerStats.successRate}% conversion rate`
+                    : "No conversions yet"}
+                </p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium flex items-center gap-2">
+                  <Calendar className="h-4 w-4 text-primary" />
+                  Avg. Time to Hire
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">
+                  {timeToHireData.avg} days
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {timeToHireData.avg > 0
+                    ? `Based on ${timeToHireData.data.length} successful hires`
+                    : "No completed hires yet"}
+                </p>
               </CardContent>
             </Card>
           </div>
 
           <Tabs defaultValue="overview">
-            <TabsList>
+            <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="overview">Overview</TabsTrigger>
               <TabsTrigger value="positions">Positions</TabsTrigger>
               <TabsTrigger value="candidates">Candidates</TabsTrigger>
@@ -275,8 +532,11 @@ export default function HiringPartners() {
             <TabsContent value="overview" className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <Card>
-                  <CardHeader>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle>Candidate Pipeline</CardTitle>
+                    <Badge variant="outline" className="ml-2">
+                      {partnerStats.totalCandidates} total
+                    </Badge>
                   </CardHeader>
                   <CardContent>
                     <PipelineChart data={partnerStats.stageData} />
@@ -284,24 +544,19 @@ export default function HiringPartners() {
                 </Card>
 
                 <Card>
-                  <CardHeader>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle>Monthly Performance</CardTitle>
+                    <Badge variant="outline" className="ml-2">
+                      Last 6 months
+                    </Badge>
                   </CardHeader>
                   <CardContent>
                     <ResponsiveContainer width="100%" height={300}>
                       <BarChart
-                        data={[
-                          { month: "Jan", candidates: 12, joined: 3 },
-                          { month: "Feb", candidates: 19, joined: 5 },
-                          { month: "Mar", candidates: 15, joined: 4 },
-                          { month: "Apr", candidates: 25, joined: 8 },
-                          { month: "May", candidates: 30, joined: 10 },
-                          {
-                            month: "Jun",
-                            candidates: partnerStats.totalCandidates,
-                            joined: partnerStats.totalJoined,
-                          },
-                        ]}
+                        data={generateMonthlyData(
+                          candidates,
+                          selectedPartner.id,
+                        )}
                         margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
                       >
                         <XAxis dataKey="month" />
@@ -326,34 +581,171 @@ export default function HiringPartners() {
                 <CardContent>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div className="flex flex-col items-center justify-center p-4 border rounded-lg">
-                      <h3 className="text-lg font-medium text-muted-foreground">
+                      <h3 className="text-lg font-medium text-muted-foreground flex items-center gap-2">
+                        <Calendar className="h-4 w-4 text-primary" />
                         Avg. Time to Hire
                       </h3>
-                      <p className="text-3xl font-bold mt-2">14 days</p>
+                      <p className="text-3xl font-bold mt-2">
+                        {timeToHireData.avg} days
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-1 text-center">
+                        {timeToHireData.data.length > 0
+                          ? `Based on ${timeToHireData.data.length} successful hires`
+                          : "No completed hires yet"}
+                      </p>
                     </div>
                     <div className="flex flex-col items-center justify-center p-4 border rounded-lg">
-                      <h3 className="text-lg font-medium text-muted-foreground">
+                      <h3 className="text-lg font-medium text-muted-foreground flex items-center gap-2">
+                        <BarChart2 className="h-4 w-4 text-primary" />
                         Conversion Rate
                       </h3>
                       <p className="text-3xl font-bold mt-2">
                         {partnerStats.successRate}%
                       </p>
+                      <p className="text-xs text-muted-foreground mt-1 text-center">
+                        {partnerStats.totalCandidates > 0
+                          ? `${partnerStats.totalJoined} out of ${partnerStats.totalCandidates} candidates`
+                          : "No candidates yet"}
+                      </p>
                     </div>
                     <div className="flex flex-col items-center justify-center p-4 border rounded-lg">
-                      <h3 className="text-lg font-medium text-muted-foreground">
+                      <h3 className="text-lg font-medium text-muted-foreground flex items-center gap-2">
+                        <DollarSign className="h-4 w-4 text-primary" />
                         Cost per Hire
                       </h3>
-                      <p className="text-3xl font-bold mt-2">$1,200</p>
+                      <p className="text-3xl font-bold mt-2">
+                        ${costPerHireData.avg.toLocaleString()}
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-1 text-center">
+                        {costPerHireData.avg > 0
+                          ? `Average cost based on ${costPerHireData.data.length} candidates`
+                          : "No cost data available"}
+                      </p>
                     </div>
                   </div>
                 </CardContent>
               </Card>
+
+              {partnerDetails && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Partner Information</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div>
+                        <h3 className="text-lg font-medium mb-2">
+                          Company Details
+                        </h3>
+                        <div className="space-y-2">
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">
+                              Industry:
+                            </span>
+                            <span>{partnerDetails.industry}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">
+                              Location:
+                            </span>
+                            <span>{partnerDetails.location}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">
+                              Founded:
+                            </span>
+                            <span>{partnerDetails.founded}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">
+                              Employees:
+                            </span>
+                            <span>{partnerDetails.employees}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">
+                              Website:
+                            </span>
+                            <a
+                              href={partnerDetails.website}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-primary hover:underline"
+                            >
+                              {partnerDetails.website}
+                            </a>
+                          </div>
+                        </div>
+                      </div>
+                      <div>
+                        <h3 className="text-lg font-medium mb-2">
+                          Agreement Details
+                        </h3>
+                        <div className="space-y-2">
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">
+                              Start Date:
+                            </span>
+                            <span>
+                              {new Date(
+                                partnerDetails.agreement.startDate,
+                              ).toLocaleDateString()}
+                            </span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">
+                              End Date:
+                            </span>
+                            <span>
+                              {new Date(
+                                partnerDetails.agreement.endDate,
+                              ).toLocaleDateString()}
+                            </span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">
+                              Fee Structure:
+                            </span>
+                            <span>{partnerDetails.agreement.fee}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">
+                              Exclusivity:
+                            </span>
+                            <span>{partnerDetails.agreement.exclusivity}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">
+                              Contact Person:
+                            </span>
+                            <span>{partnerDetails.contactPerson.name}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">
+                              Contact Email:
+                            </span>
+                            <a
+                              href={`mailto:${partnerDetails.contactPerson.email}`}
+                              className="text-primary hover:underline"
+                            >
+                              {partnerDetails.contactPerson.email}
+                            </a>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
             </TabsContent>
 
             <TabsContent value="positions" className="space-y-4">
               <Card>
-                <CardHeader>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle>Positions Sourced</CardTitle>
+                  <Badge variant="outline" className="ml-2">
+                    {partnerStats.positionsCount || 0} positions
+                  </Badge>
                 </CardHeader>
                 <CardContent>
                   <Table>
@@ -389,6 +781,13 @@ export default function HiringPartners() {
                           </TableCell>
                         </TableRow>
                       ))}
+                      {partnerStats.jobStats.length === 0 && (
+                        <TableRow>
+                          <TableCell colSpan={7} className="text-center py-4">
+                            No positions found for this hiring partner
+                          </TableCell>
+                        </TableRow>
+                      )}
                     </TableBody>
                   </Table>
                 </CardContent>
@@ -397,12 +796,20 @@ export default function HiringPartners() {
 
             <TabsContent value="candidates" className="space-y-4">
               <Card>
-                <CardHeader>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle>Sourced Candidates</CardTitle>
+                  <Badge variant="outline" className="ml-2">
+                    {candidates?.filter(
+                      (c) =>
+                        c.hiring_partner_id === selectedPartner?.id.toString(),
+                    ).length || 0}{" "}
+                    candidates
+                  </Badge>
                 </CardHeader>
                 <CardContent>
                   <p className="text-muted-foreground mb-4">
-                    Detailed list of candidates sourced by this hiring partner
+                    Detailed list of candidates sourced by{" "}
+                    {selectedPartner.name}
                   </p>
                   <Table>
                     <TableHeader>
@@ -411,6 +818,7 @@ export default function HiringPartners() {
                         <TableHead>Position</TableHead>
                         <TableHead>Stage</TableHead>
                         <TableHead>Applied Date</TableHead>
+                        <TableHead>Days in Process</TableHead>
                         <TableHead>Status</TableHead>
                       </TableRow>
                     </TableHeader>
@@ -421,7 +829,7 @@ export default function HiringPartners() {
                             c.hiring_partner_id ===
                             selectedPartner?.id.toString(),
                         )
-                        .slice(0, 5)
+                        .slice(0, 10)
                         .map((candidate, index) => {
                           const job = jobs?.find(
                             (j) => j.id === candidate.job_id,
@@ -459,6 +867,19 @@ export default function HiringPartners() {
                                 ).toLocaleDateString()}
                               </TableCell>
                               <TableCell>
+                                {candidate.created_at
+                                  ? Math.ceil(
+                                      Math.abs(
+                                        new Date().getTime() -
+                                          new Date(
+                                            candidate.created_at,
+                                          ).getTime(),
+                                      ) /
+                                        (1000 * 60 * 60 * 24),
+                                    )
+                                  : "N/A"}
+                              </TableCell>
+                              <TableCell>
                                 <Badge
                                   variant={
                                     status === "Completed"
@@ -481,7 +902,7 @@ export default function HiringPartners() {
                             selectedPartner?.id.toString(),
                         ).length === 0) && (
                         <TableRow>
-                          <TableCell colSpan={5} className="text-center py-4">
+                          <TableCell colSpan={6} className="text-center py-4">
                             No candidates found for this hiring partner
                           </TableCell>
                         </TableRow>
