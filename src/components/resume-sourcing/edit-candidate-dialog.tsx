@@ -270,16 +270,22 @@ export function EditCandidateDialog({
               </SelectContent>
             </Select>
           </div>
-          {console.log(watch("candidate_source"), watch("hiring_partner_id"))}
+
           {/* Hiring Partner Selection - Only show if candidate_source is Hiring Partner */}
           {watch("candidate_source") === "Hiring Partner" && (
             <div className="space-y-2">
-              <Label>Select Hiring Partner</Label>
+              <Label>
+                <span className="flex items-center gap-1">
+                  Select Hiring Partner
+                  <span className="text-red-500">*</span>
+                </span>
+              </Label>
               <Select
                 value={watch("hiring_partner_id") || ""}
                 onValueChange={(value) => {
                   setValue("hiring_partner_id", value);
                 }}
+                required
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select a hiring partner" />
@@ -292,6 +298,12 @@ export function EditCandidateDialog({
                   ))}
                 </SelectContent>
               </Select>
+              {watch("candidate_source") === "Hiring Partner" &&
+                !watch("hiring_partner_id") && (
+                  <p className="text-sm text-red-500 mt-1">
+                    Hiring partner selection is required
+                  </p>
+                )}
             </div>
           )}
 

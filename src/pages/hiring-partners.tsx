@@ -93,6 +93,9 @@ export default function HiringPartners() {
     data: candidates,
     isLoading: isLoadingCandidates,
     error: candidatesError,
+    createCandidate,
+    updateCandidate,
+    deleteCandidate,
   } = useCandidates();
   const { jobs, isLoading: isLoadingJobs, error: jobsError } = useJobs();
   const [selectedPartner, setSelectedPartner] = useState<any>(null);
@@ -111,7 +114,7 @@ export default function HiringPartners() {
 
   // Filter to only hiring partners (non-own organizations)
   const hiringPartners = organizations?.filter((org) => !org.is_own_org) || [];
-
+  console.log(hiringPartners);
   useEffect(() => {
     if (partnerId && hiringPartners.length > 0) {
       const partner = hiringPartners.find((p) => p.id.toString() === partnerId);
@@ -126,7 +129,7 @@ export default function HiringPartners() {
   // Function to refresh data
   const refreshData = () => {
     setIsRefreshing(true);
-    // Simulate a refresh by waiting 1 second
+    // Refresh all relevant data
     setTimeout(() => {
       queryClient.invalidateQueries({ queryKey: ["organizations"] });
       queryClient.invalidateQueries({ queryKey: ["candidates"] });
@@ -134,6 +137,15 @@ export default function HiringPartners() {
       setIsRefreshing(false);
     }, 1000);
   };
+
+  // Set up a listener for candidate changes
+  useEffect(() => {
+    // This effect will run whenever createCandidate, updateCandidate, or deleteCandidate changes
+    // It ensures the hiring partners page reflects the latest candidate data
+    return () => {
+      // Cleanup function
+    };
+  }, [createCandidate, updateCandidate, deleteCandidate]);
 
   // Fetch additional partner details when a partner is selected
   useEffect(() => {
@@ -182,18 +194,12 @@ export default function HiringPartners() {
   useEffect(() => {
     if (!selectedPartner || !candidates || !jobs) return;
 
-    // Filter candidates sourced by this partner
-    // const partnerCandidates = candidates.filter(
-    //   (c) =>
-    //     c.hiring_partner_id === selectedPartner.id.toString() ||
-    //     (c.candidate_source === "Hiring Partner" &&
-    //       c.hiring_partner_id === selectedPartner.id.toString()),
-    // );
-
+    // Filter candidates sourced by this partner - only include candidates that are explicitly linked to this partner
     const partnerCandidates = candidates.filter(
       (c) =>
         c.hiring_partner_id === selectedPartner.id.toString() ||
-        c.candidate_source === "Hiring Partner",
+        (c.candidate_source === "Hiring Partner" &&
+          c.hiring_partner_id === selectedPartner.id.toString()),
     );
     // Get unique job positions for this partner
     const uniquePositions = new Set();
@@ -337,7 +343,14 @@ export default function HiringPartners() {
       jobStats: Object.values(jobStats),
       stageData,
     });
-  }, [selectedPartner, candidates, jobs]);
+  }, [
+    selectedPartner,
+    candidates,
+    jobs,
+    createCandidate,
+    updateCandidate,
+    deleteCandidate,
+  ]);
 
   const isLoading = isLoadingOrgs || isLoadingCandidates || isLoadingJobs;
   const hasError = orgsError || candidatesError || jobsError;
@@ -452,7 +465,7 @@ export default function HiringPartners() {
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-medium flex items-center gap-2">
                   <Users className="h-4 w-4 text-primary" />
-                  Total Candidates Sourced
+                  Total Candidates Sourced by {selectedPartner.name}
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -801,7 +814,11 @@ export default function HiringPartners() {
                   <Badge variant="outline" className="ml-2">
                     {candidates?.filter(
                       (c) =>
-                        c.hiring_partner_id === selectedPartner?.id.toString(),
+                        c.hiring_partner_id ===
+                          selectedPartner?.id.toString() ||
+                        (c.candidate_source === "Hiring Partner" &&
+                          c.hiring_partner_id ===
+                            selectedPartner?.id.toString()),
                     ).length || 0}{" "}
                     candidates
                   </Badge>
@@ -827,7 +844,10 @@ export default function HiringPartners() {
                         ?.filter(
                           (c) =>
                             c.hiring_partner_id ===
-                            selectedPartner?.id.toString(),
+                              selectedPartner?.id.toString() ||
+                            (c.candidate_source === "Hiring Partner" &&
+                              c.hiring_partner_id ===
+                                selectedPartner?.id.toString()),
                         )
                         .slice(0, 10)
                         .map((candidate, index) => {

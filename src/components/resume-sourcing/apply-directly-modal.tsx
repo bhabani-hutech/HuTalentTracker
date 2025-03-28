@@ -90,6 +90,20 @@ export function ApplyDirectlyModal({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Validate hiring partner selection if candidate source is Hiring Partner
+    if (
+      formData.candidate_source === "Hiring Partner" &&
+      !formData.hiring_partner_id
+    ) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Please select a hiring partner",
+      });
+      return;
+    }
+
     try {
       // Calculate match score based on skills match with job requirements
       let matchScore = 0;
@@ -100,10 +114,10 @@ export function ApplyDirectlyModal({
       ) {
         // Count matching skills
         const jobSkills = selectedJob.skills.map((skill) =>
-          typeof skill === "string" ? skill.toLowerCase() : ""
+          typeof skill === "string" ? skill.toLowerCase() : "",
         );
         const candidateSkills = formData.skills.map((skill) =>
-          skill.toLowerCase()
+          skill.toLowerCase(),
         );
 
         let matchCount = 0;
@@ -113,7 +127,7 @@ export function ApplyDirectlyModal({
               (jobSkill) =>
                 jobSkill === skill ||
                 jobSkill.includes(skill) ||
-                skill.includes(jobSkill)
+                skill.includes(jobSkill),
             )
           ) {
             matchCount++;
@@ -137,7 +151,10 @@ export function ApplyDirectlyModal({
         position: formData.position,
         location: formData.location,
         notice_period: formData.notice_period,
-        source: "Direct Application",
+        source:
+          formData.candidate_source === "Hiring Partner"
+            ? "Hiring Partner Referral"
+            : "Direct Application",
         match_score: matchScore,
         job_id: selectedJob?.id,
         stage_id: 1, // Default to screening stage
@@ -304,11 +321,16 @@ export function ApplyDirectlyModal({
               </SelectContent>
             </Select>
           </div>
-{console.log(formData,"formDataformDataformDataformDataformData")}
+
           {/* Hiring Partner Selection - Only show if candidate_source is Hiring Partner */}
           {formData.candidate_source === "Hiring Partner" && (
             <div className="space-y-2">
-              <Label>Select Hiring Partner</Label>
+              <Label>
+                <span className="flex items-center gap-1">
+                  Select Hiring Partner
+                  <span className="text-red-500">*</span>
+                </span>
+              </Label>
               <Select
                 value={formData.hiring_partner_id || ""}
                 onValueChange={(value) => {
@@ -317,6 +339,7 @@ export function ApplyDirectlyModal({
                     hiring_partner_id: value,
                   });
                 }}
+                required
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select a hiring partner" />
@@ -329,6 +352,12 @@ export function ApplyDirectlyModal({
                   ))}
                 </SelectContent>
               </Select>
+              {formData.candidate_source === "Hiring Partner" &&
+                !formData.hiring_partner_id && (
+                  <p className="text-sm text-red-500 mt-1">
+                    Hiring partner selection is required
+                  </p>
+                )}
             </div>
           )}
 

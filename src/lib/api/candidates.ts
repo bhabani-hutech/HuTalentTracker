@@ -69,6 +69,9 @@ export async function createCandidate(
     console.warn(
       "Hiring Partner source selected but no hiring_partner_id provided",
     );
+    throw new Error(
+      "A hiring partner must be selected when 'Hiring Partner' is the source",
+    );
   }
   console.log("Creating candidate with data:", candidate);
   // Convert skills from string to array if needed for match score calculation
@@ -212,6 +215,41 @@ export async function updateCandidate(id: string, updates: Partial<Candidate>) {
     console.warn(
       "Hiring Partner source selected but no hiring_partner_id provided",
     );
+    throw new Error(
+      "A hiring partner must be selected when 'Hiring Partner' is the source",
+    );
+  }
+
+  // If we're updating the source but not explicitly setting hiring_partner_id, check current value
+  if (
+    updates.candidate_source === "Hiring Partner" &&
+    updates.hiring_partner_id === undefined
+  ) {
+    // Get current candidate data to check if hiring_partner_id exists
+    const { data: currentCandidate, error: fetchError } = await supabase
+      .from("candidates")
+      .select("hiring_partner_id")
+      .eq("id", id)
+      .single();
+
+    if (fetchError) {
+      console.error("Error fetching current candidate data:", fetchError);
+      throw fetchError;
+    }
+
+    // If current candidate doesn't have a hiring_partner_id, throw error
+    if (!currentCandidate.hiring_partner_id) {
+      throw new Error(
+        "A hiring partner must be selected when 'Hiring Partner' is the source",
+      );
+    }
+  }
+
+  // Update source field based on candidate_source
+  if (updates.candidate_source === "Hiring Partner" && !updates.source) {
+    updates.source = "Hiring Partner Referral";
+  } else if (updates.candidate_source === "Direct Apply" && !updates.source) {
+    updates.source = "Direct Application";
   }
 
   const { data, error } = await supabase
