@@ -60,24 +60,24 @@ export function ResumeList({
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedCandidate, setSelectedCandidate] = useState<Candidate | null>(
-    null,
+    null
   );
   const [editingCandidate, setEditingCandidate] = useState<Candidate | null>(
-    null,
+    null
   );
   const [showFilters, setShowFilters] = useState(false);
   const [scheduleInterview, setScheduleInterview] = useState<Candidate | null>(
-    null,
+    null
   );
   const resultsPerPage = 10;
 
   // State for job listings
   const [jobs, setJobs] = useState<Job[]>([]);
-
   useEffect(() => {
     async function fetchJobs() {
       try {
         const data = await getJobs();
+        console.log("Fetched jobs:", data);
         setJobs(data);
       } catch (error) {
         console.error("Error fetching jobs:", error);
@@ -105,13 +105,13 @@ export function ResumeList({
     (candidate) =>
       candidate.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       candidate.position?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (candidate.email || "").toLowerCase().includes(searchTerm.toLowerCase()),
+      (candidate.email || "").toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const totalPages = Math.ceil(filteredCandidates.length / resultsPerPage);
   const paginatedCandidates = filteredCandidates.slice(
     (currentPage - 1) * resultsPerPage,
-    currentPage * resultsPerPage,
+    currentPage * resultsPerPage
   );
 
   return (
@@ -297,6 +297,7 @@ export function ResumeList({
         isOpen={!!editingCandidate}
         onClose={() => setEditingCandidate(null)}
         onSubmit={async (id, updates) => {
+          console.log(updates, "updatesupdatesupdatesupdates");
           if (!id) {
             // Create new candidate if ID is empty (Apply Directly case)
             await createCandidate({
@@ -309,6 +310,8 @@ export function ResumeList({
               skills: updates.skills || "",
               location: updates.location || "Remote",
               position: updates.position || "Unspecified Position",
+              candidate_source: updates.candidate_source || "Direct Apply",
+              hiring_partner_id: updates.hiring_partner_id || null,
               job_id: updates.job_id ?? null, // Ensure job_id is explicitly defined
               source: updates.source || "Direct Application", // Ensure source is provided
             });

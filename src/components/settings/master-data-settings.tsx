@@ -102,7 +102,7 @@ export function MasterDataSettings() {
         <TabsTrigger value="job-positions">Job Positions</TabsTrigger>
         <TabsTrigger value="pipeline">Pipeline Stages</TabsTrigger>
         <TabsTrigger value="panels">Interview Panels</TabsTrigger>
-        <TabsTrigger value="recruiters">Hiring Partners</TabsTrigger>
+        {/* <TabsTrigger value="recruiters">Hiring Partners</TabsTrigger> */}
         <TabsTrigger value="skills">Skills</TabsTrigger>
         <TabsTrigger value="interview-rounds">Interview Rounds</TabsTrigger>
         {/* <TabsTrigger value="departments">Departments</TabsTrigger> */}
@@ -116,7 +116,7 @@ export function MasterDataSettings() {
       <TabsContent value="panels" className="space-y-4">
         <PanelsList />
       </TabsContent>
-      <TabsContent value="recruiters" className="space-y-4">
+      {/* <TabsContent value="recruiters" className="space-y-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle>Hiring Partners</CardTitle>
@@ -165,7 +165,7 @@ export function MasterDataSettings() {
             </Table>
           </CardContent>
         </Card>
-      </TabsContent>
+      </TabsContent> */}
       <TabsContent value="pipeline">
         <PipelineStagesList />
       </TabsContent>

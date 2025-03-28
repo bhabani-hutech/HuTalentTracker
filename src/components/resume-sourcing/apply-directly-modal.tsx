@@ -47,6 +47,7 @@ export function ApplyDirectlyModal({
   onClose,
   selectedJob,
 }: ApplyDirectlyModalProps) {
+  console.log(selectedJob);
   const { toast } = useToast();
   const { skills: domainSkills } = useSkills("domain");
   const { skills: technicalSkills } = useSkills("technical");
@@ -69,7 +70,7 @@ export function ApplyDirectlyModal({
         : "",
     candidate_source: "Direct Apply",
   });
-
+  console.log(selectedJob);
   // Update form data when selected job changes
   useEffect(() => {
     if (selectedJob) {
@@ -99,10 +100,10 @@ export function ApplyDirectlyModal({
       ) {
         // Count matching skills
         const jobSkills = selectedJob.skills.map((skill) =>
-          typeof skill === "string" ? skill.toLowerCase() : "",
+          typeof skill === "string" ? skill.toLowerCase() : ""
         );
         const candidateSkills = formData.skills.map((skill) =>
-          skill.toLowerCase(),
+          skill.toLowerCase()
         );
 
         let matchCount = 0;
@@ -112,7 +113,7 @@ export function ApplyDirectlyModal({
               (jobSkill) =>
                 jobSkill === skill ||
                 jobSkill.includes(skill) ||
-                skill.includes(jobSkill),
+                skill.includes(jobSkill)
             )
           ) {
             matchCount++;
@@ -161,6 +162,7 @@ export function ApplyDirectlyModal({
       });
     }
   };
+  console.log(formData, "formDataformDataformDataformData");
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -302,7 +304,7 @@ export function ApplyDirectlyModal({
               </SelectContent>
             </Select>
           </div>
-
+{console.log(formData,"formDataformDataformDataformDataformData")}
           {/* Hiring Partner Selection - Only show if candidate_source is Hiring Partner */}
           {formData.candidate_source === "Hiring Partner" && (
             <div className="space-y-2">

@@ -49,7 +49,7 @@ export function EditCandidateDialog({
   const { jobs: allJobs } = useJobs();
   const { organizations } = useOrganizations();
   const hiringPartners = organizations?.filter((org) => !org.is_own_org) || [];
-
+  console.log(candidate, jobs, "aaaaaaaaaaaaa");
   // Use the locations hook instead of fetching directly
   const { locations, isLoading: isLoadingLocations } = useLocations();
 
@@ -74,7 +74,13 @@ export function EditCandidateDialog({
   // Populate form when candidate data is available
   useEffect(() => {
     if (candidate) {
-      reset(candidate); // Reset the form with candidate details
+      // Convert hiring_partner_id to string if it exists
+      const candidateData = {
+        ...candidate,
+        hiring_partner_id: candidate.hiring_partner_id ? candidate.hiring_partner_id.toString() : undefined
+      };
+      
+      reset(candidateData); // Reset the form with candidate details
 
       // Find the job associated with this candidate
       if (candidate.job_id && allJobs) {
@@ -85,7 +91,8 @@ export function EditCandidateDialog({
       }
     }
   }, [candidate, reset, allJobs]);
-
+  const partenr_id=watch("hiring_partner_id")
+  console.log(partenr_id,"partenr_idpartenr_idpartenr_idpartenr_idpartenr_idpartenr_id")
   const submitForm = async (data: Partial<Candidate>) => {
     if (!candidate) return;
     try {
@@ -107,7 +114,6 @@ export function EditCandidateDialog({
       console.error("Error updating candidate:", error);
     }
   };
-
   // Combine all skills for the dropdown
   const allSkills = [
     ...domainSkills.map((skill) => ({ ...skill, category: "Domain" })),
@@ -241,7 +247,7 @@ export function EditCandidateDialog({
               onValueChange={(value) => {
                 setValue(
                   "candidate_source",
-                  value as "Direct Apply" | "Hiring Partner",
+                  value as "Direct Apply" | "Hiring Partner"
                 );
                 if (value === "Direct Apply") {
                   setValue("hiring_partner_id", undefined);
@@ -259,7 +265,7 @@ export function EditCandidateDialog({
               </SelectContent>
             </Select>
           </div>
-
+          {console.log(watch("candidate_source"), watch("hiring_partner_id"))}
           {/* Hiring Partner Selection - Only show if candidate_source is Hiring Partner */}
           {watch("candidate_source") === "Hiring Partner" && (
             <div className="space-y-2">
@@ -290,18 +296,18 @@ export function EditCandidateDialog({
             <div className="flex flex-col gap-2">
               {/* Select Dropdown */}
               <Select
-                value=""
+                value={undefined}
                 onValueChange={(value) => {
                   try {
                     const skillsArray = getSkillsArray();
-
+              
                     if (!skillsArray.includes(value)) {
                       const newSkillsArray = [...skillsArray, value];
                       setValue(
                         "skills",
                         typeof watch("skills") === "string"
                           ? newSkillsArray.join(", ")
-                          : newSkillsArray,
+                          : newSkillsArray
                       );
                     }
                   } catch (error) {
@@ -341,14 +347,14 @@ export function EditCandidateDialog({
                         try {
                           const skillsArray = getSkillsArray();
                           const updatedSkills = skillsArray.filter(
-                            (s) => s !== skill,
+                            (s) => s !== skill
                           );
 
                           setValue(
                             "skills",
                             typeof watch("skills") === "string"
                               ? updatedSkills.join(", ")
-                              : updatedSkills,
+                              : updatedSkills
                           );
                         } catch (error) {
                           console.error("Error removing skill:", error);
