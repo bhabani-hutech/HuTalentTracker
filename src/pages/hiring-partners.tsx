@@ -35,6 +35,7 @@ import {
   DollarSign,
 } from "lucide-react";
 import axios from "axios";
+import { supabase } from "@/lib/supabase";
 
 // Helper function to generate monthly performance data
 const generateMonthlyData = (candidates, partnerId, months = 6) => {
@@ -44,7 +45,7 @@ const generateMonthlyData = (candidates, partnerId, months = 6) => {
     (c) =>
       c.hiring_partner_id === partnerId.toString() ||
       (c.candidate_source === "Hiring Partner" &&
-        c.hiring_partner_id === partnerId.toString()),
+        c.hiring_partner_id === partnerId.toString())
   );
 
   // Get current date and calculate the last 6 months
@@ -110,11 +111,34 @@ export default function HiringPartners() {
   }>({ avg: 0, data: [] });
   const [partnerDetails, setPartnerDetails] = useState<any>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [sourceCount, setSourceCount] = useState({})
   const [isLoadingPartnerDetails, setIsLoadingPartnerDetails] = useState(false);
 
   // Filter to only hiring partners (non-own organizations)
   const hiringPartners = organizations?.filter((org) => !org.is_own_org) || [];
   console.log(hiringPartners);
+  useEffect(() => {
+    const fetchPartnerDetails = async () => {
+       const orgIdArray = hiringPartners.map((ele) => ele?.id);
+      let finalData: any = {};
+       for (const datas of orgIdArray) {
+        const { data, error, count } = await supabase
+        .from('candidates')
+        .select('*', { count: 'exact', head: true })
+        .eq('hiring_partner_id', datas);
+        console.log(count,"ddddddddddddddddddddddddddddd");
+        if (error) {
+          finalData[datas]=0
+        }else{
+          finalData[datas]=count
+        }
+      }
+      console.log(finalData,"finalDatafinalDatafinalDatafinalDatafinalData")
+      setSourceCount(finalData)
+    };
+    fetchPartnerDetails();
+  }, []);
+
   useEffect(() => {
     if (partnerId && hiringPartners.length > 0) {
       const partner = hiringPartners.find((p) => p.id.toString() === partnerId);
@@ -199,7 +223,7 @@ export default function HiringPartners() {
       (c) =>
         c.hiring_partner_id === selectedPartner.id.toString() ||
         (c.candidate_source === "Hiring Partner" &&
-          c.hiring_partner_id === selectedPartner.id.toString()),
+          c.hiring_partner_id === selectedPartner.id.toString())
     );
     // Get unique job positions for this partner
     const uniquePositions = new Set();
@@ -245,10 +269,10 @@ export default function HiringPartners() {
     // Calculate overall stats
     const totalCandidates = partnerCandidates.length;
     const totalJoined = partnerCandidates.filter(
-      (c) => c.stage_id === 6,
+      (c) => c.stage_id === 6
     ).length;
     const totalInterviewed = partnerCandidates.filter(
-      (c) => c.stage_id === 2 || c.stage_id === 3,
+      (c) => c.stage_id === 2 || c.stage_id === 3
     ).length;
     const successRate =
       totalCandidates > 0
@@ -257,7 +281,7 @@ export default function HiringPartners() {
 
     // Calculate time to hire metrics
     const joinedCandidates = partnerCandidates.filter(
-      (c) => c.stage_id === 6 && c.created_at && c.updated_at,
+      (c) => c.stage_id === 6 && c.created_at && c.updated_at
     );
     let totalDays = 0;
     const timeData = [];
@@ -317,7 +341,7 @@ export default function HiringPartners() {
       {
         stage: "Interview",
         count: partnerCandidates.filter(
-          (c) => c.stage_id === 2 || c.stage_id === 3,
+          (c) => c.stage_id === 2 || c.stage_id === 3
         ).length,
       },
       {
@@ -433,7 +457,9 @@ export default function HiringPartners() {
         {hiringPartners.map((partner) => (
           <Card
             key={partner.id}
-            className={`cursor-pointer ${selectedPartner?.id === partner.id ? "border-primary" : ""}`}
+            className={`cursor-pointer ${
+              selectedPartner?.id === partner.id ? "border-primary" : ""
+            }`}
             onClick={() => setSelectedPartner(partner)}
           >
             <CardHeader className="pb-2">
@@ -470,11 +496,15 @@ export default function HiringPartners() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">
-                  {partnerStats.totalCandidates}
+                {sourceCount[selectedPartner.id] || 0}
                 </div>
                 <p className="text-xs text-muted-foreground mt-1">
                   {partnerStats.totalCandidates > 0
-                    ? `${Math.round((partnerStats.totalInterviewed / partnerStats.totalCandidates) * 100)}% reached interview stage`
+                    ? `${Math.round(
+                        (partnerStats.totalInterviewed /
+                          partnerStats.totalCandidates) *
+                          100
+                      )}% reached interview stage`
                     : "No candidates yet"}
                 </p>
               </CardContent>
@@ -568,7 +598,7 @@ export default function HiringPartners() {
                       <BarChart
                         data={generateMonthlyData(
                           candidates,
-                          selectedPartner.id,
+                          selectedPartner.id
                         )}
                         margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
                       >
@@ -701,7 +731,7 @@ export default function HiringPartners() {
                             </span>
                             <span>
                               {new Date(
-                                partnerDetails.agreement.startDate,
+                                partnerDetails.agreement.startDate
                               ).toLocaleDateString()}
                             </span>
                           </div>
@@ -711,7 +741,7 @@ export default function HiringPartners() {
                             </span>
                             <span>
                               {new Date(
-                                partnerDetails.agreement.endDate,
+                                partnerDetails.agreement.endDate
                               ).toLocaleDateString()}
                             </span>
                           </div>
@@ -818,7 +848,7 @@ export default function HiringPartners() {
                           selectedPartner?.id.toString() ||
                         (c.candidate_source === "Hiring Partner" &&
                           c.hiring_partner_id ===
-                            selectedPartner?.id.toString()),
+                            selectedPartner?.id.toString())
                     ).length || 0}{" "}
                     candidates
                   </Badge>
@@ -847,12 +877,12 @@ export default function HiringPartners() {
                               selectedPartner?.id.toString() ||
                             (c.candidate_source === "Hiring Partner" &&
                               c.hiring_partner_id ===
-                                selectedPartner?.id.toString()),
+                                selectedPartner?.id.toString())
                         )
                         .slice(0, 10)
                         .map((candidate, index) => {
                           const job = jobs?.find(
-                            (j) => j.id === candidate.job_id,
+                            (j) => j.id === candidate.job_id
                           );
                           let stage = "Unknown";
                           let status = "Pending";
@@ -883,7 +913,7 @@ export default function HiringPartners() {
                               <TableCell>{stage}</TableCell>
                               <TableCell>
                                 {new Date(
-                                  candidate.created_at || Date.now(),
+                                  candidate.created_at || Date.now()
                                 ).toLocaleDateString()}
                               </TableCell>
                               <TableCell>
@@ -892,10 +922,10 @@ export default function HiringPartners() {
                                       Math.abs(
                                         new Date().getTime() -
                                           new Date(
-                                            candidate.created_at,
-                                          ).getTime(),
+                                            candidate.created_at
+                                          ).getTime()
                                       ) /
-                                        (1000 * 60 * 60 * 24),
+                                        (1000 * 60 * 60 * 24)
                                     )
                                   : "N/A"}
                               </TableCell>
@@ -903,10 +933,10 @@ export default function HiringPartners() {
                                 <Badge
                                   variant={
                                     status === "Completed"
-                                      ? "success"
+                                      ? "default"
                                       : status === "Rejected"
-                                        ? "destructive"
-                                        : "outline"
+                                      ? "destructive"
+                                      : "outline"
                                   }
                                 >
                                   {status}
@@ -919,7 +949,7 @@ export default function HiringPartners() {
                         candidates.filter(
                           (c) =>
                             c.hiring_partner_id ===
-                            selectedPartner?.id.toString(),
+                            selectedPartner?.id.toString()
                         ).length === 0) && (
                         <TableRow>
                           <TableCell colSpan={6} className="text-center py-4">
