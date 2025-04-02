@@ -669,6 +669,11 @@ export default function HiringPartners() {
                     </Badge>
                   </CardHeader>
                   <CardContent>
+                    <p className="text-muted-foreground mb-4">
+                      Detailed list of candidates sourced by{" "}
+                      {selectedPartner.name}
+                    </p>
+
                     {selectedPartner && stages && jobs && candidates ? (
                       <PipelineStageCountTable
                         selectedPartnerId={selectedPartner.id.toString()}
@@ -681,133 +686,6 @@ export default function HiringPartners() {
                         No data available for this hiring partner
                       </div>
                     )}
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle>Sourced Candidates</CardTitle>
-                    <Badge variant="outline" className="ml-2">
-                      {candidates?.filter(
-                        (c) =>
-                          c.hiring_partner_id ===
-                            selectedPartner?.id.toString() ||
-                          (c.candidate_source === "Hiring Partner" &&
-                            c.hiring_partner_id ===
-                              selectedPartner?.id.toString()),
-                      ).length || 0}{" "}
-                      candidates
-                    </Badge>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-muted-foreground mb-4">
-                      Detailed list of candidates sourced by{" "}
-                      {selectedPartner.name}
-                    </p>
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Name</TableHead>
-                          <TableHead>Position</TableHead>
-                          <TableHead>Stage</TableHead>
-                          <TableHead>Applied Date</TableHead>
-                          <TableHead>Days in Process</TableHead>
-                          <TableHead>Status</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {candidates
-                          ?.filter(
-                            (c) =>
-                              c.hiring_partner_id ===
-                                selectedPartner?.id.toString() ||
-                              (c.candidate_source === "Hiring Partner" &&
-                                c.hiring_partner_id ===
-                                  selectedPartner?.id.toString()),
-                          )
-                          .slice(0, 10)
-                          .map((candidate, index) => {
-                            const job = jobs?.find(
-                              (j) => j.id === candidate.job_id,
-                            );
-                            let stage = "Unknown";
-                            let status = "Pending";
-
-                            if (candidate.stage_id === 1) stage = "Screening";
-                            else if (
-                              candidate.stage_id === 2 ||
-                              candidate.stage_id === 3
-                            )
-                              stage = "Interview";
-                            else if (candidate.stage_id === 4)
-                              stage = "Offered";
-                            else if (candidate.stage_id === 6) {
-                              stage = "Joined";
-                              status = "Completed";
-                            } else if (candidate.stage_id === 5) {
-                              stage = "Rejected";
-                              status = "Rejected";
-                            }
-
-                            return (
-                              <TableRow key={index}>
-                                <TableCell className="font-medium">
-                                  {candidate.name}
-                                </TableCell>
-                                <TableCell>
-                                  {job?.title ||
-                                    candidate.position ||
-                                    "Unknown"}
-                                </TableCell>
-                                <TableCell>{stage}</TableCell>
-                                <TableCell>
-                                  {new Date(
-                                    candidate.created_at || Date.now(),
-                                  ).toLocaleDateString()}
-                                </TableCell>
-                                <TableCell>
-                                  {candidate.created_at
-                                    ? Math.ceil(
-                                        Math.abs(
-                                          new Date().getTime() -
-                                            new Date(
-                                              candidate.created_at,
-                                            ).getTime(),
-                                        ) /
-                                          (1000 * 60 * 60 * 24),
-                                      )
-                                    : "N/A"}
-                                </TableCell>
-                                <TableCell>
-                                  <Badge
-                                    variant={
-                                      status === "Completed"
-                                        ? "default"
-                                        : status === "Rejected"
-                                          ? "destructive"
-                                          : "outline"
-                                    }
-                                  >
-                                    {status}
-                                  </Badge>
-                                </TableCell>
-                              </TableRow>
-                            );
-                          })}
-                        {(!candidates ||
-                          candidates.filter(
-                            (c) =>
-                              c.hiring_partner_id ===
-                              selectedPartner?.id.toString(),
-                          ).length === 0) && (
-                          <TableRow>
-                            <TableCell colSpan={6} className="text-center py-4">
-                              No candidates found for this hiring partner
-                            </TableCell>
-                          </TableRow>
-                        )}
-                      </TableBody>
-                    </Table>
                   </CardContent>
                 </Card>
               </div>
