@@ -94,7 +94,7 @@ export default function InterviewFlow() {
         const { data: candidatesData } = await supabase
           .from("candidates")
           .select(
-            "id, name, stage_id, job_id, created_at, updated_at, source, move_reason, jobs(title)",
+            "id, name, stage_id, job_id, created_at, updated_at, source, move_reason, jobs(title)"
           )
           .eq("job_id", selectedJobId)
           .order("updated_at", { ascending: false });
@@ -137,7 +137,7 @@ export default function InterviewFlow() {
         (payload) => {
           // Refresh candidates when there's a change
           fetchCandidates();
-        },
+        }
       )
       .subscribe();
 
@@ -146,7 +146,7 @@ export default function InterviewFlow() {
         const { data } = await supabase
           .from("candidates")
           .select(
-            "id, name, stage_id, job_id, created_at, updated_at, source, move_reason, jobs(title)",
+            "id, name, stage_id, job_id, created_at, updated_at, source, move_reason, jobs(title)"
           )
           .eq("job_id", selectedJobId)
           .order("updated_at", { ascending: false });
@@ -178,7 +178,7 @@ export default function InterviewFlow() {
   const candidatesByStage = {};
   stages.forEach((stage) => {
     candidatesByStage[stage.id] = candidates.filter(
-      (c) => c.stage_id === stage.id,
+      (c) => c.stage_id === stage.id
     );
   });
 
@@ -191,7 +191,7 @@ export default function InterviewFlow() {
       JSON.stringify({
         candidateId: candidate.id,
         fromStageId: fromStage.id,
-      }),
+      })
     );
     e.dataTransfer.setData("candidateId", candidate.id);
     e.dataTransfer.setData("fromStageId", fromStage.id);
@@ -223,7 +223,6 @@ export default function InterviewFlow() {
     e.dataTransfer.dropEffect = "move";
   };
 
-  // Handle drop
   const handleDrop = (e, toStage) => {
     e.preventDefault();
     console.log("Drop event triggered on stage:", toStage.stage);
@@ -233,7 +232,6 @@ export default function InterviewFlow() {
       el.classList.remove("dragging");
     });
 
-    // Try to get the data in different ways to ensure compatibility
     let candidateId;
     let fromStageId;
 
@@ -261,7 +259,6 @@ export default function InterviewFlow() {
       if (!candidateId) {
         candidateId = e.dataTransfer.getData("text/plain");
         console.log("Retrieved candidateId from text/plain:", candidateId);
-        // We'll need to find the candidate's current stage
         const candidate = candidates.find((c) => c.id === candidateId);
         if (candidate) {
           fromStageId = candidate.stage_id;
@@ -273,19 +270,16 @@ export default function InterviewFlow() {
       return;
     }
 
-    // Don't do anything if we couldn't get the candidate ID
     if (!candidateId) {
       console.error("No candidate ID found in drop event");
       return;
     }
 
-    // Don't do anything if dropping in the same stage
     if (fromStageId === toStage.id) {
       console.log("Dropping in same stage, ignoring");
       return;
     }
 
-    // Find the candidate and from stage
     const candidate = candidates.find((c) => c.id === candidateId);
     const fromStage = stages.find((s) => s.id === fromStageId);
 
@@ -296,20 +290,17 @@ export default function InterviewFlow() {
 
     if (!fromStage) {
       console.error("From stage not found:", fromStageId);
-      // If we can't find the stage, use a fallback
-      const fallbackStage = stages[0];
-      if (fallbackStage) {
-        console.log("Using fallback stage:", fallbackStage.stage);
-        // Open the move dialog with fallback stage
-        setMoveDialog({
-          isOpen: true,
-          candidate,
-          fromStage: fallbackStage,
-          toStage,
-          comment: "",
-        });
-        return;
-      }
+      return;
+    }
+
+    // Prevent moving candidates **to or from** a closed stage
+    if (fromStage.stage === "Closed" || toStage.stage === "Closed") {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to move candidate",
+      });
+      console.log("Cannot move candidate because one of the stages is closed.");
       return;
     }
 
@@ -319,7 +310,6 @@ export default function InterviewFlow() {
       toStage: toStage.stage,
     });
 
-    // Open the move dialog
     setMoveDialog({
       isOpen: true,
       candidate,
@@ -370,8 +360,8 @@ export default function InterviewFlow() {
                 updated_at: timestamp,
                 move_reason: comment,
               }
-            : c,
-        ),
+            : c
+        )
       );
 
       // Close dialog
@@ -488,7 +478,7 @@ export default function InterviewFlow() {
                                   document
                                     .querySelectorAll(".drop-target")
                                     .forEach((el) =>
-                                      el.classList.remove("bg-gray-100"),
+                                      el.classList.remove("bg-gray-100")
                                     );
                                   // Remove dragging class
                                   e.currentTarget.classList.remove("dragging");
@@ -532,7 +522,7 @@ export default function InterviewFlow() {
                                   <div className="text-xs text-gray-500 mt-1">
                                     Last updated:{" "}
                                     {new Date(
-                                      candidate.updated_at,
+                                      candidate.updated_at
                                     ).toLocaleString()}
                                   </div>
                                 )}
