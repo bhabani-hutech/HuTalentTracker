@@ -30,7 +30,7 @@ export function PipelineStageCountTable({
   jobs,
   candidates,
 }: PipelineStageCountTableProps) {
-  console.log(stagesData, "selectedPartnerId,stagesData,jobs,candidates");
+  // console.log(stagesData, "selectedPartnerId,stagesData,jobs,candidates");
 
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -60,8 +60,8 @@ export function PipelineStageCountTable({
         const jobsWithPartnerCandidates = jobs.filter((job) => {
           return partnerCandidates.some((c) => c.job_id === job.id);
         });
-
-        setRelevantJobs(jobsWithPartnerCandidates);
+        console.log(jobsWithPartnerCandidates, jobs);
+        setRelevantJobs(jobs);
 
         // Calculate counts for each stage and job
         const counts: StageJobCount = {};
@@ -121,7 +121,6 @@ export function PipelineStageCountTable({
   if (error) {
     return <div className="text-red-500">{error}</div>;
   }
-
   if (relevantJobs.length === 0) {
     return (
       <div className="text-muted-foreground">
@@ -129,7 +128,7 @@ export function PipelineStageCountTable({
       </div>
     );
   }
-  console.log(relevantJobs);
+
   return (
     <div className="overflow-x-auto">
       <Table>
@@ -147,7 +146,6 @@ export function PipelineStageCountTable({
         <TableBody>
           {stagesData.map((stage) => {
             const rowTotal = calculateRowTotal(stage.id);
-
             return (
               <TableRow key={stage.id}>
                 <TableCell className="font-medium">{stage.stage}</TableCell>

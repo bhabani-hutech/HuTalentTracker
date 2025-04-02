@@ -1,6 +1,7 @@
 import { supabase } from "../supabase";
 
 export interface PipelineStage {
+  stage: string;
   id: number;
   name: string;
   description: string;
