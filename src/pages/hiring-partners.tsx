@@ -111,7 +111,7 @@ export default function HiringPartners() {
   }>({ avg: 0, data: [] });
   const [partnerDetails, setPartnerDetails] = useState<any>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [sourceCount, setSourceCount] = useState({})
+  const [sourceCount, setSourceCount] = useState({});
   const [isLoadingPartnerDetails, setIsLoadingPartnerDetails] = useState(false);
 
   // Filter to only hiring partners (non-own organizations)
@@ -119,22 +119,22 @@ export default function HiringPartners() {
   console.log(hiringPartners);
   useEffect(() => {
     const fetchPartnerDetails = async () => {
-       const orgIdArray = hiringPartners.map((ele) => ele?.id);
+      const orgIdArray = hiringPartners.map((ele) => ele?.id);
       let finalData: any = {};
-       for (const datas of orgIdArray) {
+      for (const datas of orgIdArray) {
         const { data, error, count } = await supabase
-        .from('candidates')
-        .select('*', { count: 'exact', head: true })
-        .eq('hiring_partner_id', datas);
-        console.log(count,"ddddddddddddddddddddddddddddd");
+          .from("candidates")
+          .select("*", { count: "exact", head: true })
+          .eq("hiring_partner_id", datas);
+        console.log(count, "ddddddddddddddddddddddddddddd");
         if (error) {
-          finalData[datas]=0
-        }else{
-          finalData[datas]=count
+          finalData[datas] = 0;
+        } else {
+          finalData[datas] = count;
         }
       }
-      console.log(finalData,"finalDatafinalDatafinalDatafinalDatafinalData")
-      setSourceCount(finalData)
+      console.log(finalData, "finalDatafinalDatafinalDatafinalDatafinalData");
+      setSourceCount(finalData);
     };
     fetchPartnerDetails();
   }, []);
@@ -496,7 +496,7 @@ export default function HiringPartners() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">
-                {sourceCount[selectedPartner.id] || 0}
+                  {sourceCount[selectedPartner.id] || 0}
                 </div>
                 <p className="text-xs text-muted-foreground mt-1">
                   {partnerStats.totalCandidates > 0
@@ -566,14 +566,14 @@ export default function HiringPartners() {
           </div>
 
           <Tabs defaultValue="overview">
-            <TabsList className="grid w-full grid-cols-3">
+            <TabsList className="grid w-full grid-cols-1">
               <TabsTrigger value="overview">Overview</TabsTrigger>
-              <TabsTrigger value="positions">Positions</TabsTrigger>
-              <TabsTrigger value="candidates">Candidates</TabsTrigger>
+              {/* <TabsTrigger value="positions">Positions</TabsTrigger>
+              <TabsTrigger value="candidates">Candidates</TabsTrigger> */}
             </TabsList>
 
             <TabsContent value="overview" className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <Card>
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle>Candidate Pipeline</CardTitle>
@@ -615,67 +615,143 @@ export default function HiringPartners() {
                     </ResponsiveContainer>
                   </CardContent>
                 </Card>
+              </div> */}
+
+              <div className="grid grid-cols-1 md:grid-cols-1 gap-4">
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle>Sourced Candidates</CardTitle>
+                    <Badge variant="outline" className="ml-2">
+                      {candidates?.filter(
+                        (c) =>
+                          c.hiring_partner_id ===
+                            selectedPartner?.id.toString() ||
+                          (c.candidate_source === "Hiring Partner" &&
+                            c.hiring_partner_id ===
+                              selectedPartner?.id.toString())
+                      ).length || 0}{" "}
+                      candidates
+                    </Badge>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-muted-foreground mb-4">
+                      Detailed list of candidates sourced by{" "}
+                      {selectedPartner.name}
+                    </p>
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Name</TableHead>
+                          <TableHead>Position</TableHead>
+                          <TableHead>Stage</TableHead>
+                          <TableHead>Applied Date</TableHead>
+                          <TableHead>Days in Process</TableHead>
+                          <TableHead>Status</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {candidates
+                          ?.filter(
+                            (c) =>
+                              c.hiring_partner_id ===
+                                selectedPartner?.id.toString() ||
+                              (c.candidate_source === "Hiring Partner" &&
+                                c.hiring_partner_id ===
+                                  selectedPartner?.id.toString())
+                          )
+                          .slice(0, 10)
+                          .map((candidate, index) => {
+                            const job = jobs?.find(
+                              (j) => j.id === candidate.job_id
+                            );
+                            let stage = "Unknown";
+                            let status = "Pending";
+
+                            if (candidate.stage_id === 1) stage = "Screening";
+                            else if (
+                              candidate.stage_id === 2 ||
+                              candidate.stage_id === 3
+                            )
+                              stage = "Interview";
+                            else if (candidate.stage_id === 4)
+                              stage = "Offered";
+                            else if (candidate.stage_id === 6) {
+                              stage = "Joined";
+                              status = "Completed";
+                            } else if (candidate.stage_id === 5) {
+                              stage = "Rejected";
+                              status = "Rejected";
+                            }
+
+                            return (
+                              <TableRow key={index}>
+                                <TableCell className="font-medium">
+                                  {candidate.name}
+                                </TableCell>
+                                <TableCell>
+                                  {job?.title ||
+                                    candidate.position ||
+                                    "Unknown"}
+                                </TableCell>
+                                <TableCell>{stage}</TableCell>
+                                <TableCell>
+                                  {new Date(
+                                    candidate.created_at || Date.now()
+                                  ).toLocaleDateString()}
+                                </TableCell>
+                                <TableCell>
+                                  {candidate.created_at
+                                    ? Math.ceil(
+                                        Math.abs(
+                                          new Date().getTime() -
+                                            new Date(
+                                              candidate.created_at
+                                            ).getTime()
+                                        ) /
+                                          (1000 * 60 * 60 * 24)
+                                      )
+                                    : "N/A"}
+                                </TableCell>
+                                <TableCell>
+                                  <Badge
+                                    variant={
+                                      status === "Completed"
+                                        ? "default"
+                                        : status === "Rejected"
+                                        ? "destructive"
+                                        : "outline"
+                                    }
+                                  >
+                                    {status}
+                                  </Badge>
+                                </TableCell>
+                              </TableRow>
+                            );
+                          })}
+                        {(!candidates ||
+                          candidates.filter(
+                            (c) =>
+                              c.hiring_partner_id ===
+                              selectedPartner?.id.toString()
+                          ).length === 0) && (
+                          <TableRow>
+                            <TableCell colSpan={6} className="text-center py-4">
+                              No candidates found for this hiring partner
+                            </TableCell>
+                          </TableRow>
+                        )}
+                      </TableBody>
+                    </Table>
+                  </CardContent>
+                </Card>
               </div>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle>Efficiency Metrics</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="flex flex-col items-center justify-center p-4 border rounded-lg">
-                      <h3 className="text-lg font-medium text-muted-foreground flex items-center gap-2">
-                        <Calendar className="h-4 w-4 text-primary" />
-                        Avg. Time to Hire
-                      </h3>
-                      <p className="text-3xl font-bold mt-2">
-                        {timeToHireData.avg} days
-                      </p>
-                      <p className="text-xs text-muted-foreground mt-1 text-center">
-                        {timeToHireData.data.length > 0
-                          ? `Based on ${timeToHireData.data.length} successful hires`
-                          : "No completed hires yet"}
-                      </p>
-                    </div>
-                    <div className="flex flex-col items-center justify-center p-4 border rounded-lg">
-                      <h3 className="text-lg font-medium text-muted-foreground flex items-center gap-2">
-                        <BarChart2 className="h-4 w-4 text-primary" />
-                        Conversion Rate
-                      </h3>
-                      <p className="text-3xl font-bold mt-2">
-                        {partnerStats.successRate}%
-                      </p>
-                      <p className="text-xs text-muted-foreground mt-1 text-center">
-                        {partnerStats.totalCandidates > 0
-                          ? `${partnerStats.totalJoined} out of ${partnerStats.totalCandidates} candidates`
-                          : "No candidates yet"}
-                      </p>
-                    </div>
-                    <div className="flex flex-col items-center justify-center p-4 border rounded-lg">
-                      <h3 className="text-lg font-medium text-muted-foreground flex items-center gap-2">
-                        <DollarSign className="h-4 w-4 text-primary" />
-                        Cost per Hire
-                      </h3>
-                      <p className="text-3xl font-bold mt-2">
-                        ${costPerHireData.avg.toLocaleString()}
-                      </p>
-                      <p className="text-xs text-muted-foreground mt-1 text-center">
-                        {costPerHireData.avg > 0
-                          ? `Average cost based on ${costPerHireData.data.length} candidates`
-                          : "No cost data available"}
-                      </p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
               {partnerDetails && (
                 <Card>
                   <CardHeader>
                     <CardTitle>Partner Information</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-1 gap-6">
                       <div>
                         <h3 className="text-lg font-medium mb-2">
                           Company Details
@@ -720,7 +796,7 @@ export default function HiringPartners() {
                           </div>
                         </div>
                       </div>
-                      <div>
+                      {/* <div>
                         <h3 className="text-lg font-medium mb-2">
                           Agreement Details
                         </h3>
@@ -775,14 +851,14 @@ export default function HiringPartners() {
                             </a>
                           </div>
                         </div>
-                      </div>
+                      </div> */}
                     </div>
                   </CardContent>
                 </Card>
               )}
             </TabsContent>
 
-            <TabsContent value="positions" className="space-y-4">
+            {/* <TabsContent value="positions" className="space-y-4">
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle>Positions Sourced</CardTitle>
@@ -961,7 +1037,7 @@ export default function HiringPartners() {
                   </Table>
                 </CardContent>
               </Card>
-            </TabsContent>
+            </TabsContent> */}
           </Tabs>
         </div>
       )}
