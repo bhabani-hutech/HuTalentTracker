@@ -3,7 +3,7 @@ import { getPipelineStages, PipelineStage } from "../pipeline-stages";
 
 export function usePipelineStages() {
   const {
-    data: stages,
+    data: stagesD,
     isLoading,
     error,
   } = useQuery({
@@ -12,7 +12,7 @@ export function usePipelineStages() {
   });
 
   return {
-    stages,
+    stagesD,
     isLoading,
     error,
   };

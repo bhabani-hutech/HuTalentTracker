@@ -13,7 +13,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 interface PipelineStageCountTableProps {
   selectedPartnerId: string;
-  stages: { id: string; stage: string }[];
+  stagesData: { id: string; stage: string }[];
   jobs: any[];
   candidates: any[];
 }
@@ -26,17 +26,19 @@ interface StageJobCount {
 
 export function PipelineStageCountTable({
   selectedPartnerId,
-  stages,
+  stagesData,
   jobs,
   candidates,
 }: PipelineStageCountTableProps) {
+  console.log(stagesData, "selectedPartnerId,stagesData,jobs,candidates");
+
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [stageCounts, setStageCounts] = useState<StageJobCount>({});
   const [relevantJobs, setRelevantJobs] = useState<any[]>([]);
 
   useEffect(() => {
-    if (!selectedPartnerId || !stages.length || !jobs.length) {
+    if (!selectedPartnerId || !stagesData.length || !jobs.length) {
       setIsLoading(false);
       return;
     }
@@ -51,7 +53,7 @@ export function PipelineStageCountTable({
           (c) =>
             c.hiring_partner_id === selectedPartnerId.toString() ||
             (c.candidate_source === "Hiring Partner" &&
-              c.hiring_partner_id === selectedPartnerId.toString()),
+              c.hiring_partner_id === selectedPartnerId.toString())
         );
 
         // Find jobs that have candidates from this hiring partner
@@ -65,7 +67,7 @@ export function PipelineStageCountTable({
         const counts: StageJobCount = {};
 
         // Initialize counts object
-        stages.forEach((stage) => {
+        stagesData.forEach((stage) => {
           counts[stage.id] = {};
           jobsWithPartnerCandidates.forEach((job) => {
             counts[stage.id][job.id] = 0;
@@ -94,7 +96,7 @@ export function PipelineStageCountTable({
     };
 
     fetchCounts();
-  }, [selectedPartnerId, stages, jobs, candidates]);
+  }, []);
 
   // Calculate row totals
   const calculateRowTotal = (stageId: string) => {
@@ -102,7 +104,7 @@ export function PipelineStageCountTable({
 
     return Object.values(stageCounts[stageId]).reduce(
       (total, count) => total + count,
-      0,
+      0
     );
   };
 
@@ -127,7 +129,7 @@ export function PipelineStageCountTable({
       </div>
     );
   }
-
+  console.log(relevantJobs);
   return (
     <div className="overflow-x-auto">
       <Table>
@@ -143,7 +145,7 @@ export function PipelineStageCountTable({
           </TableRow>
         </TableHeader>
         <TableBody>
-          {stages.map((stage) => {
+          {stagesData.map((stage) => {
             const rowTotal = calculateRowTotal(stage.id);
 
             return (

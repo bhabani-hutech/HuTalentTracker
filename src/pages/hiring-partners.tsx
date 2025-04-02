@@ -47,7 +47,7 @@ const generateMonthlyData = (candidates, partnerId, months = 6) => {
     (c) =>
       c.hiring_partner_id === partnerId.toString() ||
       (c.candidate_source === "Hiring Partner" &&
-        c.hiring_partner_id === partnerId.toString()),
+        c.hiring_partner_id === partnerId.toString())
   );
 
   // Get current date and calculate the last 6 months
@@ -101,7 +101,7 @@ export default function HiringPartners() {
     deleteCandidate,
   } = useCandidates();
   const { jobs, isLoading: isLoadingJobs, error: jobsError } = useJobs();
-  const { stages, isLoading: isLoadingStages } = usePipelineStages();
+  const { stagesD, isLoading: isLoadingStages } = usePipelineStages();
   const [selectedPartner, setSelectedPartner] = useState<any>(null);
   const [partnerStats, setPartnerStats] = useState<any>(null);
   const [timeToHireData, setTimeToHireData] = useState<{
@@ -139,13 +139,13 @@ export default function HiringPartners() {
             .from("candidates")
             .select("*", { count: "exact", head: true })
             .or(
-              `hiring_partner_id.eq.${partnerId},and(candidate_source.eq.Hiring Partner,hiring_partner_id.eq.${partnerId})`,
+              `hiring_partner_id.eq.${partnerId},and(candidate_source.eq.Hiring Partner,hiring_partner_id.eq.${partnerId})`
             );
 
           if (error) {
             console.error(
               `Error fetching count for partner ${partnerId}:`,
-              error,
+              error
             );
             finalData[partnerId] = 0;
           } else {
@@ -153,7 +153,6 @@ export default function HiringPartners() {
           }
         }
 
-        console.log("Partner candidate counts:", finalData);
         setSourceCount(finalData);
       } catch (err) {
         console.error("Error in fetchPartnerDetails:", err);
@@ -240,12 +239,12 @@ export default function HiringPartners() {
 
   // Calculate statistics for the selected partner
   useEffect(() => {
-    if (!selectedPartner || !candidates || !jobs || !stages) {
+    if (!selectedPartner || !candidates || !jobs || !stagesD) {
       console.log("Missing data for partner statistics:", {
         hasPartner: !!selectedPartner,
         hasCandidates: !!candidates,
         hasJobs: !!jobs,
-        hasStages: !!stages,
+        hasStages: !!stagesD,
       });
       return;
     }
@@ -255,7 +254,7 @@ export default function HiringPartners() {
       (c) =>
         c.hiring_partner_id === selectedPartner.id.toString() ||
         (c.candidate_source === "Hiring Partner" &&
-          c.hiring_partner_id === selectedPartner.id.toString()),
+          c.hiring_partner_id === selectedPartner.id.toString())
     );
     // Get unique job positions for this partner
     const uniquePositions = new Set();
@@ -301,10 +300,10 @@ export default function HiringPartners() {
     // Calculate overall stats
     const totalCandidates = partnerCandidates.length;
     const totalJoined = partnerCandidates.filter(
-      (c) => c.stage_id === 6,
+      (c) => c.stage_id === 6
     ).length;
     const totalInterviewed = partnerCandidates.filter(
-      (c) => c.stage_id === 2 || c.stage_id === 3,
+      (c) => c.stage_id === 2 || c.stage_id === 3
     ).length;
     const successRate =
       totalCandidates > 0
@@ -313,7 +312,7 @@ export default function HiringPartners() {
 
     // Calculate time to hire metrics
     const joinedCandidates = partnerCandidates.filter(
-      (c) => c.stage_id === 6 && c.created_at && c.updated_at,
+      (c) => c.stage_id === 6 && c.created_at && c.updated_at
     );
     let totalDays = 0;
     const timeData = [];
@@ -373,7 +372,7 @@ export default function HiringPartners() {
       {
         stage: "Interview",
         count: partnerCandidates.filter(
-          (c) => c.stage_id === 2 || c.stage_id === 3,
+          (c) => c.stage_id === 2 || c.stage_id === 3
         ).length,
       },
       {
@@ -403,7 +402,7 @@ export default function HiringPartners() {
     selectedPartner,
     candidates,
     jobs,
-    stages,
+    stagesD,
     createCandidate,
     updateCandidate,
     deleteCandidate,
@@ -538,7 +537,7 @@ export default function HiringPartners() {
                     ? `${Math.round(
                         (partnerStats.totalInterviewed /
                           partnerStats.totalCandidates) *
-                          100,
+                          100
                       )}% reached interview stage`
                     : "No candidates yet"}
                 </p>
@@ -663,7 +662,7 @@ export default function HiringPartners() {
                             selectedPartner?.id.toString() ||
                           (c.candidate_source === "Hiring Partner" &&
                             c.hiring_partner_id ===
-                              selectedPartner?.id.toString()),
+                              selectedPartner?.id.toString())
                       ).length || 0}{" "}
                       candidates
                     </Badge>
@@ -674,12 +673,17 @@ export default function HiringPartners() {
                       {selectedPartner.name}
                     </p>
 
-                    {selectedPartner && stages && jobs && candidates ? (
+                    {true ? (
                       <PipelineStageCountTable
-                        selectedPartnerId={selectedPartner.id.toString()}
-                        stages={stages}
-                        jobs={jobs}
-                        candidates={candidates}
+                        selectedPartnerId={
+                          selectedPartner?.id?.toString() || ""
+                        }
+                        stagesData={stagesD.map((stage) => ({
+                          id: stage.id.toString(), // Ensure ID is a string
+                          stage: stage.stage || "Unknown", // Provide a default value if missing
+                        }))}
+                        jobs={jobs || []}
+                        candidates={candidates || []}
                       />
                     ) : (
                       <div className="text-muted-foreground">
