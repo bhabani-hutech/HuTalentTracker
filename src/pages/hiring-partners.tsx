@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import { useOrganizations } from "@/lib/api/hooks/useOrganizations";
 import { useCandidates } from "@/lib/api/hooks/useCandidates";
 import { useJobs } from "@/lib/api/hooks/useJobs";
+import { usePipelineStages } from "@/lib/api/hooks/usePipelineStages";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PipelineChart } from "@/components/dashboard/pipeline-chart";
@@ -15,6 +16,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { PipelineStageCountTable } from "@/components/hiring-partners/PipelineStageCountTable";
 import { useSearchParams } from "react-router-dom";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -45,7 +47,7 @@ const generateMonthlyData = (candidates, partnerId, months = 6) => {
     (c) =>
       c.hiring_partner_id === partnerId.toString() ||
       (c.candidate_source === "Hiring Partner" &&
-        c.hiring_partner_id === partnerId.toString())
+        c.hiring_partner_id === partnerId.toString()),
   );
 
   // Get current date and calculate the last 6 months
@@ -99,6 +101,7 @@ export default function HiringPartners() {
     deleteCandidate,
   } = useCandidates();
   const { jobs, isLoading: isLoadingJobs, error: jobsError } = useJobs();
+  const { stages, isLoading: isLoadingStages } = usePipelineStages();
   const [selectedPartner, setSelectedPartner] = useState<any>(null);
   const [partnerStats, setPartnerStats] = useState<any>(null);
   const [timeToHireData, setTimeToHireData] = useState<{
@@ -116,28 +119,49 @@ export default function HiringPartners() {
 
   // Filter to only hiring partners (non-own organizations)
   const hiringPartners = organizations?.filter((org) => !org.is_own_org) || [];
-  console.log(hiringPartners);
+
   useEffect(() => {
     const fetchPartnerDetails = async () => {
-      const orgIdArray = hiringPartners.map((ele) => ele?.id);
-      let finalData: any = {};
-      for (const datas of orgIdArray) {
-        const { data, error, count } = await supabase
-          .from("candidates")
-          .select("*", { count: "exact", head: true })
-          .eq("hiring_partner_id", datas);
-        console.log(count, "ddddddddddddddddddddddddddddd");
-        if (error) {
-          finalData[datas] = 0;
-        } else {
-          finalData[datas] = count;
-        }
+      if (!hiringPartners || hiringPartners.length === 0) {
+        console.log("No hiring partners available to fetch counts");
+        return;
       }
-      console.log(finalData, "finalDatafinalDatafinalDatafinalDatafinalData");
-      setSourceCount(finalData);
+
+      try {
+        const orgIdArray = hiringPartners.map((ele) => ele?.id);
+        let finalData: any = {};
+
+        for (const partnerId of orgIdArray) {
+          if (!partnerId) continue;
+
+          // Count candidates with this hiring partner ID
+          const { data, error, count } = await supabase
+            .from("candidates")
+            .select("*", { count: "exact", head: true })
+            .or(
+              `hiring_partner_id.eq.${partnerId},and(candidate_source.eq.Hiring Partner,hiring_partner_id.eq.${partnerId})`,
+            );
+
+          if (error) {
+            console.error(
+              `Error fetching count for partner ${partnerId}:`,
+              error,
+            );
+            finalData[partnerId] = 0;
+          } else {
+            finalData[partnerId] = count || 0;
+          }
+        }
+
+        console.log("Partner candidate counts:", finalData);
+        setSourceCount(finalData);
+      } catch (err) {
+        console.error("Error in fetchPartnerDetails:", err);
+      }
     };
+
     fetchPartnerDetails();
-  }, []);
+  }, [hiringPartners]);
 
   useEffect(() => {
     if (partnerId && hiringPartners.length > 0) {
@@ -216,14 +240,22 @@ export default function HiringPartners() {
 
   // Calculate statistics for the selected partner
   useEffect(() => {
-    if (!selectedPartner || !candidates || !jobs) return;
+    if (!selectedPartner || !candidates || !jobs || !stages) {
+      console.log("Missing data for partner statistics:", {
+        hasPartner: !!selectedPartner,
+        hasCandidates: !!candidates,
+        hasJobs: !!jobs,
+        hasStages: !!stages,
+      });
+      return;
+    }
 
     // Filter candidates sourced by this partner - only include candidates that are explicitly linked to this partner
     const partnerCandidates = candidates.filter(
       (c) =>
         c.hiring_partner_id === selectedPartner.id.toString() ||
         (c.candidate_source === "Hiring Partner" &&
-          c.hiring_partner_id === selectedPartner.id.toString())
+          c.hiring_partner_id === selectedPartner.id.toString()),
     );
     // Get unique job positions for this partner
     const uniquePositions = new Set();
@@ -269,10 +301,10 @@ export default function HiringPartners() {
     // Calculate overall stats
     const totalCandidates = partnerCandidates.length;
     const totalJoined = partnerCandidates.filter(
-      (c) => c.stage_id === 6
+      (c) => c.stage_id === 6,
     ).length;
     const totalInterviewed = partnerCandidates.filter(
-      (c) => c.stage_id === 2 || c.stage_id === 3
+      (c) => c.stage_id === 2 || c.stage_id === 3,
     ).length;
     const successRate =
       totalCandidates > 0
@@ -281,7 +313,7 @@ export default function HiringPartners() {
 
     // Calculate time to hire metrics
     const joinedCandidates = partnerCandidates.filter(
-      (c) => c.stage_id === 6 && c.created_at && c.updated_at
+      (c) => c.stage_id === 6 && c.created_at && c.updated_at,
     );
     let totalDays = 0;
     const timeData = [];
@@ -341,7 +373,7 @@ export default function HiringPartners() {
       {
         stage: "Interview",
         count: partnerCandidates.filter(
-          (c) => c.stage_id === 2 || c.stage_id === 3
+          (c) => c.stage_id === 2 || c.stage_id === 3,
         ).length,
       },
       {
@@ -371,6 +403,7 @@ export default function HiringPartners() {
     selectedPartner,
     candidates,
     jobs,
+    stages,
     createCandidate,
     updateCandidate,
     deleteCandidate,
@@ -403,7 +436,7 @@ export default function HiringPartners() {
       </div>
     );
   }
-  console.log(selectedPartner);
+
   if (hasError) {
     return (
       <div className="container py-8 space-y-8">
@@ -496,14 +529,16 @@ export default function HiringPartners() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">
-                  {sourceCount[selectedPartner.id] || 0}
+                  {sourceCount[selectedPartner.id] !== undefined
+                    ? sourceCount[selectedPartner.id]
+                    : partnerStats.totalCandidates || 0}
                 </div>
                 <p className="text-xs text-muted-foreground mt-1">
                   {partnerStats.totalCandidates > 0
                     ? `${Math.round(
                         (partnerStats.totalInterviewed /
                           partnerStats.totalCandidates) *
-                          100
+                          100,
                       )}% reached interview stage`
                     : "No candidates yet"}
                 </p>
@@ -620,6 +655,37 @@ export default function HiringPartners() {
               <div className="grid grid-cols-1 md:grid-cols-1 gap-4">
                 <Card>
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle>Pipeline Stage Count by Job</CardTitle>
+                    <Badge variant="outline" className="ml-2">
+                      {candidates?.filter(
+                        (c) =>
+                          c.hiring_partner_id ===
+                            selectedPartner?.id.toString() ||
+                          (c.candidate_source === "Hiring Partner" &&
+                            c.hiring_partner_id ===
+                              selectedPartner?.id.toString()),
+                      ).length || 0}{" "}
+                      candidates
+                    </Badge>
+                  </CardHeader>
+                  <CardContent>
+                    {selectedPartner && stages && jobs && candidates ? (
+                      <PipelineStageCountTable
+                        selectedPartnerId={selectedPartner.id.toString()}
+                        stages={stages}
+                        jobs={jobs}
+                        candidates={candidates}
+                      />
+                    ) : (
+                      <div className="text-muted-foreground">
+                        No data available for this hiring partner
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle>Sourced Candidates</CardTitle>
                     <Badge variant="outline" className="ml-2">
                       {candidates?.filter(
@@ -628,7 +694,7 @@ export default function HiringPartners() {
                             selectedPartner?.id.toString() ||
                           (c.candidate_source === "Hiring Partner" &&
                             c.hiring_partner_id ===
-                              selectedPartner?.id.toString())
+                              selectedPartner?.id.toString()),
                       ).length || 0}{" "}
                       candidates
                     </Badge>
@@ -657,12 +723,12 @@ export default function HiringPartners() {
                                 selectedPartner?.id.toString() ||
                               (c.candidate_source === "Hiring Partner" &&
                                 c.hiring_partner_id ===
-                                  selectedPartner?.id.toString())
+                                  selectedPartner?.id.toString()),
                           )
                           .slice(0, 10)
                           .map((candidate, index) => {
                             const job = jobs?.find(
-                              (j) => j.id === candidate.job_id
+                              (j) => j.id === candidate.job_id,
                             );
                             let stage = "Unknown";
                             let status = "Pending";
@@ -696,7 +762,7 @@ export default function HiringPartners() {
                                 <TableCell>{stage}</TableCell>
                                 <TableCell>
                                   {new Date(
-                                    candidate.created_at || Date.now()
+                                    candidate.created_at || Date.now(),
                                   ).toLocaleDateString()}
                                 </TableCell>
                                 <TableCell>
@@ -705,10 +771,10 @@ export default function HiringPartners() {
                                         Math.abs(
                                           new Date().getTime() -
                                             new Date(
-                                              candidate.created_at
-                                            ).getTime()
+                                              candidate.created_at,
+                                            ).getTime(),
                                         ) /
-                                          (1000 * 60 * 60 * 24)
+                                          (1000 * 60 * 60 * 24),
                                       )
                                     : "N/A"}
                                 </TableCell>
@@ -718,8 +784,8 @@ export default function HiringPartners() {
                                       status === "Completed"
                                         ? "default"
                                         : status === "Rejected"
-                                        ? "destructive"
-                                        : "outline"
+                                          ? "destructive"
+                                          : "outline"
                                     }
                                   >
                                     {status}
@@ -732,7 +798,7 @@ export default function HiringPartners() {
                           candidates.filter(
                             (c) =>
                               c.hiring_partner_id ===
-                              selectedPartner?.id.toString()
+                              selectedPartner?.id.toString(),
                           ).length === 0) && (
                           <TableRow>
                             <TableCell colSpan={6} className="text-center py-4">

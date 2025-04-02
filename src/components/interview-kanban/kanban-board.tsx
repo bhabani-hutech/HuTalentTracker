@@ -285,6 +285,27 @@ export function KanbanBoard({ selectedJobId }: KanbanBoardProps) {
     const fromStage = stages.find((s) => s.id === fromStageId)?.stage || "";
     const toStage = stages.find((s) => s.id === targetStageId)?.stage || "";
 
+    // Check if the card is being moved from a Closed stage
+    if (fromStage.includes("Closed")) {
+      toast({
+        variant: "destructive",
+        title: "Movement Restricted",
+        description: "Cards in Closed stages cannot be moved.",
+      });
+      return;
+    }
+
+    // Check if the card is being moved to a stage that comes before a Closed stage
+    // This prevents backward movement after reaching a Closed stage
+    if (toStage.includes("Closed") === false && fromStage.includes("Closed")) {
+      toast({
+        variant: "destructive",
+        title: "Movement Restricted",
+        description: "Cards cannot be moved backward from Closed stages.",
+      });
+      return;
+    }
+
     // Open the move dialog
     setMoveDialog({
       isOpen: true,
