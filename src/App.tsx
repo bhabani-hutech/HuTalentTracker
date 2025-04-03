@@ -14,6 +14,9 @@ import Jobs from "./pages/jobs";
 import NewJob from "./pages/jobs/new";
 import JobSelection from "./pages/jobs/select";
 
+import { useLocation } from "react-router-dom";
+import { useAuth } from "./lib/auth/AuthContext";
+
 const StatusTracking = lazy(() => import("./pages/status-tracking"));
 const AssociateOnboarding = lazy(() => import("./pages/associate-onboarding"));
 const HiringPartners = lazy(() => import("./pages/hiring-partners"));
@@ -118,12 +121,24 @@ const queryClient = new QueryClient({
 });
 
 function AppContent() {
+  const { user } = useAuth(); // Get authentication state
+  const location = useLocation(); // Get current route
+
+  // Check if the current page is login or signup
+  const isAuthPage =
+    location.pathname === "/login" || location.pathname === "/signup";
+
   return (
     <div className="relative flex min-h-screen">
-      <SiteHeader items={navigationItems} />
+      {/* Show SiteHeader only if user is authenticated and not on login/signup pages */}
+      {!isAuthPage && user && <SiteHeader items={navigationItems} />}
+
       <main
         className="flex-1 transition-all duration-300 pb-14"
-        style={{ paddingLeft: "var(--sidebar-width, 250px)" }}
+        style={{
+          paddingLeft:
+            !isAuthPage && user ? "var(--sidebar-width, 250px)" : "0",
+        }}
       >
         <Suspense
           fallback={
@@ -133,55 +148,47 @@ function AppContent() {
           }
         >
           <Routes>
-            <Route path="/">
-              <Route path="/login" element={<Login />} />
-              <Route path="/signup" element={<Signup />} />
-            </Route>
+            <Route path="/login" element={<Login />} />
+            <Route path="/signup" element={<Signup />} />
 
-            <Route path="/dashboard" element={<Home />} />
-            <Route path="/jobs" element={<Jobs />} />
-            <Route path="/jobs/new" element={<NewJob />} />
-            <Route path="/jobs/:id" element={<NewJob />} />
-            <Route path="/jobs/select" element={<JobSelection />} />
-            <Route path="/resume-sourcing" element={<ResumeSourcing />} />
-            <Route
-              path="/interview-scheduling"
-              element={<InterviewSchedule />}
-            />
-            {/* Interview Feedback routes */}
-            {/* Route hidden from navigation but still accessible */}
-            <Route path="/interview-kanban" element={<InterviewKanban />} />
-            <Route path="/interview-flow" element={<InterviewFlow />} />
-            <Route path="/interview-feedback" element={<InterviewFeedback />}>
-              <Route path=":interviewId" element={<InterviewFeedback />} />
-              <Route
-                path=":interviewId/feedback/:feedbackId"
-                element={<InterviewFeedback />}
-              />
-            </Route>
-            <Route path="/status-tracking" element={<StatusTracking />} />
-            <Route
-              path="/associate-onboarding"
-              element={<AssociateOnboarding />}
-            />
-            <Route path="/hiring-partners" element={<HiringPartners />} />
-            <Route path="/settings" element={<Settings />} />
-            <Route path="/master-data" element={<MasterData />} />
-
-            {import.meta.env.VITE_TEMPO === "true" && (
+            {/* Protected Routes */}
+            {user ? (
               <>
-                <Route path="/tempobook/*" />
+                <Route path="/dashboard" element={<Home />} />
+                <Route path="/jobs" element={<Jobs />} />
+                <Route path="/jobs/new" element={<NewJob />} />
+                <Route path="/jobs/:id" element={<NewJob />} />
+                <Route path="/jobs/select" element={<JobSelection />} />
+                <Route path="/resume-sourcing" element={<ResumeSourcing />} />
                 <Route
-                  path="/tempobook/preview/:id"
-                  element={<DocumentPreviewPage />}
+                  path="/interview-scheduling"
+                  element={<InterviewSchedule />}
                 />
+                <Route path="/interview-kanban" element={<InterviewKanban />} />
+                <Route path="/interview-flow" element={<InterviewFlow />} />
+                <Route
+                  path="/interview-feedback"
+                  element={<InterviewFeedback />}
+                />
+                <Route path="/status-tracking" element={<StatusTracking />} />
+                <Route
+                  path="/associate-onboarding"
+                  element={<AssociateOnboarding />}
+                />
+                <Route path="/hiring-partners" element={<HiringPartners />} />
+                <Route path="/settings" element={<Settings />} />
+                <Route path="/master-data" element={<MasterData />} />
               </>
+            ) : (
+              // Redirect unauthorized users to login
+              <Route path="*" element={<Navigate to="/login" />} />
             )}
           </Routes>
-          {import.meta.env.VITE_TEMPO === "true" && useRoutes(routes)}
         </Suspense>
       </main>
-      <SiteFooter />
+
+      {/* Show SiteFooter only if user is authenticated and not on login/signup pages */}
+      {!isAuthPage && user && <SiteFooter />}
     </div>
   );
 }
