@@ -1,5 +1,5 @@
 import { Suspense, lazy } from "react";
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "./lib/auth/AuthContext";
 import Home from "./components/home";
 import ResumeSourcing from "./pages/resume-sourcing";
@@ -21,6 +21,8 @@ const HiringPartners = lazy(() => import("./pages/hiring-partners"));
 import { SiteHeader } from "./components/layout/site-header";
 import { SiteFooter } from "./components/layout/site-footer";
 import { DocumentPreviewPage } from "./components/associate-onboarding/document-preview-page";
+import { Login } from "./components/auth/Login";
+import { Signup } from "./components/auth/Signup";
 import { NavItem } from "./types/navigation";
 import { useRoutes } from "react-router-dom";
 import {
@@ -46,7 +48,7 @@ import MasterData from "./pages/masterdata";
 const navigationItems: NavItem[] = [
   {
     title: "Dashboard",
-    href: "/",
+    href: "/dashboard",
     icon: HomeIcon,
   },
   {
@@ -131,7 +133,12 @@ function AppContent() {
           }
         >
           <Routes>
-            <Route path="/" element={<Home />} />
+            <Route path="/">
+              <Route path="/login" element={<Login />} />
+              <Route path="/signup" element={<Signup />} />
+            </Route>
+
+            <Route path="/dashboard" element={<Home />} />
             <Route path="/jobs" element={<Jobs />} />
             <Route path="/jobs/new" element={<NewJob />} />
             <Route path="/jobs/:id" element={<NewJob />} />
@@ -160,6 +167,7 @@ function AppContent() {
             <Route path="/hiring-partners" element={<HiringPartners />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="/master-data" element={<MasterData />} />
+
             {import.meta.env.VITE_TEMPO === "true" && (
               <>
                 <Route path="/tempobook/*" />
