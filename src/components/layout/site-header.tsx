@@ -13,6 +13,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
+import { supabase } from "@/lib/supabase";
 
 interface SiteHeaderProps {
   items: NavItem[];
@@ -28,7 +29,7 @@ export function SiteHeader({ items }: SiteHeaderProps) {
   useEffect(() => {
     // Check if the user belongs to a hiring partner organization
     const isHiringPartner = organizations?.some(
-      (org) => !org.is_own_org && user?.email?.endsWith(org.email_domain || ""),
+      (org) => !org.is_own_org && user?.email?.endsWith(org.email_domain || "")
     );
 
     // For debugging
@@ -51,12 +52,14 @@ export function SiteHeader({ items }: SiteHeaderProps) {
   // Update CSS variable for sidebar width
   document.documentElement.style.setProperty(
     "--sidebar-width",
-    isCollapsed ? "80px" : "250px",
+    isCollapsed ? "80px" : "250px"
   );
 
   return (
     <header
-      className={`fixed left-0 top-0 z-50 h-full border-r bg-[#003874] text-white transition-all duration-300 ${isCollapsed ? "w-[80px]" : "w-[250px]"}`}
+      className={`fixed left-0 top-0 z-50 h-full border-r bg-[#003874] text-white transition-all duration-300 ${
+        isCollapsed ? "w-[80px]" : "w-[250px]"
+      }`}
     >
       <div className="flex h-14 items-center px-4 border-b border-white/10 justify-between">
         {!isCollapsed && <h1 className="text-lg font-bold">Hutech</h1>}
@@ -80,7 +83,9 @@ export function SiteHeader({ items }: SiteHeaderProps) {
             <DropdownMenuTrigger asChild>
               <Button
                 variant="ghost"
-                className={`text-white hover:text-white hover:bg-white/10 flex items-center gap-2 ${isCollapsed ? "w-full justify-center px-0" : ""}`}
+                className={`text-white hover:text-white hover:bg-white/10 flex items-center gap-2 ${
+                  isCollapsed ? "w-full justify-center px-0" : ""
+                }`}
               >
                 <User className="h-5 w-5" />
                 {!isCollapsed && <span>Account</span>}
@@ -94,7 +99,17 @@ export function SiteHeader({ items }: SiteHeaderProps) {
                 Profile Settings
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem className="text-red-600">
+              {/* <DropdownMenuItem className="text-red-600">
+                <LogOut className="h-4 w-4 mr-2" />
+                Logout
+              </DropdownMenuItem> */}
+              <DropdownMenuItem
+                className="text-red-600 cursor-pointer"
+                onClick={async () => {
+                  await supabase.auth.signOut(); // Clears the session
+                  window.location.href = "/login"; // Redirects to login page
+                }}
+              >
                 <LogOut className="h-4 w-4 mr-2" />
                 Logout
               </DropdownMenuItem>

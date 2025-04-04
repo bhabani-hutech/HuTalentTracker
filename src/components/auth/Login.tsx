@@ -37,7 +37,7 @@ export function Login() {
 
     try {
       await signIn(email, password);
-      navigate("/");
+      navigate("/dashboard");
     } catch (err: any) {
       setError(err.message || "Failed to sign in");
     } finally {
@@ -45,7 +45,19 @@ export function Login() {
     }
   };
 
-  // Google sign-in is now handled by the GoogleAuthButton component
+  const handleGoogleSignIn = async () => {
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      await signInWithGoogle();
+      navigate("/dashboard");
+    } catch (err: any) {
+      setError(err.message || "Failed to sign in with Google");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-50">

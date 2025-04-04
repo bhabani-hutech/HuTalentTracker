@@ -19,49 +19,50 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Check active sessions and sets the user
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
       setLoading(false);
     });
-
-    // Listen for changes on auth state
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (event, session) => {
-      setUser(session?.user ?? null);
-      setLoading(false);
-
-      // If this is a new sign up with OAuth, create a user record
-      if (
-        event === "SIGNED_IN" &&
-        session?.user?.app_metadata?.provider !== "email"
-      ) {
-        try {
-          // Check if user already exists in our users table
-          const { data: existingUser } = await supabase
-            .from("users")
-            .select("*")
-            .eq("auth_id", session.user.id)
-            .single();
-
-          // If user doesn't exist, create one
-          if (!existingUser) {
-            await createUser({
-              auth_id: session.user.id,
-              email: session.user.email || "",
-              name: session.user.user_metadata?.full_name || "",
-              role: "User", // Default role
-              status: "Active",
-            });
+  
+    const { data: subscription } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        if (
+          event === "SIGNED_IN" &&
+          session?.user?.app_metadata?.provider !== "email"
+        ) {
+          try {
+            // Check if user already exists in our users table
+            const { data: existingUser } = await supabase
+              .from("users")
+              .select("*")
+              .eq("auth_id", session.user.id)
+              .single();
+  
+            // If user doesn't exist, create one
+            if (!existingUser) {
+              await createUser({
+                auth_id: session.user.id,
+                email: session.user.email || "",
+                name: session.user.user_metadata?.full_name || "",
+                role: "User", // Default role
+                status: "Active",
+              });
+            }
+          } catch (error) {
+            console.error("Error creating user record:", error);
           }
-        } catch (error) {
-          console.error("Error creating user record:", error);
         }
+        else if (event === "SIGNED_OUT") {
+          setUser(null); // Clear user state
+          window.location.href = "/login"; // Redirect to login
+        } else {
+          setUser(session?.user ?? null);
+        }
+        setLoading(false);
       }
-    });
-
-    return () => subscription.unsubscribe();
+    );
+  
+    return () => subscription?.subscription.unsubscribe();
   }, []);
 
   const signUp = async (email: string, password: string, name?: string) => {
