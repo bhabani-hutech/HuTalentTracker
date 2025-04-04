@@ -148,41 +148,90 @@ function AppContent() {
           }
         >
           <Routes>
+            {/* Protected Routes */}
+            {/* Public Routes */}
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
 
             {/* Protected Routes */}
-            {user ? (
-              <>
-                <Route path="/dashboard" element={<Home />} />
-                <Route path="/jobs" element={<Jobs />} />
-                <Route path="/jobs/new" element={<NewJob />} />
-                <Route path="/jobs/:id" element={<NewJob />} />
-                <Route path="/jobs/select" element={<JobSelection />} />
-                <Route path="/resume-sourcing" element={<ResumeSourcing />} />
-                <Route
-                  path="/interview-scheduling"
-                  element={<InterviewSchedule />}
-                />
-                <Route path="/interview-kanban" element={<InterviewKanban />} />
-                <Route path="/interview-flow" element={<InterviewFlow />} />
-                <Route
-                  path="/interview-feedback"
-                  element={<InterviewFeedback />}
-                />
-                <Route path="/status-tracking" element={<StatusTracking />} />
-                <Route
-                  path="/associate-onboarding"
-                  element={<AssociateOnboarding />}
-                />
-                <Route path="/hiring-partners" element={<HiringPartners />} />
-                <Route path="/settings" element={<Settings />} />
-                <Route path="/master-data" element={<MasterData />} />
-              </>
-            ) : (
-              // Redirect unauthorized users to login
-              <Route path="*" element={<Navigate to="/login" />} />
-            )}
+            <Route
+              path="/dashboard"
+              element={user ? <Home /> : <Navigate to="/login" />}
+            />
+            <Route
+              path="/jobs"
+              element={user ? <Jobs /> : <Navigate to="/login" />}
+            />
+            <Route
+              path="/jobs/new"
+              element={user ? <NewJob /> : <Navigate to="/login" />}
+            />
+            <Route
+              path="/jobs/:id"
+              element={user ? <NewJob /> : <Navigate to="/login" />}
+            />
+            <Route
+              path="/jobs/select"
+              element={user ? <JobSelection /> : <Navigate to="/login" />}
+            />
+            <Route
+              path="/resume-sourcing"
+              element={user ? <ResumeSourcing /> : <Navigate to="/login" />}
+            />
+            <Route
+              path="/interview-scheduling"
+              element={user ? <InterviewSchedule /> : <Navigate to="/login" />}
+            />
+            <Route
+              path="/interview-kanban"
+              element={user ? <InterviewKanban /> : <Navigate to="/login" />}
+            />
+            <Route
+              path="/interview-flow"
+              element={user ? <InterviewFlow /> : <Navigate to="/login" />}
+            />
+            <Route
+              path="/interview-feedback"
+              element={user ? <InterviewFeedback /> : <Navigate to="/login" />}
+            />
+            <Route
+              path="/status-tracking"
+              element={user ? <StatusTracking /> : <Navigate to="/login" />}
+            />
+            <Route
+              path="/associate-onboarding"
+              element={
+                user ? <AssociateOnboarding /> : <Navigate to="/login" />
+              }
+            />
+            <Route
+              path="/hiring-partners"
+              element={user ? <HiringPartners /> : <Navigate to="/login" />}
+            />
+            <Route
+              path="/settings"
+              element={user ? <Settings /> : <Navigate to="/login" />}
+            />
+            <Route
+              path="/master-data"
+              element={user ? <MasterData /> : <Navigate to="/login" />}
+            />
+
+            {/* Redirect root to dashboard if logged in, otherwise to login */}
+            <Route
+              path="/"
+              element={
+                user ? <Navigate to="/dashboard" /> : <Navigate to="/login" />
+              }
+            />
+
+            {/* Catch all other routes */}
+            <Route
+              path="*"
+              element={
+                user ? <Navigate to="/dashboard" /> : <Navigate to="/login" />
+              }
+            />
           </Routes>
         </Suspense>
       </main>

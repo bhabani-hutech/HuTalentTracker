@@ -4,6 +4,7 @@ import { useAuth } from "@/lib/auth/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Icons } from "@/components/icons";
 import { Input } from "@/components/ui/input";
+import { GoogleAuthButton } from "./GoogleAuthButton";
 import {
   Card,
   CardContent,
@@ -44,19 +45,7 @@ export function Login() {
     }
   };
 
-  const handleGoogleSignIn = async () => {
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      await signInWithGoogle();
-      navigate("/");
-    } catch (err: any) {
-      setError(err.message || "Failed to sign in with Google");
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  // Google sign-in is now handled by the GoogleAuthButton component
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-50">
@@ -121,21 +110,7 @@ export function Login() {
               </span>
             </div>
           </div>
-          <Button
-            variant="outline"
-            type="button"
-            disabled={isLoading}
-            className="w-full"
-            onClick={handleGoogleSignIn}
-          >
-            {
-              isLoading ? (
-                <Icons.spinner className="mr-2 h-4 w-4 animate-spin" />
-              ) : null
-              // <Icons.google className="mr-2 h-4 w-4" />
-            }
-            Google
-          </Button>
+          <GoogleAuthButton />
         </CardContent>
         <CardFooter className="flex flex-col">
           <div className="text-sm text-center text-muted-foreground mt-2">
