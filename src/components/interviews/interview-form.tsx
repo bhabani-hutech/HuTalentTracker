@@ -53,31 +53,35 @@ export function InterviewForm({
   const { data: candidates } = useCandidates();
   const { data: interviewers } = useInterviewers();
   const { data: interviewRounds } = useInterviewRounds();
+
+  // This useEffect hook will run only when the `initialData` changes.
   useEffect(() => {
-    if (isOpen && initialData) {
-      const parsedDate = new Date(initialData.date); // Convert timestamp to Date object
+    if (initialData) {
+      // Set form data directly from initialData without conditional checks
       setFormData({
         job_id: initialData.job_id || "",
         candidate_id: initialData.candidate_id || "",
         interviewer_id: initialData.interviewer_id || "",
         round_id: initialData.round_id,
-        date: parsedDate,
-        time: format(parsedDate, "HH:mm"), // Extract time
+        date: new Date(initialData.date),
+        time: format(new Date(initialData.date), "HH:mm"), // Extract time
         type: initialData.type || "F2F",
       });
-    } else if (isOpen && !initialData) {
+    } else {
+      // Reset form when not editing
       setFormData({
         job_id: "",
         candidate_id: "",
         interviewer_id: "",
         round_id: null,
         date: new Date(),
-        time: "09:00",
+        time: "09:00", // Default time
         type: "F2F",
       });
     }
-  }, [initialData]); // Depend only on `initialData`
-
+  }, [initialData]); // This effect only triggers when `initialData` changes
+  // Only runs when `initialData` changes
+  // Remove console.log to avoid unnecessary logging
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -85,8 +89,9 @@ export function InterviewForm({
     const [hours, minutes] = formData.time.split(":").map(Number);
     const interviewTimestamp = new Date(formData.date);
     interviewTimestamp.setHours(hours, minutes, 0, 0);
-    const { time, ...interviewData } = formData;
-    onSubmit({ ...interviewData, date: interviewTimestamp }); // Submit merged timestamp
+    // const { time, ...interviewData } = formData;
+    onSubmit(formData);
+    // onSubmit({ ...interviewData, date: interviewTimestamp }); // Submit merged timestamp
     onClose();
   };
 
@@ -112,6 +117,7 @@ export function InterviewForm({
           </DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Job Position */}
           <div className="space-y-2">
             <Label>Job Position</Label>
             <Select
@@ -133,6 +139,7 @@ export function InterviewForm({
             </Select>
           </div>
 
+          {/* Candidate */}
           <div className="space-y-2">
             <Label>Candidate</Label>
             <Select
@@ -154,6 +161,7 @@ export function InterviewForm({
             </Select>
           </div>
 
+          {/* Interview Round */}
           <div className="space-y-2">
             <Label>Interview Round</Label>
             <Select
@@ -179,6 +187,7 @@ export function InterviewForm({
             </Select>
           </div>
 
+          {/* Interviewer */}
           <div className="space-y-2">
             <Label>Interviewer</Label>
             <Select
@@ -200,6 +209,7 @@ export function InterviewForm({
             </Select>
           </div>
 
+          {/* Interview Type */}
           <div className="space-y-2">
             <Label>Interview Type</Label>
             <Select
@@ -218,6 +228,7 @@ export function InterviewForm({
             </Select>
           </div>
 
+          {/* Date */}
           <div className="space-y-2">
             <Label>Date</Label>
             <Popover>
@@ -242,13 +253,16 @@ export function InterviewForm({
                       }
                     }
                   }}
-                  disabled={(date) => date.getTime() < new Date().setHours(0, 0, 0, 0)} // Disable past dates
+                  disabled={(date) =>
+                    date.getTime() < new Date().setHours(0, 0, 0, 0)
+                  } // Disable past dates
                   initialFocus
                 />
               </PopoverContent>
             </Popover>
           </div>
 
+          {/* Time */}
           <div className="space-y-2">
             <Label>Time</Label>
             <Select

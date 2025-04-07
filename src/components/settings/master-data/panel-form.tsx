@@ -45,7 +45,7 @@ interface PanelFormProps {
 export function PanelForm({ isOpen, onClose, initialData }: PanelFormProps) {
   const { createPanel, updatePanel, isCreating, isUpdating } = usePanels();
   const { users } = useUsers();
-  const { stages, isLoading: isLoadingStages } = usePipelineStages();
+  const { stagesD, isLoading: isLoadingStages } = usePipelineStages();
 
   const [name, setName] = useState("");
   const [selectedMembers, setSelectedMembers] = useState<string[]>([]);
@@ -92,10 +92,10 @@ export function PanelForm({ isOpen, onClose, initialData }: PanelFormProps) {
     setSelectedMembers((current) =>
       current.includes(userId)
         ? current.filter((id) => id !== userId)
-        : [...current, userId],
+        : [...current, userId]
     );
   };
-
+  console.log(stagesD, "stagesD");
   return (
     <Dialog
       open={isOpen}
@@ -117,8 +117,8 @@ export function PanelForm({ isOpen, onClose, initialData }: PanelFormProps) {
                 <SelectValue placeholder="Select a panel name" />
               </SelectTrigger>
               <SelectContent>
-                {stages?.length > 0 ? (
-                  stages.map((stage) => (
+                {stagesD?.length > 0 ? (
+                  stagesD.map((stage) => (
                     <SelectItem key={stage.id} value={stage.name}>
                       {stage.name}
                     </SelectItem>
@@ -164,7 +164,7 @@ export function PanelForm({ isOpen, onClose, initialData }: PanelFormProps) {
                               "mr-2 h-4 w-4",
                               selectedMembers.includes(user.id)
                                 ? "opacity-100"
-                                : "opacity-0",
+                                : "opacity-0"
                             )}
                           />
                           {user.name}
