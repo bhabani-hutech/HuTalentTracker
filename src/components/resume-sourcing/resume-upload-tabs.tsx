@@ -23,6 +23,7 @@ import {
 import { Job } from "@/types/database";
 import { Alert, AlertDescription } from "../ui/alert";
 import { useOrganizations } from "@/lib/api/hooks/useOrganizations";
+import { useLocations } from "@/lib/api/hooks/useLocations";
 
 interface ResumeUploadTabsProps {
   onFileUpload: (
@@ -51,6 +52,8 @@ export function ResumeUploadTabs({
     string | null
   >(null);
   const { organizations } = useOrganizations();
+  const { locations } = useLocations();
+  console.log(locations);
   const hiringPartners = organizations?.filter((org) => !org.is_own_org) || [];
 
   // Check if upload buttons should be enabled based on job selection
@@ -94,11 +97,11 @@ export function ResumeUploadTabs({
                 onJobSelect(value === "all" ? null : value)
               }
             >
-              <SelectTrigger id="job-position" className="w-full">
-                <SelectValue placeholder="Select a position" />
+              <SelectTrigger id="job-post" className="w-full">
+                <SelectValue placeholder="Select a Job Post" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Positions</SelectItem>
+                <SelectItem value="all">All Post</SelectItem>
                 {jobs.map((job) => (
                   <SelectItem key={job.id} value={job.id}>
                     {job.title}
@@ -120,7 +123,7 @@ export function ResumeUploadTabs({
         </div>
       </div>
       <div className="flex items-center gap-4">
-        <Label htmlFor="job-position" className="min-w-32">
+        <Label htmlFor="job-location" className="min-w-32">
           Filter by Location:
         </Label>
         <div className="flex-1 flex gap-2">
@@ -131,14 +134,14 @@ export function ResumeUploadTabs({
                 onJobSelect(value === "all" ? null : value)
               }
             >
-              <SelectTrigger id="job-position" className="w-full">
+              <SelectTrigger id="job-location" className="w-full">
                 <SelectValue placeholder="Select a location" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Locations</SelectItem>
-                {jobs.map((job) => (
-                  <SelectItem key={job.id} value={job.id}>
-                    {job.title}
+                {locations?.map((location) => (
+                  <SelectItem key={location.id} value={location.id}>
+                    {location.name}
                   </SelectItem>
                 ))}
               </SelectContent>

@@ -91,7 +91,7 @@ export function PipelineStageCountTable({
           (c) =>
             c.hiring_partner_id === selectedPartnerId.toString() ||
             (c.candidate_source === "Hiring Partner" &&
-              c.hiring_partner_id === selectedPartnerId.toString()),
+              c.hiring_partner_id === selectedPartnerId.toString())
         );
 
         // Find jobs that have candidates from this hiring partner
@@ -103,7 +103,7 @@ export function PipelineStageCountTable({
         setRelevantJobs(
           jobsWithPartnerCandidates.length > 0
             ? jobsWithPartnerCandidates
-            : jobs,
+            : jobs
         );
 
         // Calculate counts for each stage and job
@@ -161,7 +161,7 @@ export function PipelineStageCountTable({
 
     return Object.values(stageCounts[stageId]).reduce(
       (total, count) => total + count,
-      0,
+      0
     );
   };
 
@@ -200,32 +200,31 @@ export function PipelineStageCountTable({
       </div>
     );
   }
-
+  // console.log(stagesData);
   return (
     <div className="overflow-x-auto">
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead className="font-bold">Pipeline Stage</TableHead>
-            {relevantJobs.map((job) => (
-              <TableHead key={job.id} className="text-center">
-                {job.title || "Unknown Job"}
+            <TableHead className="font-bold">Job Post</TableHead>
+            {stagesData.map((stage) => (
+              <TableHead key={stage.id} className="text-center">
+                {getStageName(stage)}
               </TableHead>
             ))}
             <TableHead className="text-center font-bold">Total</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {stagesData.map((stage) => {
+          {relevantJobs.map((stage) => {
             const rowTotal = calculateRowTotal(stage.id);
             return (
               <TableRow key={stage.id}>
                 <TableCell className="font-medium">
-                  {getStageName(stage)}
+                  {stage.title || "Unknown Job"}
                 </TableCell>
-                {relevantJobs.map((job) => {
+                {stagesData.map((job) => {
                   const count = stageCounts[stage.id]?.[job.id] || 0;
-
                   return (
                     <TableCell key={job.id} className="text-center">
                       {count > 0 ? (

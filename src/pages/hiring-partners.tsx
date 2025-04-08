@@ -116,7 +116,7 @@ export default function HiringPartners() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [sourceCount, setSourceCount] = useState({});
   const [isLoadingPartnerDetails, setIsLoadingPartnerDetails] = useState(false);
-
+  // console.log(stagesD);
   // Filter to only hiring partners (non-own organizations)
   const hiringPartners = organizations?.filter((org) => !org.is_own_org) || [];
 
@@ -673,14 +673,14 @@ export default function HiringPartners() {
                       {selectedPartner.name}
                     </p>
 
-                    {true ? (
+                    {selectedPartner ? (
                       <PipelineStageCountTable
                         selectedPartnerId={
                           selectedPartner?.id?.toString() || ""
                         }
                         stagesData={stagesD.map((stage) => ({
                           id: stage.id.toString(), // Ensure ID is a string
-                          stage: stage.stage || "Unknown", // Provide a default value if missing
+                          stage: stage.name || "Unknown", // Provide a default value if missing
                         }))}
                         jobs={jobs || []}
                         candidates={candidates || []}
