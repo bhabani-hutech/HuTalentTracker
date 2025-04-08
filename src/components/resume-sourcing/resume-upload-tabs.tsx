@@ -149,7 +149,7 @@ export function ResumeUploadTabs({
           </div>
         </div>
       </div>
-      <div className="flex items-center gap-4">
+      {/* <div className="flex items-center gap-4">
         <Label htmlFor="job-position" className="min-w-32">
           Filter by Position:
         </Label>
@@ -175,7 +175,7 @@ export function ResumeUploadTabs({
             </Select>
           </div>
         </div>
-      </div>
+      </div> */}
 
       {/* Hiring Partner Selection */}
       <div className="flex items-center gap-4">

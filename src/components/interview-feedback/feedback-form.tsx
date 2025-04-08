@@ -76,7 +76,7 @@ export function InterviewFeedbackForm({
           interview_id: selectedInterview?.id || selectedInterviewId || "",
           interview: selectedInterview,
           interviewer: selectedInterview?.interviewer,
-        },
+        }
   );
 
   // Initialize skill ratings based on existing feedback or candidate skills
@@ -258,14 +258,17 @@ export function InterviewFeedbackForm({
       ))}
     </div>
   );
-
   return (
     <div className="grid gap-4 py-4">
       <div className="grid gap-4 md:grid-cols-2">
         <div className="space-y-2">
           <Label>Candidate Name</Label>
           <Input
-            value={formData.candidate?.name || ""}
+            value={
+              formData?.interview?.candidate?.name ||
+              formData?.candidate?.name ||
+              ""
+            }
             disabled
             placeholder="Candidate name"
           />

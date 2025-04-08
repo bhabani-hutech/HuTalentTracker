@@ -7,7 +7,6 @@ import InterviewFeedback from "./pages/interview-feedback";
 import InterviewKanban from "./pages/interview-kanban";
 import InterviewFlow from "./pages/interview-flow";
 import Settings from "./pages/settings";
-import routes from "tempo-routes";
 import { Icons } from "@/components/icons";
 import InterviewSchedule from "./pages/interview-schedule";
 import Jobs from "./pages/jobs";
@@ -49,21 +48,9 @@ import { Toaster } from "./components/ui/toaster";
 import MasterData from "./pages/masterdata";
 
 const navigationItems: NavItem[] = [
-  {
-    title: "Dashboard",
-    href: "/dashboard",
-    icon: HomeIcon,
-  },
-  {
-    title: "Jobs",
-    href: "/jobs",
-    icon: FileText,
-  },
-  {
-    title: "Resume Sourcing",
-    href: "/resume-sourcing",
-    icon: FileText,
-  },
+  { title: "Dashboard", href: "/dashboard", icon: HomeIcon },
+  { title: "Jobs", href: "/jobs", icon: FileText },
+  { title: "Resume Sourcing", href: "/resume-sourcing", icon: FileText },
   {
     title: "Interview Schedule",
     href: "/interview-scheduling",
@@ -74,37 +61,16 @@ const navigationItems: NavItem[] = [
     href: "/interview-feedback",
     icon: MessageSquare,
   },
-
-  {
-    title: "Interview Flow",
-    href: "/interview-flow",
-    icon: GitBranch,
-  },
-  {
-    title: "Status Tracking",
-    href: "/status-tracking",
-    icon: ListTodo,
-  },
+  { title: "Interview Flow", href: "/interview-flow", icon: GitBranch },
+  { title: "Status Tracking", href: "/status-tracking", icon: ListTodo },
   {
     title: "Associate Onboarding",
     href: "/associate-onboarding",
     icon: Briefcase,
   },
-  {
-    title: "Hiring Partners",
-    href: "/hiring-partners",
-    icon: Users,
-  },
-  {
-    title: "Master Data",
-    href: "/master-data",
-    icon: Database,
-  },
-  {
-    title: "Settings",
-    href: "/settings",
-    icon: SettingsIcon,
-  },
+  { title: "Hiring Partners", href: "/hiring-partners", icon: Users },
+  { title: "Master Data", href: "/master-data", icon: Database },
+  { title: "Settings", href: "/settings", icon: SettingsIcon },
 ];
 
 // Configure with optimized defaults to prevent excessive API calls
@@ -148,74 +114,39 @@ function AppContent() {
           }
         >
           <Routes>
-            {/* Protected Routes */}
             {/* Public Routes */}
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
 
             {/* Protected Routes */}
-            <Route
-              path="/dashboard"
-              element={user ? <Home /> : <Navigate to="/login" />}
-            />
-            <Route
-              path="/jobs"
-              element={user ? <Jobs /> : <Navigate to="/login" />}
-            />
-            <Route
-              path="/jobs/new"
-              element={user ? <NewJob /> : <Navigate to="/login" />}
-            />
-            <Route
-              path="/jobs/:id"
-              element={user ? <NewJob /> : <Navigate to="/login" />}
-            />
-            <Route
-              path="/jobs/select"
-              element={user ? <JobSelection /> : <Navigate to="/login" />}
-            />
-            <Route
-              path="/resume-sourcing"
-              element={user ? <ResumeSourcing /> : <Navigate to="/login" />}
-            />
-            <Route
-              path="/interview-scheduling"
-              element={user ? <InterviewSchedule /> : <Navigate to="/login" />}
-            />
-            <Route
-              path="/interview-kanban"
-              element={user ? <InterviewKanban /> : <Navigate to="/login" />}
-            />
-            <Route
-              path="/interview-flow"
-              element={user ? <InterviewFlow /> : <Navigate to="/login" />}
-            />
-            <Route
-              path="/interview-feedback"
-              element={user ? <InterviewFeedback /> : <Navigate to="/login" />}
-            />
-            <Route
-              path="/status-tracking"
-              element={user ? <StatusTracking /> : <Navigate to="/login" />}
-            />
-            <Route
-              path="/associate-onboarding"
-              element={
-                user ? <AssociateOnboarding /> : <Navigate to="/login" />
-              }
-            />
-            <Route
-              path="/hiring-partners"
-              element={user ? <HiringPartners /> : <Navigate to="/login" />}
-            />
-            <Route
-              path="/settings"
-              element={user ? <Settings /> : <Navigate to="/login" />}
-            />
-            <Route
-              path="/master-data"
-              element={user ? <MasterData /> : <Navigate to="/login" />}
-            />
+            {user && (
+              <>
+                <Route path="/dashboard" element={<Home />} />
+                <Route path="/jobs" element={<Jobs />} />
+                <Route path="/jobs/new" element={<NewJob />} />
+                <Route path="/jobs/:id" element={<NewJob />} />
+                <Route path="/jobs/select" element={<JobSelection />} />
+                <Route path="/resume-sourcing" element={<ResumeSourcing />} />
+                <Route
+                  path="/interview-scheduling"
+                  element={<InterviewSchedule />}
+                />
+                <Route path="/interview-kanban" element={<InterviewKanban />} />
+                <Route path="/interview-flow" element={<InterviewFlow />} />
+                <Route
+                  path="/interview-feedback"
+                  element={<InterviewFeedback />}
+                />
+                <Route path="/status-tracking" element={<StatusTracking />} />
+                <Route
+                  path="/associate-onboarding"
+                  element={<AssociateOnboarding />}
+                />
+                <Route path="/hiring-partners" element={<HiringPartners />} />
+                <Route path="/settings" element={<Settings />} />
+                <Route path="/master-data" element={<MasterData />} />
+              </>
+            )}
 
             {/* Redirect root to dashboard if logged in, otherwise to login */}
             <Route
