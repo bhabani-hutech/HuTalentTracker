@@ -19,11 +19,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    // Get the initial session
+    const initAuth = async () => {
+      setLoading(true);
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
       setUser(session?.user ?? null);
       setLoading(false);
-    });
-  
+    };
+
+    initAuth();
+
+    // Listen for auth changes
     const { data: subscription } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         if (
@@ -37,7 +45,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               .select("*")
               .eq("auth_id", session.user.id)
               .single();
-  
+
             // If user doesn't exist, create one
             if (!existingUser) {
               await createUser({
@@ -51,17 +59,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           } catch (error) {
             console.error("Error creating user record:", error);
           }
-        }
-        else if (event === "SIGNED_OUT") {
+        } else if (event === "SIGNED_OUT") {
           setUser(null); // Clear user state
-          window.location.href = "/login"; // Redirect to login
+          // Don't redirect here, let the protected routes handle redirection
         } else {
           setUser(session?.user ?? null);
         }
         setLoading(false);
-      }
+      },
     );
-  
+
     return () => subscription?.subscription.unsubscribe();
   }, []);
 

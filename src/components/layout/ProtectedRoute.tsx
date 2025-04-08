@@ -5,6 +5,7 @@ import { Icons } from "@/components/icons";
 export function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
 
+  // Show loading spinner while checking authentication
   if (loading) {
     return (
       <div className="flex h-screen items-center justify-center">
@@ -13,9 +14,11 @@ export function ProtectedRoute({ children }: { children: React.ReactNode }) {
     );
   }
 
+  // Redirect to login if not authenticated
   if (!user) {
-    return <Navigate to="/login" />;
+    return <Navigate to="/login" replace />;
   }
 
+  // User is authenticated, render the protected content
   return <>{children}</>;
 }
