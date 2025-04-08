@@ -113,6 +113,16 @@ export function ResumeList({
     (currentPage - 1) * resultsPerPage,
     currentPage * resultsPerPage
   );
+  const handleDelete = async (id: string) => {
+    if (window.confirm("Are you sure you want to delete this?")) {
+      try {
+        await onDelete(id);
+      } catch (error) {
+        console.error("Error deleting:", error);
+        alert("Error deleting");
+      }
+    }
+  };
 
   return (
     <Card>
@@ -243,7 +253,7 @@ export function ResumeList({
                     <Button
                       variant="ghost"
                       size="icon"
-                      onClick={() => onDelete(candidate.id)}
+                      onClick={() => handleDelete(candidate.id)}
                       className="text-red-500 hover:text-red-600"
                     >
                       <Trash2 className="h-4 w-4" />

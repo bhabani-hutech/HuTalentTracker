@@ -28,7 +28,7 @@ interface ResumeUploadTabsProps {
   onFileUpload: (
     files: FileList,
     jobId?: string,
-    hiringPartnerId?: string,
+    hiringPartnerId?: string
   ) => Promise<void>;
   jobs: Job[];
   selectedJobId: string | null;
@@ -65,7 +65,7 @@ export function ResumeUploadTabs({
       await onFileUpload(
         files,
         selectedJobId,
-        selectedHiringPartnerId || undefined,
+        selectedHiringPartnerId || undefined
       );
       setUploadStatus({
         success: true,
@@ -84,7 +84,7 @@ export function ResumeUploadTabs({
     <div className="space-y-4">
       <div className="flex items-center gap-4">
         <Label htmlFor="job-position" className="min-w-32">
-          Filter by Position:
+          Filter by Job Post:
         </Label>
         <div className="flex-1 flex gap-2">
           <div className="flex-1">
@@ -117,6 +117,60 @@ export function ResumeUploadTabs({
               Apply Directly
             </Button>
           )}
+        </div>
+      </div>
+      <div className="flex items-center gap-4">
+        <Label htmlFor="job-position" className="min-w-32">
+          Filter by Location:
+        </Label>
+        <div className="flex-1 flex gap-2">
+          <div className="flex-1">
+            <Select
+              value={selectedJobId || ""}
+              onValueChange={(value) =>
+                onJobSelect(value === "all" ? null : value)
+              }
+            >
+              <SelectTrigger id="job-position" className="w-full">
+                <SelectValue placeholder="Select a location" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Locations</SelectItem>
+                {jobs.map((job) => (
+                  <SelectItem key={job.id} value={job.id}>
+                    {job.title}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+      </div>
+      <div className="flex items-center gap-4">
+        <Label htmlFor="job-position" className="min-w-32">
+          Filter by Position:
+        </Label>
+        <div className="flex-1 flex gap-2">
+          <div className="flex-1">
+            <Select
+              value={selectedJobId || ""}
+              onValueChange={(value) =>
+                onJobSelect(value === "all" ? null : value)
+              }
+            >
+              <SelectTrigger id="job-position" className="w-full">
+                <SelectValue placeholder="Select a position" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Positions</SelectItem>
+                {jobs.map((job) => (
+                  <SelectItem key={job.id} value={job.id}>
+                    {job.title}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
       </div>
 
@@ -184,7 +238,7 @@ export function ResumeUploadTabs({
                     <p className="text-sm font-medium text-green-500 mt-1">
                       Hiring Partner:{" "}
                       {hiringPartners.find(
-                        (p) => p.id.toString() === selectedHiringPartnerId,
+                        (p) => p.id.toString() === selectedHiringPartnerId
                       )?.name || "Selected partner"}
                     </p>
                   )}
@@ -204,7 +258,9 @@ export function ResumeUploadTabs({
                 <Button asChild disabled={!isUploadEnabled}>
                   <label
                     htmlFor="cv-upload"
-                    className={`cursor-pointer ${!isUploadEnabled ? "opacity-50 pointer-events-none" : ""}`}
+                    className={`cursor-pointer ${
+                      !isUploadEnabled ? "opacity-50 pointer-events-none" : ""
+                    }`}
                   >
                     <FileUp className="mr-2 h-4 w-4" />
                     Upload CV
@@ -243,7 +299,7 @@ export function ResumeUploadTabs({
                     <p className="text-sm font-medium text-green-500 mt-1">
                       Hiring Partner:{" "}
                       {hiringPartners.find(
-                        (p) => p.id.toString() === selectedHiringPartnerId,
+                        (p) => p.id.toString() === selectedHiringPartnerId
                       )?.name || "Selected partner"}
                     </p>
                   )}
@@ -264,7 +320,9 @@ export function ResumeUploadTabs({
                 <Button asChild disabled={!isUploadEnabled}>
                   <label
                     htmlFor="bulk-upload"
-                    className={`cursor-pointer ${!isUploadEnabled ? "opacity-50 pointer-events-none" : ""}`}
+                    className={`cursor-pointer ${
+                      !isUploadEnabled ? "opacity-50 pointer-events-none" : ""
+                    }`}
                   >
                     <FileUp className="mr-2 h-4 w-4" />
                     Upload Files

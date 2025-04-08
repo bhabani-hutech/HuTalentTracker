@@ -114,7 +114,7 @@ export default function StatusTracking() {
   const candidatesByStage = {};
   stages.forEach((stage) => {
     candidatesByStage[stage.id] = candidates.filter(
-      (c) => c.stage_id === stage.id,
+      (c) => c.stage_id === stage.id
     );
   });
 
@@ -172,13 +172,25 @@ export default function StatusTracking() {
         </div>
       </div>
 
-      <StatusOverview selectedJobId={selectedJobId} />
+      {/* This grid will always have 2 columns on medium and large screens */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div>
+          <StatusOverview selectedJobId={selectedJobId} />
+        </div>
+        <div className="space-y-6">
+          <StatusAnalytics
+            selectedJobId={selectedJobId}
+            selectedCandidateId={selectedCandidateId}
+          />
+          <StatusTimeline selectedCandidate={selectedCandidate} />
+        </div>
+      </div>
 
       <div className="flex flex-wrap gap-4 pb-4 overflow-auto">
         {stages.map((stage) => (
           <Card
             key={stage.id}
-            className="w-[250px] bg-gray-50 shadow-md rounded-lg flex flex-col h-auto"
+            className="w-[225px] bg-gray-50 shadow-md rounded-lg flex flex-col h-auto"
           >
             <CardHeader className="py-3 bg-gray-200 rounded-t-lg">
               <CardTitle className="text-sm font-medium flex items-center justify-between text-gray-700">
@@ -224,14 +236,6 @@ export default function StatusTracking() {
             </CardContent>
           </Card>
         ))}
-      </div>
-
-      <div className="grid gap-6 md:grid-cols-2">
-        <StatusTimeline selectedCandidate={selectedCandidate} />
-        <StatusAnalytics
-          selectedJobId={selectedJobId}
-          selectedCandidateId={selectedCandidateId}
-        />
       </div>
     </div>
   );

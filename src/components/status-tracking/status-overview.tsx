@@ -97,7 +97,7 @@ export function StatusOverview({ selectedJobId }: StatusOverviewProps) {
   }
 
   return (
-    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-2">
       {isLoading ? (
         <Card className="col-span-full">
           <CardContent className="py-6">
