@@ -49,13 +49,13 @@ export default function Jobs() {
     (job) =>
       job.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       job.department.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      job.location.toLowerCase().includes(searchQuery.toLowerCase()),
+      job.location.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const totalPages = Math.ceil((filteredJobs?.length || 0) / resultsPerPage);
   const paginatedJobs = filteredJobs?.slice(
     (currentPage - 1) * resultsPerPage,
-    currentPage * resultsPerPage,
+    currentPage * resultsPerPage
   );
 
   const getStatusColor = (status) => {
@@ -124,7 +124,7 @@ export default function Jobs() {
                         <TableHead>Department</TableHead>
                         <TableHead>Location</TableHead>
                         <TableHead>Type</TableHead>
-                        <TableHead>Level</TableHead>
+                        {/* <TableHead>Level</TableHead> */}
                         <TableHead>Status</TableHead>
                         <TableHead className="text-right">Actions</TableHead>
                       </TableRow>
@@ -153,10 +153,12 @@ export default function Jobs() {
                             <TableCell>
                               <Badge variant="secondary">{job.type}</Badge>
                             </TableCell>
-                            <TableCell>{job.level}</TableCell>
+                            {/* <TableCell>{job.level}</TableCell> */}
                             <TableCell>
                               <Badge
-                                className={`${getStatusColor(job.status)} text-white`}
+                                className={`${getStatusColor(
+                                  job.status
+                                )} text-white`}
                               >
                                 {job.status}
                               </Badge>
@@ -194,7 +196,11 @@ export default function Jobs() {
                                       onSuccess: () => {
                                         toast({
                                           title: "Success",
-                                          description: `Job ${job.status === "Published" ? "unpublished" : "published"} successfully`,
+                                          description: `Job ${
+                                            job.status === "Published"
+                                              ? "unpublished"
+                                              : "published"
+                                          } successfully`,
                                         });
                                       },
                                       onError: () => {
@@ -205,12 +211,16 @@ export default function Jobs() {
                                             "Failed to update job status",
                                         });
                                       },
-                                    },
+                                    }
                                   );
                                 }}
                               >
                                 <Power
-                                  className={`h-4 w-4 ${job.status === "Published" ? "text-green-500" : "text-gray-500"}`}
+                                  className={`h-4 w-4 ${
+                                    job.status === "Published"
+                                      ? "text-green-500"
+                                      : "text-gray-500"
+                                  }`}
                                 />
                               </Button>
                               <Button
@@ -232,7 +242,7 @@ export default function Jobs() {
                     Showing{" "}
                     {Math.min(
                       currentPage * resultsPerPage,
-                      filteredJobs?.length || 0,
+                      filteredJobs?.length || 0
                     )}{" "}
                     of {filteredJobs?.length || 0} jobs
                   </div>

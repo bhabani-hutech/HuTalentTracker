@@ -153,7 +153,7 @@ export default function HiringPartners() {
             finalData[partnerId] = count || 0;
           }
         }
-
+        // console.log(finalData);
         setSourceCount(finalData);
       } catch (err) {
         console.error("Error in fetchPartnerDetails:", err);
@@ -253,11 +253,11 @@ export default function HiringPartners() {
     ) {
       return;
     }
-
+    console.log(candidates, selectedPartner.id);
     // Filter candidates sourced by this partner - only include candidates that are explicitly linked to this partner
     const partnerCandidates = candidates.filter(
       (c) =>
-        c.hiring_partner_id === selectedPartner.id.toString() ||
+        c.hiring_partner_id == selectedPartner.id.toString() ||
         (c.candidate_source === "Hiring Partner" &&
           c.hiring_partner_id === selectedPartner.id.toString()),
     );
@@ -534,6 +534,7 @@ export default function HiringPartners() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
+                {/* {console.log(partnerStats)} */}
                 <div className="text-2xl font-bold">
                   {partnerStats.totalJoined}
                 </div>

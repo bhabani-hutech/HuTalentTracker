@@ -119,7 +119,7 @@ function AppContent() {
             <Route path="/signup" element={<Signup />} />
 
             {/* Protected Routes */}
-            {user && (
+            {user ? (
               <>
                 <Route path="/dashboard" element={<Home />} />
                 <Route path="/jobs" element={<Jobs />} />
@@ -145,24 +145,11 @@ function AppContent() {
                 <Route path="/hiring-partners" element={<HiringPartners />} />
                 <Route path="/settings" element={<Settings />} />
                 <Route path="/master-data" element={<MasterData />} />
+                <Route path="*" element={<Home />} />
               </>
+            ) : (
+              <Route path="/" element={<Login />} />
             )}
-
-            {/* Redirect root to dashboard if logged in, otherwise to login */}
-            <Route
-              path="/"
-              element={
-                user ? <Navigate to="/dashboard" /> : <Navigate to="/login" />
-              }
-            />
-
-            {/* Catch all other routes */}
-            <Route
-              path="*"
-              element={
-                user ? <Navigate to="/dashboard" /> : <Navigate to="/login" />
-              }
-            />
           </Routes>
         </Suspense>
       </main>

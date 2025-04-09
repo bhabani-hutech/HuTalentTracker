@@ -129,7 +129,7 @@ export function PipelineStageCountTable({
           if (candidate.stage_id && candidate.job_id) {
             const stageId = candidate.stage_id.toString();
             const jobId = candidate.job_id.toString();
-
+            console.log(stageId, jobId, candidate);
             // Initialize if not already done
             if (!counts[stageId]) {
               counts[stageId] = {};
@@ -224,6 +224,7 @@ export function PipelineStageCountTable({
                   {stage.title || "Unknown Job"}
                 </TableCell>
                 {stagesData.map((job) => {
+                  // console.log(stageCounts);
                   const count = stageCounts[stage.id]?.[job.id] || 0;
                   return (
                     <TableCell key={job.id} className="text-center">
