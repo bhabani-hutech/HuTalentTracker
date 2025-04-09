@@ -56,17 +56,22 @@ export function InterviewForm({
 
   // This useEffect hook will run only when the `initialData` changes.
   useEffect(() => {
-    if (initialData) {
+    if (initialData && initialData.id) {
       // Set form data directly from initialData without conditional checks
+      // Ensure all UUID fields have valid values and not empty strings
       setFormData({
         job_id: initialData.job_id || "",
         candidate_id: initialData.candidate_id || "",
         interviewer_id: initialData.interviewer_id || "",
-        round_id: initialData.round_id,
-        date: new Date(initialData.date),
-        time: format(new Date(initialData.date), "HH:mm"), // Extract time
+        round_id: initialData.round_id || null,
+        date: initialData.date ? new Date(initialData.date) : new Date(),
+        time: initialData.date
+          ? format(new Date(initialData.date), "HH:mm")
+          : "09:00", // Extract time
         type: initialData.type || "F2F",
       });
+
+      console.log("Populated form with initial data:", initialData);
     } else {
       // Reset form when not editing
       setFormData({
@@ -85,18 +90,35 @@ export function InterviewForm({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
+    // Validate required fields
+    if (
+      !formData.job_id ||
+      !formData.candidate_id ||
+      !formData.interviewer_id ||
+      !formData.round_id
+    ) {
+      alert("Please fill in all required fields");
+      return;
+    }
+
     // Merge Date & Time into a timestamp
     const [hours, minutes] = formData.time.split(":").map(Number);
     const interviewTimestamp = new Date(formData.date);
     interviewTimestamp.setHours(hours, minutes, 0, 0);
-    // const { time, ...interviewData } = formData;
-    onSubmit(formData);
-    // onSubmit({ ...interviewData, date: interviewTimestamp }); // Submit merged timestamp
+
+    // Prepare data for submission
+    const { time, ...interviewData } = formData;
+    const submissionData = {
+      ...interviewData,
+      date: interviewTimestamp,
+    };
+
+    onSubmit(submissionData);
     onClose();
   };
 
   const filteredCandidates = candidates?.filter(
-    (c) => c.job_id === formData.job_id
+    (c) => c.job_id === formData.job_id,
   );
 
   const generateTimeOptions = () => {
@@ -173,7 +195,7 @@ export function InterviewForm({
               <SelectTrigger>
                 <SelectValue placeholder="Select interview round">
                   {interviewRounds?.find(
-                    (r) => r.id === Number(formData.round_id)
+                    (r) => r.id === Number(formData.round_id),
                   )?.name || "Select interview round"}
                 </SelectValue>
               </SelectTrigger>

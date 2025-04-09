@@ -91,7 +91,7 @@ export function PipelineStageCountTable({
           (c) =>
             c.hiring_partner_id === selectedPartnerId.toString() ||
             (c.candidate_source === "Hiring Partner" &&
-              c.hiring_partner_id === selectedPartnerId.toString())
+              c.hiring_partner_id === selectedPartnerId.toString()),
         );
 
         // Find jobs that have candidates from this hiring partner
@@ -103,7 +103,7 @@ export function PipelineStageCountTable({
         setRelevantJobs(
           jobsWithPartnerCandidates.length > 0
             ? jobsWithPartnerCandidates
-            : jobs
+            : jobs,
         );
 
         // Calculate counts for each stage and job
@@ -160,8 +160,8 @@ export function PipelineStageCountTable({
     if (!stageCounts[stageId]) return 0;
 
     return Object.values(stageCounts[stageId]).reduce(
-      (total, count) => total + count,
-      0
+      (total, count) => total + (count || 0),
+      0,
     );
   };
 

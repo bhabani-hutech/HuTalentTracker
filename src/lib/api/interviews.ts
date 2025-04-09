@@ -81,11 +81,18 @@ export async function getInterviews() {
 export async function createInterview(
   interview: Omit<Interview, "id" | "created_at" | "updated_at">,
 ) {
-  // console.log("Creating interview:", interview);
+  // Sanitize data to prevent empty string UUID errors
+  const sanitizedData = {
+    ...interview,
+    job_id: interview.job_id || null,
+    candidate_id: interview.candidate_id || null,
+    interviewer_id: interview.interviewer_id || null,
+    round_id: interview.round_id || null,
+  };
 
   const { data, error } = await supabase
     .from("interviews")
-    .insert([interview])
+    .insert([sanitizedData])
     .select(
       `
       *,
@@ -110,11 +117,20 @@ export async function updateInterview(
   id: string,
   updates: Partial<Omit<Interview, "id" | "created_at" | "updated_at">>,
 ) {
-  // console.log("Updating interview with ID:", id, "with updates:", updates);
+  // Sanitize data to prevent empty string UUID errors
+  const sanitizedData = {
+    ...updates,
+    job_id: updates.job_id || null,
+    candidate_id: updates.candidate_id || null,
+    interviewer_id: updates.interviewer_id || null,
+    round_id: updates.round_id || null,
+  };
+
+  console.log("Updating interview with sanitized data:", sanitizedData);
 
   const { data, error } = await supabase
     .from("interviews")
-    .update(updates)
+    .update(sanitizedData)
     .eq("id", id)
     .select(
       `

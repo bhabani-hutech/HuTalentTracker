@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
+import { useHiringPartnerMetrics } from "@/lib/api/hooks/useHiringPartnerMetrics";
 import { useOrganizations } from "@/lib/api/hooks/useOrganizations";
 import { useCandidates } from "@/lib/api/hooks/useCandidates";
 import { useJobs } from "@/lib/api/hooks/useJobs";
@@ -47,7 +48,7 @@ const generateMonthlyData = (candidates, partnerId, months = 6) => {
     (c) =>
       c.hiring_partner_id === partnerId.toString() ||
       (c.candidate_source === "Hiring Partner" &&
-        c.hiring_partner_id === partnerId.toString())
+        c.hiring_partner_id === partnerId.toString()),
   );
 
   // Get current date and calculate the last 6 months
@@ -139,13 +140,13 @@ export default function HiringPartners() {
             .from("candidates")
             .select("*", { count: "exact", head: true })
             .or(
-              `hiring_partner_id.eq.${partnerId},and(candidate_source.eq.Hiring Partner,hiring_partner_id.eq.${partnerId})`
+              `hiring_partner_id.eq.${partnerId},and(candidate_source.eq.Hiring Partner,hiring_partner_id.eq.${partnerId})`,
             );
 
           if (error) {
             console.error(
               `Error fetching count for partner ${partnerId}:`,
-              error
+              error,
             );
             finalData[partnerId] = 0;
           } else {
@@ -237,15 +238,19 @@ export default function HiringPartners() {
     fetchPartnerDetails();
   }, [selectedPartner]);
 
+  // Import the new hook
+  const { data: partnerMetrics, isLoading: isLoadingMetrics } =
+    useHiringPartnerMetrics(selectedPartner?.id?.toString() || "");
+
   // Calculate statistics for the selected partner
   useEffect(() => {
-    if (!selectedPartner || !candidates || !jobs || !stagesD) {
-      console.log("Missing data for partner statistics:", {
-        hasPartner: !!selectedPartner,
-        hasCandidates: !!candidates,
-        hasJobs: !!jobs,
-        hasStages: !!stagesD,
-      });
+    if (
+      !selectedPartner ||
+      !candidates ||
+      !jobs ||
+      !stagesD ||
+      !partnerMetrics
+    ) {
       return;
     }
 
@@ -254,8 +259,9 @@ export default function HiringPartners() {
       (c) =>
         c.hiring_partner_id === selectedPartner.id.toString() ||
         (c.candidate_source === "Hiring Partner" &&
-          c.hiring_partner_id === selectedPartner.id.toString())
+          c.hiring_partner_id === selectedPartner.id.toString()),
     );
+
     // Get unique job positions for this partner
     const uniquePositions = new Set();
     partnerCandidates.forEach((candidate) => {
@@ -297,47 +303,21 @@ export default function HiringPartners() {
       else if (candidate.stage_id === 5) jobStats[jobId].rejected++;
     });
 
-    // Calculate overall stats
-    const totalCandidates = partnerCandidates.length;
-    const totalJoined = partnerCandidates.filter(
-      (c) => c.stage_id === 6
-    ).length;
-    const totalInterviewed = partnerCandidates.filter(
-      (c) => c.stage_id === 2 || c.stage_id === 3
-    ).length;
-    const successRate =
-      totalCandidates > 0
-        ? Math.round((totalJoined / totalCandidates) * 100)
-        : 0;
+    // Use metrics from backend
+    const totalCandidates = partnerMetrics.totalCandidates;
+    const totalJoined = partnerMetrics.totalJoined;
+    const successRate = partnerMetrics.successRate;
+    const avgTimeToHire = partnerMetrics.avgTimeToHire;
 
-    // Calculate time to hire metrics
-    const joinedCandidates = partnerCandidates.filter(
-      (c) => c.stage_id === 6 && c.created_at && c.updated_at
-    );
-    let totalDays = 0;
-    const timeData = [];
-
-    joinedCandidates.forEach((candidate) => {
-      const createdDate = new Date(candidate.created_at);
-      const joinedDate = new Date(candidate.updated_at);
-      const diffTime = Math.abs(joinedDate.getTime() - createdDate.getTime());
-      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-      totalDays += diffDays;
-      timeData.push({
-        name: candidate.name,
-        days: diffDays,
-        position:
-          jobs.find((j) => j.id === candidate.job_id)?.title ||
-          "Unknown Position",
-      });
+    // Set time to hire data from backend
+    setTimeToHireData({
+      avg: avgTimeToHire,
+      data: partnerMetrics.timeToHireData,
     });
 
-    const avgTimeToHire =
-      joinedCandidates.length > 0
-        ? Math.round(totalDays / joinedCandidates.length)
-        : 0;
-    setTimeToHireData({ avg: avgTimeToHire, data: timeData });
+    const totalInterviewed = partnerCandidates.filter(
+      (c) => c.stage_id === 2 || c.stage_id === 3,
+    ).length;
 
     // Calculate cost per hire (using a placeholder average cost of $1000 per candidate)
     const baseCost = 1000; // Base cost per candidate
@@ -372,7 +352,7 @@ export default function HiringPartners() {
       {
         stage: "Interview",
         count: partnerCandidates.filter(
-          (c) => c.stage_id === 2 || c.stage_id === 3
+          (c) => c.stage_id === 2 || c.stage_id === 3,
         ).length,
       },
       {
@@ -381,7 +361,7 @@ export default function HiringPartners() {
       },
       {
         stage: "Joined",
-        count: partnerCandidates.filter((c) => c.stage_id === 6).length,
+        count: totalJoined, // Use the backend count
       },
       {
         stage: "Rejected",
@@ -398,11 +378,18 @@ export default function HiringPartners() {
       jobStats: Object.values(jobStats),
       stageData,
     });
+
+    // Update source count for this partner
+    setSourceCount({
+      ...sourceCount,
+      [selectedPartner.id]: totalCandidates,
+    });
   }, [
     selectedPartner,
     candidates,
     jobs,
     stagesD,
+    partnerMetrics,
     createCandidate,
     updateCandidate,
     deleteCandidate,
@@ -523,7 +510,7 @@ export default function HiringPartners() {
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-medium flex items-center gap-2">
                   <Users className="h-4 w-4 text-primary" />
-                  Total Candidates Sourced by {selectedPartner.name}
+                  Total Candidates Sourced
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -534,11 +521,7 @@ export default function HiringPartners() {
                 </div>
                 <p className="text-xs text-muted-foreground mt-1">
                   {partnerStats.totalCandidates > 0
-                    ? `${Math.round(
-                        (partnerStats.totalInterviewed /
-                          partnerStats.totalCandidates) *
-                          100
-                      )}% reached interview stage`
+                    ? `${partnerStats.totalCandidates} candidates in total`
                     : "No candidates yet"}
                 </p>
               </CardContent>
@@ -662,7 +645,7 @@ export default function HiringPartners() {
                             selectedPartner?.id.toString() ||
                           (c.candidate_source === "Hiring Partner" &&
                             c.hiring_partner_id ===
-                              selectedPartner?.id.toString())
+                              selectedPartner?.id.toString()),
                       ).length || 0}{" "}
                       candidates
                     </Badge>
