@@ -51,6 +51,9 @@ export function ResumeUploadTabs({
   const [selectedHiringPartnerId, setSelectedHiringPartnerId] = useState<
     string | null
   >(null);
+  const [selectedLocationId, setSelectedLocationId] = useState<string | null>(
+    null
+  ); // New state for location
   const { organizations } = useOrganizations();
   const { locations } = useLocations();
   console.log(locations);
@@ -85,6 +88,7 @@ export function ResumeUploadTabs({
 
   return (
     <div className="space-y-4">
+      {/* Filter by Job Post */}
       <div className="flex items-center gap-4">
         <Label htmlFor="job-position" className="min-w-32">
           Filter by Job Post:
@@ -122,6 +126,8 @@ export function ResumeUploadTabs({
           )}
         </div>
       </div>
+
+      {/* Filter by Location */}
       <div className="flex items-center gap-4">
         <Label htmlFor="job-location" className="min-w-32">
           Filter by Location:
@@ -129,9 +135,9 @@ export function ResumeUploadTabs({
         <div className="flex-1 flex gap-2">
           <div className="flex-1">
             <Select
-              value={selectedJobId || ""}
+              value={selectedLocationId || ""} // Use the new state
               onValueChange={(value) =>
-                onJobSelect(value === "all" ? null : value)
+                setSelectedLocationId(value === "all" ? null : value)
               }
             >
               <SelectTrigger id="job-location" className="w-full">
@@ -149,34 +155,8 @@ export function ResumeUploadTabs({
           </div>
         </div>
       </div>
-      {/* <div className="flex items-center gap-4">
-        <Label htmlFor="job-position" className="min-w-32">
-          Filter by Position:
-        </Label>
-        <div className="flex-1 flex gap-2">
-          <div className="flex-1">
-            <Select
-              value={selectedJobId || ""}
-              onValueChange={(value) =>
-                onJobSelect(value === "all" ? null : value)
-              }
-            >
-              <SelectTrigger id="job-position" className="w-full">
-                <SelectValue placeholder="Select a position" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Positions</SelectItem>
-                {jobs.map((job) => (
-                  <SelectItem key={job.id} value={job.id}>
-                    {job.title}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-      </div> */}
 
+      {/* Other components remain unchanged */}
       {/* Hiring Partner Selection */}
       <div className="flex items-center gap-4">
         <Label htmlFor="hiring-partner" className="min-w-32">
