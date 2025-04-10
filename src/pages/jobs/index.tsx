@@ -49,13 +49,14 @@ export default function Jobs() {
     (job) =>
       job.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       job.department.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      job.location.toLowerCase().includes(searchQuery.toLowerCase())
+      job.location.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      job.type.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
   const totalPages = Math.ceil((filteredJobs?.length || 0) / resultsPerPage);
   const paginatedJobs = filteredJobs?.slice(
     (currentPage - 1) * resultsPerPage,
-    currentPage * resultsPerPage
+    currentPage * resultsPerPage,
   );
 
   const getStatusColor = (status) => {
@@ -157,7 +158,7 @@ export default function Jobs() {
                             <TableCell>
                               <Badge
                                 className={`${getStatusColor(
-                                  job.status
+                                  job.status,
                                 )} text-white`}
                               >
                                 {job.status}
@@ -211,7 +212,7 @@ export default function Jobs() {
                                             "Failed to update job status",
                                         });
                                       },
-                                    }
+                                    },
                                   );
                                 }}
                               >
@@ -242,7 +243,7 @@ export default function Jobs() {
                     Showing{" "}
                     {Math.min(
                       currentPage * resultsPerPage,
-                      filteredJobs?.length || 0
+                      filteredJobs?.length || 0,
                     )}{" "}
                     of {filteredJobs?.length || 0} jobs
                   </div>

@@ -33,6 +33,32 @@ export default function NewJob() {
   const { locations } = useLocations();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const [positions, setPositions] = useState([]);
+
+  // Fetch job positions from master data
+  useEffect(() => {
+    const fetchPositions = async () => {
+      try {
+        const { data, error } = await supabase
+          .from("job_positions")
+          .select("*")
+          .eq("status", "Active")
+          .order("title");
+
+        if (error) throw error;
+        setPositions(data || []);
+      } catch (error) {
+        console.error("Error loading job positions:", error);
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Failed to load job positions",
+        });
+      }
+    };
+
+    fetchPositions();
+  }, [toast]);
   // const [locations, setLocations] = useState<
   //   { id: number; name: string; address: string }[]
   // >([]);
@@ -199,7 +225,35 @@ export default function NewJob() {
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
                 <Label>Job Title</Label>
-                <Input {...form.register("title")} />
+                <Select
+                  name="title"
+                  value={form.watch("title") || ""}
+                  onValueChange={(value) => form.setValue("title", value)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select job title" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {positions?.map((position) => (
+                      <SelectItem key={position.id} value={position.title}>
+                        {position.title}
+                      </SelectItem>
+                    ))}
+                    <SelectItem value="custom">Enter custom title</SelectItem>
+                  </SelectContent>
+                </Select>
+                {form.watch("title") === "custom" && (
+                  <Input
+                    className="mt-2"
+                    placeholder="Enter custom title"
+                    value={
+                      form.watch("title") === "custom"
+                        ? ""
+                        : form.watch("title")
+                    }
+                    onChange={(e) => form.setValue("title", e.target.value)}
+                  />
+                )}
                 {form.formState.errors.title && (
                   <p className="text-sm text-red-500">
                     {form.formState.errors.title.message}

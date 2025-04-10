@@ -35,8 +35,11 @@ export function JobPreviewModal({
           <div className="space-y-2">
             <h2 className="text-2xl font-bold">{job.title}</h2>
             <div className="flex flex-wrap gap-2">
+              {console.log(job)}
               <Badge variant="secondary">{job.type}</Badge>
-              <Badge variant="secondary">{job.level}</Badge>
+              <Badge variant="secondary">
+                {job.experience_min} yr-{job.experience_max} yr
+              </Badge>
               <Badge variant="secondary">{job.department}</Badge>
               <Badge variant="secondary">{job.location}</Badge>
             </div>
