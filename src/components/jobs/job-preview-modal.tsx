@@ -38,7 +38,7 @@ export function JobPreviewModal({
               {console.log(job)}
               <Badge variant="secondary">{job.type}</Badge>
               <Badge variant="secondary">
-                {job.experience_min} yr-{job.experience_max} yr
+                {job.experience_min} yr - {job.experience_max} yr
               </Badge>
               <Badge variant="secondary">{job.department}</Badge>
               <Badge variant="secondary">{job.location}</Badge>

@@ -224,13 +224,6 @@ export default function Jobs() {
                                   }`}
                                 />
                               </Button>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => handleDelete(job.id)}
-                              >
-                                <Trash2 className="h-4 w-4 text-red-500" />
-                              </Button>
                             </TableCell>
                           </TableRow>
                         ))
@@ -274,3 +267,7 @@ export default function Jobs() {
     </>
   );
 }
+
+// <Button variant="ghost" size="icon" onClick={() => handleDelete(job.id)}>
+//   <Trash2 className="h-4 w-4 text-red-500" />
+// </Button>;
