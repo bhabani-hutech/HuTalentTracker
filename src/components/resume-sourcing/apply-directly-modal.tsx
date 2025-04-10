@@ -114,10 +114,10 @@ export function ApplyDirectlyModal({
       ) {
         // Count matching skills
         const jobSkills = selectedJob.skills.map((skill) =>
-          typeof skill === "string" ? skill.toLowerCase() : "",
+          typeof skill === "string" ? skill.toLowerCase() : ""
         );
         const candidateSkills = formData.skills.map((skill) =>
-          skill.toLowerCase(),
+          skill.toLowerCase()
         );
 
         let matchCount = 0;
@@ -127,7 +127,7 @@ export function ApplyDirectlyModal({
               (jobSkill) =>
                 jobSkill === skill ||
                 jobSkill.includes(skill) ||
-                skill.includes(jobSkill),
+                skill.includes(jobSkill)
             )
           ) {
             matchCount++;
@@ -183,7 +183,7 @@ export function ApplyDirectlyModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[600px]">
+      <DialogContent className="max-w-[800px] max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Apply Directly: {selectedJob?.title}</DialogTitle>
         </DialogHeader>

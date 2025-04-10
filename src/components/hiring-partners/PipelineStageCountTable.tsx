@@ -13,7 +13,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 interface PipelineStageCountTableProps {
   selectedPartnerId: string;
-  stagesData: { id: string; stage: string }[];
+  stagesData: { id: string; stage: string; count: number; position: string }[];
   jobs: any[];
   candidates: any[];
 }
@@ -29,14 +29,22 @@ export function PipelineStageCountTable({
   stagesData,
   jobs,
   candidates,
+  position,
 }: PipelineStageCountTableProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [stageCounts, setStageCounts] = useState<StageJobCount>({});
   const [relevantJobs, setRelevantJobs] = useState<any[]>([]);
   const [stageNames, setStageNames] = useState<{ [key: string]: string }>({});
-
+  //  console.log(jobs, position);
   // Fetch stage names if not provided
+
+  const result = stagesData.reduce((acc, curr) => {
+    acc[curr.stage] = curr.count;
+    acc.position = curr.position; // position is same for all, just set once
+    return acc;
+  }, {});
+  // console.log(result);
   useEffect(() => {
     const fetchStageNames = async () => {
       // Create a map of stage IDs to stage names from stagesData
@@ -91,7 +99,7 @@ export function PipelineStageCountTable({
           (c) =>
             c.hiring_partner_id === selectedPartnerId.toString() ||
             (c.candidate_source === "Hiring Partner" &&
-              c.hiring_partner_id === selectedPartnerId.toString()),
+              c.hiring_partner_id === selectedPartnerId.toString())
         );
 
         // Find jobs that have candidates from this hiring partner
@@ -103,7 +111,7 @@ export function PipelineStageCountTable({
         setRelevantJobs(
           jobsWithPartnerCandidates.length > 0
             ? jobsWithPartnerCandidates
-            : jobs,
+            : jobs
         );
 
         // Calculate counts for each stage and job
@@ -161,7 +169,7 @@ export function PipelineStageCountTable({
 
     return Object.values(stageCounts[stageId]).reduce(
       (total, count) => total + (count || 0),
-      0,
+      0
     );
   };
 
@@ -202,6 +210,54 @@ export function PipelineStageCountTable({
   }
   // console.log(stagesData);
   return (
+    // <div className="overflow-x-auto">
+    //   <Table>
+    //     <TableHeader>
+    //       <TableRow>
+    //         <TableHead className="font-bold">Job Post</TableHead>
+    //         {stagesData.map((stage) => (
+    //           <TableHead key={stage.id} className="text-center">
+    //             {getStageName(stage)}
+    //           </TableHead>
+    //         ))}
+    //         <TableHead className="text-center font-bold">Total</TableHead>
+    //       </TableRow>
+    //     </TableHeader>
+    //     <TableBody>
+    //       {relevantJobs.map((stage) => {
+    //         const rowTotal = calculateRowTotal(stage.id);
+    //         // console.log(stage);
+    //         return (
+    //           <TableRow key={stage.id}>
+    //             <TableCell className="font-medium">
+    //               {stage.title || "Unknown Job"}
+    //             </TableCell>
+    //             <TableCell className="text-center">
+    //               {stage.title === result["position"] ? (
+    //                 <Badge variant="secondary">
+    //                   {stagesData.map((stageItem, index) => (
+    //                     <span key={index}>
+    //                       {result[getStageName(stageItem)]}
+    //                     </span>
+    //                   ))}
+    //                 </Badge>
+    //               ) : (
+    //                 0
+    //               )}
+    //             </TableCell>
+    //             <TableCell className="text-center font-bold">
+    //               {rowTotal > 0 ? (
+    //                 <Badge variant="default">{rowTotal}</Badge>
+    //               ) : (
+    //                 "0"
+    //               )}
+    //             </TableCell>
+    //           </TableRow>
+    //         );
+    //       })}
+    //     </TableBody>
+    //   </Table>
+    // </div>
     <div className="overflow-x-auto">
       <Table>
         <TableHeader>
@@ -216,26 +272,29 @@ export function PipelineStageCountTable({
           </TableRow>
         </TableHeader>
         <TableBody>
-          {relevantJobs.map((stage) => {
-            const rowTotal = calculateRowTotal(stage.id);
+          {relevantJobs.map((job) => {
+            const rowTotal = calculateRowTotal(job.id); // or however you're calculating it
+
             return (
-              <TableRow key={stage.id}>
+              <TableRow key={job.id}>
                 <TableCell className="font-medium">
-                  {stage.title || "Unknown Job"}
+                  {job.title || "Unknown Job"}
                 </TableCell>
-                {stagesData.map((job) => {
-                  // console.log(stageCounts);
-                  const count = stageCounts[stage.id]?.[job.id] || 0;
+
+                {stagesData.map((stage) => {
+                  const stageKey = getStageName(stage);
+                  const stageValue =
+                    job.title === result?.position
+                      ? result?.[stageKey] || 0
+                      : 0;
+
                   return (
-                    <TableCell key={job.id} className="text-center">
-                      {count > 0 ? (
-                        <Badge variant="secondary">{count}</Badge>
-                      ) : (
-                        "0"
-                      )}
+                    <TableCell key={stage.id} className="text-center">
+                      {stageValue}
                     </TableCell>
                   );
                 })}
+
                 <TableCell className="text-center font-bold">
                   {rowTotal > 0 ? (
                     <Badge variant="default">{rowTotal}</Badge>

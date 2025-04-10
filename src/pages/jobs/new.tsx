@@ -128,7 +128,7 @@ export default function NewJob() {
         });
       }
     },
-    [id, createJob, updateJob, navigate, toast],
+    [id, createJob, updateJob, navigate, toast]
   );
 
   useEffect(() => {
@@ -224,10 +224,10 @@ export default function NewJob() {
           <CardContent className="space-y-4">
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
-                <Label>Job Title</Label>
+                <Label htmlFor="title">Job Title</Label>
                 <Select
                   name="title"
-                  value={form.watch("title") || ""}
+                  value={form.watch("title") || ""} // Use defaultValue here
                   onValueChange={(value) => form.setValue("title", value)}
                 >
                   <SelectTrigger>
@@ -239,21 +239,8 @@ export default function NewJob() {
                         {position.title}
                       </SelectItem>
                     ))}
-                    <SelectItem value="custom">Enter custom title</SelectItem>
                   </SelectContent>
                 </Select>
-                {form.watch("title") === "custom" && (
-                  <Input
-                    className="mt-2"
-                    placeholder="Enter custom title"
-                    value={
-                      form.watch("title") === "custom"
-                        ? ""
-                        : form.watch("title")
-                    }
-                    onChange={(e) => form.setValue("title", e.target.value)}
-                  />
-                )}
                 {form.formState.errors.title && (
                   <p className="text-sm text-red-500">
                     {form.formState.errors.title.message}
@@ -308,27 +295,13 @@ export default function NewJob() {
                         {location?.display_address
                           ? `- ${location?.display_address}`
                           : location?.address
-                            ? `- ${location?.address}`
-                            : ""}
+                          ? `- ${location?.address}`
+                          : ""}
                       </SelectItem>
                     ))}
-                    <SelectItem value="custom">
-                      Enter custom location
-                    </SelectItem>
                   </SelectContent>
                 </Select>
-                {form.watch("location") === "custom" && (
-                  <Input
-                    className="mt-2"
-                    placeholder="Enter custom location"
-                    value={
-                      form.watch("location") === "custom"
-                        ? ""
-                        : form.watch("location")
-                    }
-                    onChange={(e) => form.setValue("location", e.target.value)}
-                  />
-                )}
+
                 {form.formState.errors.location && (
                   <p className="text-sm text-red-500">
                     {form.formState.errors.location.message}
@@ -388,7 +361,7 @@ export default function NewJob() {
                           <SelectItem key={year} value={year.toString()}>
                             {year} {year === 1 ? "year" : "years"}
                           </SelectItem>
-                        ),
+                        )
                       )}
                     </SelectContent>
                   </Select>
@@ -419,7 +392,7 @@ export default function NewJob() {
                           >
                             {year} {year === 1 ? "year" : "years"}
                           </SelectItem>
-                        ),
+                        )
                       )}
                     </SelectContent>
                   </Select>
@@ -495,14 +468,14 @@ export default function NewJob() {
                     try {
                       const generated = await generateJobDescription(
                         title,
-                        level,
+                        level
                       );
 
                       form.setValue("description", generated.description);
                       form.setValue("requirements", generated.requirements);
                       form.setValue(
                         "responsibilities",
-                        generated.responsibilities,
+                        generated.responsibilities
                       );
                       form.setValue("skills", generated.skills);
 
@@ -619,7 +592,7 @@ export default function NewJob() {
                       const currentRequirements =
                         form.getValues("requirements");
                       const updatedRequirements = currentRequirements.filter(
-                        (_, i) => i !== index,
+                        (_, i) => i !== index
                       );
                       form.setValue("requirements", updatedRequirements);
                       form.trigger("requirements"); // Trigger validation
@@ -671,7 +644,7 @@ export default function NewJob() {
                         currentResponsibilities.filter((_, i) => i !== index);
                       form.setValue(
                         "responsibilities",
-                        updatedResponsibilities,
+                        updatedResponsibilities
                       );
                       form.trigger("responsibilities"); // Trigger validation
                     }}

@@ -48,7 +48,7 @@ const generateMonthlyData = (candidates, partnerId, months = 6) => {
     (c) =>
       c.hiring_partner_id === partnerId.toString() ||
       (c.candidate_source === "Hiring Partner" &&
-        c.hiring_partner_id === partnerId.toString()),
+        c.hiring_partner_id === partnerId.toString())
   );
 
   // Get current date and calculate the last 6 months
@@ -116,6 +116,7 @@ export default function HiringPartners() {
   const [partnerDetails, setPartnerDetails] = useState<any>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [sourceCount, setSourceCount] = useState({});
+  const [stageDataCount, setStageDataCount] = useState(0);
   const [isLoadingPartnerDetails, setIsLoadingPartnerDetails] = useState(false);
   // console.log(stagesD);
   // Filter to only hiring partners (non-own organizations)
@@ -140,13 +141,13 @@ export default function HiringPartners() {
             .from("candidates")
             .select("*", { count: "exact", head: true })
             .or(
-              `hiring_partner_id.eq.${partnerId},and(candidate_source.eq.Hiring Partner,hiring_partner_id.eq.${partnerId})`,
+              `hiring_partner_id.eq.${partnerId},and(candidate_source.eq.Hiring Partner,hiring_partner_id.eq.${partnerId})`
             );
 
           if (error) {
             console.error(
               `Error fetching count for partner ${partnerId}:`,
-              error,
+              error
             );
             finalData[partnerId] = 0;
           } else {
@@ -237,6 +238,23 @@ export default function HiringPartners() {
 
     fetchPartnerDetails();
   }, [selectedPartner]);
+  useEffect(() => {
+    const fetchCount = async () => {
+      const { data, error } = await supabase
+        .from("candidates")
+        .select("*")
+        .eq("hiring_partner_id", selectedPartner?.id);
+
+      if (error) {
+        console.error("Error fetching candidates:", error);
+      } else {
+        setStageDataCount(data.filter((c) => c.stage_id === 2).length);
+        console.log("Candidates:", data.filter((c) => c.stage_id === 2).length);
+      }
+    };
+
+    fetchCount();
+  }, [selectedPartner]);
 
   // Import the new hook
   const { data: partnerMetrics, isLoading: isLoadingMetrics } =
@@ -259,7 +277,7 @@ export default function HiringPartners() {
       (c) =>
         c.hiring_partner_id == selectedPartner.id.toString() ||
         (c.candidate_source === "Hiring Partner" &&
-          c.hiring_partner_id === selectedPartner.id.toString()),
+          c.hiring_partner_id === selectedPartner.id.toString())
     );
 
     // Get unique job positions for this partner
@@ -316,7 +334,7 @@ export default function HiringPartners() {
     });
 
     const totalInterviewed = partnerCandidates.filter(
-      (c) => c.stage_id === 2 || c.stage_id === 3,
+      (c) => c.stage_id === 2 || c.stage_id === 3
     ).length;
 
     // Calculate cost per hire (using a placeholder average cost of $1000 per candidate)
@@ -352,7 +370,7 @@ export default function HiringPartners() {
       {
         stage: "Interview",
         count: partnerCandidates.filter(
-          (c) => c.stage_id === 2 || c.stage_id === 3,
+          (c) => c.stage_id === 2 || c.stage_id === 3
         ).length,
       },
       {
@@ -634,7 +652,7 @@ export default function HiringPartners() {
                   </CardContent>
                 </Card>
               </div> */}
-
+              {/* {console.log(candidates)} */}
               <div className="grid grid-cols-1 md:grid-cols-1 gap-4">
                 <Card>
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -646,7 +664,7 @@ export default function HiringPartners() {
                             selectedPartner?.id.toString() ||
                           (c.candidate_source === "Hiring Partner" &&
                             c.hiring_partner_id ===
-                              selectedPartner?.id.toString()),
+                              selectedPartner?.id.toString())
                       ).length || 0}{" "}
                       candidates
                     </Badge>
@@ -656,7 +674,6 @@ export default function HiringPartners() {
                       Detailed list of candidates sourced by{" "}
                       {selectedPartner.name}
                     </p>
-
                     {selectedPartner ? (
                       <PipelineStageCountTable
                         selectedPartnerId={
@@ -665,6 +682,13 @@ export default function HiringPartners() {
                         stagesData={stagesD.map((stage) => ({
                           id: stage.id.toString(), // Ensure ID is a string
                           stage: stage.name || "Unknown", // Provide a default value if missing
+                          count:
+                            candidates.filter(
+                              (ele) =>
+                                ele.stage_id === stage.id &&
+                                ele.position === jobs[0]?.title
+                            ).length || 0, // Use the state variable for count
+                          position: jobs[0]?.title,
                         }))}
                         jobs={jobs || []}
                         candidates={candidates || []}
