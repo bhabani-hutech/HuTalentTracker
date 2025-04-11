@@ -675,24 +675,33 @@ export default function HiringPartners() {
                       {selectedPartner.name}
                     </p>
                     {selectedPartner ? (
-                      <PipelineStageCountTable
-                        selectedPartnerId={
-                          selectedPartner?.id?.toString() || ""
-                        }
-                        stagesData={stagesD.map((stage) => ({
-                          id: stage.id.toString(), // Ensure ID is a string
-                          stage: stage.name || "Unknown", // Provide a default value if missing
-                          count:
-                            candidates.filter(
-                              (ele) =>
-                                ele.stage_id === stage.id &&
-                                ele.position === jobs[0]?.title
-                            ).length || 0, // Use the state variable for count
-                          position: jobs[0]?.title,
-                        }))}
-                        jobs={jobs || []}
-                        candidates={candidates || []}
-                      />
+                      (() => {
+                        // Flatten all stage data across all jobs
+                        const allStagesData = jobs.flatMap((job) =>
+                          stagesD.map((stage) => ({
+                            id: stage.id.toString(),
+                            stage: stage.name || "Unknown",
+                            count:
+                              candidates.filter(
+                                (ele) =>
+                                  ele.stage_id === stage.id &&
+                                  ele.position === job.title
+                              ).length || 0,
+                            position: job.title, // for job-specific row
+                          }))
+                        );
+
+                        return (
+                          <PipelineStageCountTable
+                            selectedPartnerId={
+                              selectedPartner?.id?.toString() || ""
+                            }
+                            stagesData={allStagesData}
+                            jobs={jobs || []}
+                            candidates={candidates || []}
+                          />
+                        );
+                      })()
                     ) : (
                       <div className="text-muted-foreground">
                         No data available for this hiring partner

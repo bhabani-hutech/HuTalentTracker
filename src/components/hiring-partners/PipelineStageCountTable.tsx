@@ -44,6 +44,14 @@ export function PipelineStageCountTable({
     acc.position = curr.position; // position is same for all, just set once
     return acc;
   }, {});
+  const groupedByJobTitle: { [title: string]: typeof stagesData } = {};
+
+  stagesData.forEach((stageItem) => {
+    if (!groupedByJobTitle[stageItem.position]) {
+      groupedByJobTitle[stageItem.position] = [];
+    }
+    groupedByJobTitle[stageItem.position].push(stageItem);
+  });
   // console.log(result);
   useEffect(() => {
     const fetchStageNames = async () => {
@@ -154,7 +162,7 @@ export function PipelineStageCountTable({
         setStageCounts(counts);
         setIsLoading(false);
       } catch (error) {
-        console.error("Error fetching pipeline stage counts:", error);
+        // console.error("Error fetching pipeline stage counts:", error);
         setError("Failed to load pipeline stage counts");
         setIsLoading(false);
       }
@@ -272,39 +280,39 @@ export function PipelineStageCountTable({
           </TableRow>
         </TableHeader>
         <TableBody>
-          {relevantJobs.map((job) => {
-            const rowTotal = calculateRowTotal(job.id); // or however you're calculating it
+          <TableBody>
+            {Object.entries(groupedByJobTitle).map(([jobTitle, stageItems]) => {
+              const total = stageItems.reduce(
+                (sum, item) => sum + item.count,
+                0
+              );
 
-            return (
-              <TableRow key={job.id}>
-                <TableCell className="font-medium">
-                  {job.title || "Unknown Job"}
-                </TableCell>
+              return (
+                <TableRow key={jobTitle}>
+                  <TableCell className="font-medium">{jobTitle}</TableCell>
 
-                {stagesData.map((stage) => {
-                  const stageKey = getStageName(stage);
-                  const stageValue =
-                    job.title === result?.position
-                      ? result?.[stageKey] || 0
-                      : 0;
+                  {stagesData.map((stage) => {
+                    const matched = stageItems.find(
+                      (s) => s.id === stage.id.toString()
+                    );
 
-                  return (
-                    <TableCell key={stage.id} className="text-center">
-                      {stageValue}
-                    </TableCell>
-                  );
-                })}
+                    // Use a unique key by combining jobTitle and stage.id
+                    const cellKey = `${jobTitle}-${stage.id}`;
 
-                <TableCell className="text-center font-bold">
-                  {rowTotal > 0 ? (
-                    <Badge variant="default">{rowTotal}</Badge>
-                  ) : (
-                    "0"
-                  )}
-                </TableCell>
-              </TableRow>
-            );
-          })}
+                    return (
+                      <TableCell key={cellKey} className="text-center">
+                        {matched?.count ?? 0}
+                      </TableCell>
+                    );
+                  })}
+
+                  <TableCell className="text-center font-bold">
+                    <Badge variant="default">{total}</Badge>
+                  </TableCell>
+                </TableRow>
+              );
+            })}
+          </TableBody>
         </TableBody>
       </Table>
     </div>
