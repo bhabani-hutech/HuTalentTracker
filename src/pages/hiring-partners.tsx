@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
+import React from "react";
 import { useHiringPartnerMetrics } from "@/lib/api/hooks/useHiringPartnerMetrics";
 import { useOrganizations } from "@/lib/api/hooks/useOrganizations";
 import { useCandidates } from "@/lib/api/hooks/useCandidates";
@@ -48,7 +49,7 @@ const generateMonthlyData = (candidates, partnerId, months = 6) => {
     (c) =>
       c.hiring_partner_id === partnerId.toString() ||
       (c.candidate_source === "Hiring Partner" &&
-        c.hiring_partner_id === partnerId.toString())
+        c.hiring_partner_id === partnerId.toString()),
   );
 
   // Get current date and calculate the last 6 months
@@ -122,39 +123,63 @@ export default function HiringPartners() {
   // Filter to only hiring partners (non-own organizations)
   const hiringPartners = organizations?.filter((org) => !org.is_own_org) || [];
 
+  // Memoize the hiring partners array to prevent unnecessary re-renders
+  const memoizedHiringPartners = useMemo(
+    () => hiringPartners || [],
+    [hiringPartners],
+  );
+
+  // Use a ref to track if we've already fetched the data
+  const hasFetchedRef = React.useRef(false);
+
   useEffect(() => {
     const fetchPartnerDetails = async () => {
-      if (!hiringPartners || hiringPartners.length === 0) {
+      if (!memoizedHiringPartners.length) {
         console.log("No hiring partners available to fetch counts");
         return;
       }
 
+      // Skip if we've already fetched and there's no change in partners
+      if (
+        hasFetchedRef.current &&
+        Object.keys(sourceCount).length === memoizedHiringPartners.length
+      ) {
+        return;
+      }
+
+      hasFetchedRef.current = true;
+
       try {
-        const orgIdArray = hiringPartners.map((ele) => ele?.id);
-        let finalData: any = {};
+        const orgIdArray = memoizedHiringPartners
+          .map((ele) => ele?.id)
+          .filter(Boolean);
 
-        for (const partnerId of orgIdArray) {
-          if (!partnerId) continue;
+        // Batch the query instead of making individual requests
+        const { data, error } = await supabase
+          .from("candidates")
+          .select("hiring_partner_id, id")
+          .in("hiring_partner_id", orgIdArray);
 
-          // Count candidates with this hiring partner ID
-          const { data, error, count } = await supabase
-            .from("candidates")
-            .select("*", { count: "exact", head: true })
-            .or(
-              `hiring_partner_id.eq.${partnerId},and(candidate_source.eq.Hiring Partner,hiring_partner_id.eq.${partnerId})`
-            );
-
-          if (error) {
-            console.error(
-              `Error fetching count for partner ${partnerId}:`,
-              error
-            );
-            finalData[partnerId] = 0;
-          } else {
-            finalData[partnerId] = count || 0;
-          }
+        if (error) {
+          console.error("Error fetching counts for partners:", error);
+          return;
         }
-        // console.log(finalData);
+
+        // Count candidates for each partner
+        const finalData = orgIdArray.reduce(
+          (acc, partnerId) => {
+            acc[partnerId] =
+              data?.filter(
+                (c) =>
+                  c.hiring_partner_id === partnerId.toString() ||
+                  (c.candidate_source === "Hiring Partner" &&
+                    c.hiring_partner_id === partnerId.toString()),
+              ).length || 0;
+            return acc;
+          },
+          {} as Record<string, number>,
+        );
+
         setSourceCount(finalData);
       } catch (err) {
         console.error("Error in fetchPartnerDetails:", err);
@@ -162,7 +187,7 @@ export default function HiringPartners() {
     };
 
     fetchPartnerDetails();
-  }, [hiringPartners]);
+  }, [memoizedHiringPartners, sourceCount]);
 
   useEffect(() => {
     if (partnerId && hiringPartners.length > 0) {
@@ -277,7 +302,7 @@ export default function HiringPartners() {
       (c) =>
         c.hiring_partner_id == selectedPartner.id.toString() ||
         (c.candidate_source === "Hiring Partner" &&
-          c.hiring_partner_id === selectedPartner.id.toString())
+          c.hiring_partner_id === selectedPartner.id.toString()),
     );
 
     // Get unique job positions for this partner
@@ -334,7 +359,7 @@ export default function HiringPartners() {
     });
 
     const totalInterviewed = partnerCandidates.filter(
-      (c) => c.stage_id === 2 || c.stage_id === 3
+      (c) => c.stage_id === 2 || c.stage_id === 3,
     ).length;
 
     // Calculate cost per hire (using a placeholder average cost of $1000 per candidate)
@@ -370,7 +395,7 @@ export default function HiringPartners() {
       {
         stage: "Interview",
         count: partnerCandidates.filter(
-          (c) => c.stage_id === 2 || c.stage_id === 3
+          (c) => c.stage_id === 2 || c.stage_id === 3,
         ).length,
       },
       {
@@ -664,7 +689,7 @@ export default function HiringPartners() {
                             selectedPartner?.id.toString() ||
                           (c.candidate_source === "Hiring Partner" &&
                             c.hiring_partner_id ===
-                              selectedPartner?.id.toString())
+                              selectedPartner?.id.toString()),
                       ).length || 0}{" "}
                       candidates
                     </Badge>
@@ -685,10 +710,10 @@ export default function HiringPartners() {
                               candidates.filter(
                                 (ele) =>
                                   ele.stage_id === stage.id &&
-                                  ele.position === job.title
+                                  ele.position === job.title,
                               ).length || 0,
                             position: job.title, // for job-specific row
-                          }))
+                          })),
                         );
 
                         return (

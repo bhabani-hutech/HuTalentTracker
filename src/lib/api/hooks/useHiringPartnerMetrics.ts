@@ -114,5 +114,9 @@ export function useHiringPartnerMetrics(partnerId: string) {
     queryFn: () => fetchHiringPartnerMetrics(partnerId),
     enabled: !!partnerId,
     staleTime: 5 * 60 * 1000, // 5 minutes
+    cacheTime: 10 * 60 * 1000, // 10 minutes
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    refetchOnReconnect: false,
   });
 }

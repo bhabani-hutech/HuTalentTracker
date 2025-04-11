@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import {
   Table,
   TableBody,
@@ -91,36 +91,47 @@ export function PipelineStageCountTable({
     fetchStageNames();
   }, [stagesData]);
 
+  // Memoize the filtered candidates to prevent recalculation on every render
+  const partnerCandidates = useMemo(() => {
+    if (!selectedPartnerId || !candidates.length) return [];
+
+    return candidates.filter(
+      (c) =>
+        c.hiring_partner_id === selectedPartnerId.toString() ||
+        (c.candidate_source === "Hiring Partner" &&
+          c.hiring_partner_id === selectedPartnerId.toString()),
+    );
+  }, [selectedPartnerId, candidates]);
+
+  // Memoize the jobs with partner candidates
+  const jobsWithPartnerCandidates = useMemo(() => {
+    if (!partnerCandidates.length || !jobs.length) return [];
+
+    return jobs.filter((job) => {
+      return partnerCandidates.some((c) => c.job_id === job.id);
+    });
+  }, [partnerCandidates, jobs]);
+
+  // Memoize the relevant jobs
+  const relevantJobsMemo = useMemo(() => {
+    return jobsWithPartnerCandidates.length > 0
+      ? jobsWithPartnerCandidates
+      : jobs;
+  }, [jobsWithPartnerCandidates, jobs]);
+
   useEffect(() => {
     if (!selectedPartnerId || !stagesData.length || !jobs.length) {
       setIsLoading(false);
       return;
     }
 
-    const fetchCounts = async () => {
+    const calculateCounts = () => {
       setIsLoading(true);
       setError(null);
 
       try {
-        // Filter candidates by the selected hiring partner
-        const partnerCandidates = candidates.filter(
-          (c) =>
-            c.hiring_partner_id === selectedPartnerId.toString() ||
-            (c.candidate_source === "Hiring Partner" &&
-              c.hiring_partner_id === selectedPartnerId.toString())
-        );
-
-        // Find jobs that have candidates from this hiring partner
-        const jobsWithPartnerCandidates = jobs.filter((job) => {
-          return partnerCandidates.some((c) => c.job_id === job.id);
-        });
-
-        // If no jobs with candidates, show all jobs for this partner
-        setRelevantJobs(
-          jobsWithPartnerCandidates.length > 0
-            ? jobsWithPartnerCandidates
-            : jobs
-        );
+        // Set relevant jobs from memoized value
+        setRelevantJobs(relevantJobsMemo);
 
         // Calculate counts for each stage and job
         const counts: StageJobCount = {};
@@ -128,16 +139,9 @@ export function PipelineStageCountTable({
         // Initialize counts object
         stagesData.forEach((stage) => {
           counts[stage.id] = {};
-          jobsWithPartnerCandidates.forEach((job) => {
+          relevantJobsMemo.forEach((job) => {
             counts[stage.id][job.id] = 0;
           });
-
-          // Initialize counts for all jobs if no candidates found
-          if (jobsWithPartnerCandidates.length === 0) {
-            jobs.forEach((job) => {
-              counts[stage.id][job.id] = 0;
-            });
-          }
         });
 
         // Count candidates for each stage and job
@@ -145,7 +149,7 @@ export function PipelineStageCountTable({
           if (candidate.stage_id && candidate.job_id) {
             const stageId = candidate.stage_id.toString();
             const jobId = candidate.job_id.toString();
-            console.log(stageId, jobId, candidate);
+
             // Initialize if not already done
             if (!counts[stageId]) {
               counts[stageId] = {};
@@ -162,14 +166,19 @@ export function PipelineStageCountTable({
         setStageCounts(counts);
         setIsLoading(false);
       } catch (error) {
-        // console.error("Error fetching pipeline stage counts:", error);
         setError("Failed to load pipeline stage counts");
         setIsLoading(false);
       }
     };
 
-    fetchCounts();
-  }, [selectedPartnerId, stagesData, jobs, candidates]);
+    calculateCounts();
+  }, [
+    selectedPartnerId,
+    stagesData,
+    jobs,
+    partnerCandidates,
+    relevantJobsMemo,
+  ]);
 
   // Calculate row totals
   const calculateRowTotal = (stageId: string) => {
@@ -177,7 +186,7 @@ export function PipelineStageCountTable({
 
     return Object.values(stageCounts[stageId]).reduce(
       (total, count) => total + (count || 0),
-      0
+      0,
     );
   };
 
@@ -284,7 +293,7 @@ export function PipelineStageCountTable({
             {Object.entries(groupedByJobTitle).map(([jobTitle, stageItems]) => {
               const total = stageItems.reduce(
                 (sum, item) => sum + item.count,
-                0
+                0,
               );
 
               return (
@@ -293,7 +302,7 @@ export function PipelineStageCountTable({
 
                   {stagesData.map((stage) => {
                     const matched = stageItems.find(
-                      (s) => s.id === stage.id.toString()
+                      (s) => s.id === stage.id.toString(),
                     );
 
                     // Use a unique key by combining jobTitle and stage.id
