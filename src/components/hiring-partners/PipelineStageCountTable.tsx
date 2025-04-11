@@ -45,7 +45,6 @@ export function PipelineStageCountTable({
     return acc;
   }, {});
   const groupedByJobTitle: { [title: string]: typeof stagesData } = {};
-
   stagesData.forEach((stageItem) => {
     if (!groupedByJobTitle[stageItem.position]) {
       groupedByJobTitle[stageItem.position] = [];
@@ -99,7 +98,7 @@ export function PipelineStageCountTable({
       (c) =>
         c.hiring_partner_id === selectedPartnerId.toString() ||
         (c.candidate_source === "Hiring Partner" &&
-          c.hiring_partner_id === selectedPartnerId.toString()),
+          c.hiring_partner_id === selectedPartnerId.toString())
     );
   }, [selectedPartnerId, candidates]);
 
@@ -186,7 +185,7 @@ export function PipelineStageCountTable({
 
     return Object.values(stageCounts[stageId]).reduce(
       (total, count) => total + (count || 0),
-      0,
+      0
     );
   };
 
@@ -280,48 +279,71 @@ export function PipelineStageCountTable({
         <TableHeader>
           <TableRow>
             <TableHead className="font-bold">Job Post</TableHead>
-            {stagesData.map((stage) => (
-              <TableHead key={stage.id} className="text-center">
-                {getStageName(stage)}
-              </TableHead>
-            ))}
+
+            {groupedByJobTitle[Object.keys(groupedByJobTitle)[0]].map(
+              (stage) => (
+                <TableHead key={`head-${stage.stage}`} className="text-center">
+                  {stage.stage}
+                </TableHead>
+              )
+            )}
+
             <TableHead className="text-center font-bold">Total</TableHead>
           </TableRow>
         </TableHeader>
+
+        {/* <TableBody>
+          {Object.entries(groupedByJobTitle).map(([jobTitle, stageItems]) => {
+            const total = stageItems.reduce((sum, item) => sum + item.count, 0);
+            console.log(stagesData);
+            return (
+              <TableRow key={`row-${jobTitle}`}>
+                <TableCell className="font-medium">{jobTitle}</TableCell>
+
+                {stagesData.map((stage) => {
+                  const matched = stageItems.find(
+                    (s) => s.id === stage.id.toString()
+                  );
+                  const cellKey = `${jobTitle}-${stage.id}`; // Unique key
+
+                  return (
+                    <TableCell key={cellKey} className="text-center">
+                      {matched?.count ?? 0}
+                    </TableCell>
+                  );
+                })}
+
+                <TableCell className="text-center font-bold">
+                  <Badge variant="default">{total}</Badge>
+                </TableCell>
+              </TableRow>
+            );
+          })}
+        </TableBody> */}
         <TableBody>
-          <TableBody>
-            {Object.entries(groupedByJobTitle).map(([jobTitle, stageItems]) => {
-              const total = stageItems.reduce(
-                (sum, item) => sum + item.count,
-                0,
-              );
+          {Object.entries(groupedByJobTitle).map(([jobTitle, stageItems]) => {
+            const total = stageItems.reduce((sum, item) => sum + item.count, 0);
+            // console.log(stageItems);
+            return (
+              <TableRow key={`row-${jobTitle}`}>
+                <TableCell className="font-medium">{jobTitle}</TableCell>
 
-              return (
-                <TableRow key={jobTitle}>
-                  <TableCell className="font-medium">{jobTitle}</TableCell>
+                {stageItems.map((stage) => {
+                  const cellKey = `${jobTitle}-${stage.stage}`; // Use stage name for uniqueness
 
-                  {stagesData.map((stage) => {
-                    const matched = stageItems.find(
-                      (s) => s.id === stage.id.toString(),
-                    );
+                  return (
+                    <TableCell key={cellKey} className="text-center">
+                      {stage.count}
+                    </TableCell>
+                  );
+                })}
 
-                    // Use a unique key by combining jobTitle and stage.id
-                    const cellKey = `${jobTitle}-${stage.id}`;
-
-                    return (
-                      <TableCell key={cellKey} className="text-center">
-                        {matched?.count ?? 0}
-                      </TableCell>
-                    );
-                  })}
-
-                  <TableCell className="text-center font-bold">
-                    <Badge variant="default">{total}</Badge>
-                  </TableCell>
-                </TableRow>
-              );
-            })}
-          </TableBody>
+                <TableCell className="text-center font-bold">
+                  <Badge variant="default">{total}</Badge>
+                </TableCell>
+              </TableRow>
+            );
+          })}
         </TableBody>
       </Table>
     </div>
