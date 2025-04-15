@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useForm } from "react-hook-form";
 import {
   Dialog,
@@ -17,11 +17,14 @@ import {
   SelectValue,
 } from "../ui/select";
 import { Label } from "../ui/label";
-import { Candidate } from "@/lib/api/candidates";
+import { Candidate, uploadResume } from "@/lib/api/candidates";
 import { useSkills } from "@/lib/api/hooks/useSkills";
 import { useLocations } from "@/lib/api/hooks/useLocations";
 import { useJobs } from "@/lib/api/hooks/useJobs";
 import { useOrganizations } from "@/lib/api/hooks/useOrganizations";
+import { FileUp, X } from "lucide-react";
+import { Alert, AlertDescription } from "../ui/alert";
+import { useToast } from "../ui/use-toast";
 
 interface EditCandidateDialogProps {
   isOpen: boolean;
@@ -49,12 +52,20 @@ export function EditCandidateDialog({
   const { jobs: allJobs } = useJobs();
   const { organizations } = useOrganizations();
   const hiringPartners = organizations?.filter((org) => !org.is_own_org) || [];
-  console.log(candidate, jobs, "aaaaaaaaaaaaa");
+  const { toast } = useToast();
+
   // Use the locations hook instead of fetching directly
   const { locations, isLoading: isLoadingLocations } = useLocations();
 
   // State to store the selected job details
   const [selectedJob, setSelectedJob] = useState<any>(null);
+
+  // Resume upload states
+  const [resumeFile, setResumeFile] = useState<File | null>(null);
+  const [fileUrl, setFileUrl] = useState<string | undefined>(undefined);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Update ownOrgLocations when locations change
   useEffect(() => {
@@ -84,6 +95,11 @@ export function EditCandidateDialog({
 
       reset(candidateData); // Reset the form with candidate details
 
+      // Set the file URL if it exists
+      if (candidate.file_url) {
+        setFileUrl(candidate.file_url);
+      }
+
       // Find the job associated with this candidate
       if (candidate.job_id && allJobs) {
         const job = allJobs.find((job) => job.id === candidate.job_id);
@@ -93,14 +109,29 @@ export function EditCandidateDialog({
       }
     }
   }, [candidate, reset, allJobs]);
-  const partenr_id = watch("hiring_partner_id");
-  console.log(
-    partenr_id,
-    "partenr_idpartenr_idpartenr_idpartenr_idpartenr_idpartenr_id",
-  );
+
   const submitForm = async (data: Partial<Candidate>) => {
     if (!candidate) return;
     try {
+      // Upload resume if a new one was selected
+      let updatedFileUrl = fileUrl;
+      if (resumeFile) {
+        setIsUploading(true);
+        try {
+          updatedFileUrl = await uploadResume(resumeFile);
+        } catch (error) {
+          console.error("Error uploading resume:", error);
+          toast({
+            variant: "destructive",
+            title: "Upload Error",
+            description: "Failed to upload resume file",
+          });
+          setIsUploading(false);
+          return;
+        }
+        setIsUploading(false);
+      }
+
       // Only submit the fields that are editable
       const updates: Partial<Candidate> = {
         name: data.name,
@@ -113,10 +144,20 @@ export function EditCandidateDialog({
         hiring_partner_id: data.hiring_partner_id,
       };
 
+      // Only include file_url if it has changed
+      if (updatedFileUrl !== candidate.file_url) {
+        updates.file_url = updatedFileUrl;
+      }
+
       await onSubmit(candidate.id, updates);
       onClose();
     } catch (error) {
       console.error("Error updating candidate:", error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to update candidate",
+      });
     }
   };
   // Combine all skills for the dropdown
@@ -386,11 +427,93 @@ export function EditCandidateDialog({
             </div>
           </div>
 
+          {/* Resume Upload Field */}
+          <div className="space-y-2">
+            <Label>
+              <span className="flex items-center gap-1">
+                Resume
+                {!fileUrl && !resumeFile && (
+                  <span className="text-muted-foreground text-xs">
+                    (optional)
+                  </span>
+                )}
+              </span>
+            </Label>
+
+            {fileUrl || resumeFile ? (
+              <div className="flex items-center gap-2 p-2 border rounded-md">
+                <div className="flex-1 truncate">
+                  {resumeFile?.name || (
+                    <a
+                      href={fileUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-500 hover:underline"
+                    >
+                      View current resume
+                    </a>
+                  )}
+                </div>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setResumeFile(null);
+                    if (fileInputRef.current) {
+                      fileInputRef.current.value = "";
+                    }
+                  }}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2">
+                <Input
+                  type="file"
+                  ref={fileInputRef}
+                  accept=".pdf,.doc,.docx"
+                  className="hidden"
+                  id="resume-upload"
+                  onChange={(e) => {
+                    if (e.target.files && e.target.files.length > 0) {
+                      setResumeFile(e.target.files[0]);
+                      setUploadError(null);
+                    }
+                  }}
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={isUploading}
+                >
+                  <FileUp className="mr-2 h-4 w-4" />
+                  {isUploading ? "Uploading..." : "Upload Resume"}
+                </Button>
+              </div>
+            )}
+
+            {uploadError && (
+              <Alert variant="destructive" className="mt-2">
+                <AlertDescription>{uploadError}</AlertDescription>
+              </Alert>
+            )}
+
+            <p className="text-sm text-muted-foreground">
+              Accepted formats: PDF, DOC, DOCX
+            </p>
+          </div>
+
           <DialogFooter>
             <Button type="button" variant="outline" onClick={onClose}>
               Cancel
             </Button>
-            <Button type="submit">Save Changes</Button>
+            <Button type="submit" disabled={isUploading}>
+              Save Changes
+            </Button>
           </DialogFooter>
         </form>
       </DialogContent>

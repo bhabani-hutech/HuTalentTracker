@@ -21,16 +21,17 @@ import { createCandidate, uploadResume } from "@/lib/api/candidates";
 import { Job, JobType } from "@/types/database";
 import { useSkills } from "@/lib/api/hooks/useSkills";
 import { useOrganizations } from "@/lib/api/hooks/useOrganizations";
+import { useJobs } from "@/lib/api/hooks/useJobs";
+import { useDepartments } from "@/lib/api/hooks/useDepartments";
 import { FileUp, X } from "lucide-react";
 import { Alert, AlertDescription } from "../ui/alert";
 
-interface ApplyDirectlyModalProps {
+interface AddCandidateModalProps {
   isOpen: boolean;
   onClose: () => void;
-  selectedJob: Job | null;
 }
 
-interface ApplicationData {
+interface CandidateData {
   name: string;
   email: string;
   phone: string;
@@ -44,59 +45,40 @@ interface ApplicationData {
   hiring_partner_id?: string;
   resume_file?: File;
   file_url?: string;
+  job_id?: string;
+  department?: string;
 }
 
-export function ApplyDirectlyModal({
-  isOpen,
-  onClose,
-  selectedJob,
-}: ApplyDirectlyModalProps) {
-  console.log(selectedJob);
+export function AddCandidateModal({ isOpen, onClose }: AddCandidateModalProps) {
   const { toast } = useToast();
   const { skills: domainSkills } = useSkills("domain");
   const { skills: technicalSkills } = useSkills("technical");
   const { skills: softSkills } = useSkills("soft");
   const { organizations } = useOrganizations();
+  const { jobs } = useJobs();
+  const { departments } = useDepartments();
   const hiringPartners = organizations?.filter((org) => !org.is_own_org) || [];
 
-  const [formData, setFormData] = useState<ApplicationData>({
+  const [formData, setFormData] = useState<CandidateData>({
     name: "",
     email: "",
     phone: "",
-    position: selectedJob?.title || "",
-    location: selectedJob?.location || "",
+    position: "",
+    location: "Remote",
     notice_period: "",
-    skills: selectedJob?.skills || [],
-    type: selectedJob?.type || "Full Time",
-    experience:
-      selectedJob?.experience_min && selectedJob?.experience_max
-        ? `${selectedJob.experience_min}-${selectedJob.experience_max} years`
-        : "",
+    skills: [],
+    type: "Full Time",
+    experience: "0-1 years",
     candidate_source: "Direct Apply",
     resume_file: undefined,
     file_url: undefined,
+    job_id: undefined,
+    department: undefined,
   });
 
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  console.log(selectedJob);
-  // Update form data when selected job changes
-  useEffect(() => {
-    if (selectedJob) {
-      setFormData((prev) => ({
-        ...prev,
-        position: selectedJob.title || "",
-        location: selectedJob.location || "",
-        skills: selectedJob.skills || [],
-        type: selectedJob.type || "Full Time",
-        experience:
-          selectedJob.experience_min && selectedJob.experience_max
-            ? `${selectedJob.experience_min}-${selectedJob.experience_max} years`
-            : "",
-      }));
-    }
-  }, [selectedJob]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -114,54 +96,50 @@ export function ApplyDirectlyModal({
       return;
     }
 
-    // Validate resume file upload
-    if (!formData.resume_file && !formData.file_url) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Please upload a resume",
-      });
-      return;
-    }
-
     try {
       // Calculate match score based on skills match with job requirements
       let matchScore = 0;
-      if (
-        selectedJob?.skills &&
-        selectedJob.skills.length > 0 &&
-        formData.skills.length > 0
-      ) {
-        // Count matching skills
-        const jobSkills = selectedJob.skills.map((skill) =>
-          typeof skill === "string" ? skill.toLowerCase() : "",
-        );
-        const candidateSkills = formData.skills.map((skill) =>
-          skill.toLowerCase(),
-        );
+      let selectedJob = null;
 
-        let matchCount = 0;
-        for (const skill of candidateSkills) {
-          if (
-            jobSkills.some(
-              (jobSkill) =>
-                jobSkill === skill ||
-                jobSkill.includes(skill) ||
-                skill.includes(jobSkill),
-            )
-          ) {
-            matchCount++;
+      if (formData.job_id) {
+        selectedJob = jobs?.find((job) => job.id === formData.job_id);
+
+        if (
+          selectedJob?.skills &&
+          selectedJob.skills.length > 0 &&
+          formData.skills.length > 0
+        ) {
+          // Count matching skills
+          const jobSkills = selectedJob.skills.map((skill) =>
+            typeof skill === "string" ? skill.toLowerCase() : "",
+          );
+          const candidateSkills = formData.skills.map((skill) =>
+            skill.toLowerCase(),
+          );
+
+          let matchCount = 0;
+          for (const skill of candidateSkills) {
+            if (
+              jobSkills.some(
+                (jobSkill) =>
+                  jobSkill === skill ||
+                  jobSkill.includes(skill) ||
+                  skill.includes(jobSkill),
+              )
+            ) {
+              matchCount++;
+            }
           }
+
+          // Calculate percentage match
+          matchScore = Math.round((matchCount / jobSkills.length) * 100);
+
+          // Ensure minimum score for direct applications
+          matchScore = Math.max(matchScore, 70); // At least 70% for direct applications
+        } else {
+          // Default score if no skills to compare
+          matchScore = 85; // High default for direct applications
         }
-
-        // Calculate percentage match
-        matchScore = Math.round((matchCount / jobSkills.length) * 100);
-
-        // Ensure minimum score for direct applications
-        matchScore = Math.max(matchScore, 70); // At least 70% for direct applications
-      } else {
-        // Default score if no skills to compare
-        matchScore = 85; // High default for direct applications
       }
 
       // Upload resume if it exists and we don't have a URL yet
@@ -195,7 +173,7 @@ export function ApplyDirectlyModal({
             ? "Hiring Partner Referral"
             : "Direct Application",
         match_score: matchScore,
-        job_id: selectedJob?.id,
+        job_id: formData.job_id,
         stage_id: 1, // Default to screening stage
         type: formData.type,
         experience: formData.experience,
@@ -207,50 +185,27 @@ export function ApplyDirectlyModal({
 
       toast({
         title: "Success",
-        description: "Application submitted successfully",
+        description: "Candidate added successfully",
       });
       onClose();
     } catch (error) {
-      console.error("Error submitting application:", error);
+      console.error("Error adding candidate:", error);
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Failed to submit application",
+        description: "Failed to add candidate",
       });
     }
   };
-  console.log(formData, "formDataformDataformDataformData");
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-[800px] max-h-[85vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Apply Directly: {selectedJob?.title}</DialogTitle>
+          <DialogTitle>Add New Candidate</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
-            {/* Position - Auto-populated and disabled */}
-            <div className="space-y-2">
-              <Label>Position</Label>
-              <Input
-                required
-                value={formData.position}
-                disabled
-                className="bg-muted"
-              />
-            </div>
-
-            {/* Location - Auto-populated and disabled */}
-            <div className="space-y-2">
-              <Label>Location</Label>
-              <Input
-                required
-                value={formData.location}
-                disabled
-                className="bg-muted"
-              />
-            </div>
-
             {/* Full Name - Editable */}
             <div className="space-y-2">
               <Label>Full Name</Label>
@@ -260,7 +215,7 @@ export function ApplyDirectlyModal({
                 onChange={(e) =>
                   setFormData({ ...formData, name: e.target.value })
                 }
-                placeholder="Enter your full name"
+                placeholder="Enter candidate's full name"
               />
             </div>
 
@@ -274,7 +229,7 @@ export function ApplyDirectlyModal({
                 onChange={(e) =>
                   setFormData({ ...formData, email: e.target.value })
                 }
-                placeholder="Enter your email"
+                placeholder="Enter candidate's email"
               />
             </div>
 
@@ -288,7 +243,7 @@ export function ApplyDirectlyModal({
                 onChange={(e) =>
                   setFormData({ ...formData, phone: e.target.value })
                 }
-                placeholder="Enter your phone number"
+                placeholder="Enter candidate's phone number"
               />
             </div>
 
@@ -305,11 +260,78 @@ export function ApplyDirectlyModal({
               />
             </div>
 
-            {/* Employment Type - Auto-populated and disabled */}
+            {/* Department - Dropdown */}
+            <div className="space-y-2">
+              <Label>Department</Label>
+              <Select
+                value={formData.department || ""}
+                onValueChange={(value) => {
+                  setFormData({ ...formData, department: value });
+                }}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select department" />
+                </SelectTrigger>
+                <SelectContent>
+                  {departments?.map((dept) => (
+                    <SelectItem key={dept.id} value={dept.id}>
+                      {dept.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Position/Job - Dropdown */}
+            <div className="space-y-2">
+              <Label>Position</Label>
+              <Select
+                value={formData.job_id || ""}
+                onValueChange={(value) => {
+                  const selectedJob = jobs?.find((job) => job.id === value);
+                  setFormData({
+                    ...formData,
+                    job_id: value,
+                    position: selectedJob?.title || formData.position,
+                  });
+                }}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select position" />
+                </SelectTrigger>
+                <SelectContent>
+                  {jobs?.map((job) => (
+                    <SelectItem key={job.id} value={job.id}>
+                      {job.title}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Location - Editable */}
+            <div className="space-y-2">
+              <Label>Location</Label>
+              <Input
+                required
+                value={formData.location}
+                onChange={(e) =>
+                  setFormData({ ...formData, location: e.target.value })
+                }
+                placeholder="e.g. Remote, New York, etc."
+              />
+            </div>
+
+            {/* Employment Type - Dropdown */}
             <div className="space-y-2">
               <Label>Employment Type</Label>
-              <Select value={formData.type} disabled>
-                <SelectTrigger className="bg-muted">
+              <Select
+                value={formData.type}
+                onValueChange={(value) =>
+                  setFormData({ ...formData, type: value as JobType })
+                }
+              >
+                <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -321,14 +343,16 @@ export function ApplyDirectlyModal({
               </Select>
             </div>
 
-            {/* Experience - Auto-populated and disabled */}
+            {/* Experience - Editable */}
             <div className="space-y-2">
-              <Label>Experience Range</Label>
+              <Label>Experience</Label>
               <Input
                 required
                 value={formData.experience}
-                disabled
-                className="bg-muted"
+                onChange={(e) =>
+                  setFormData({ ...formData, experience: e.target.value })
+                }
+                placeholder="e.g. 2-3 years"
               />
             </div>
           </div>
@@ -407,7 +431,7 @@ export function ApplyDirectlyModal({
             <div className="flex flex-col gap-2">
               {/* Select Dropdown */}
               <Select
-                value="Data"
+                value=""
                 onValueChange={(value) => {
                   if (!formData.skills.includes(value)) {
                     setFormData({
@@ -548,13 +572,8 @@ export function ApplyDirectlyModal({
             <Button type="button" variant="outline" onClick={onClose}>
               Cancel
             </Button>
-            <Button
-              type="submit"
-              disabled={
-                isUploading || (!formData.resume_file && !formData.file_url)
-              }
-            >
-              Submit Application
+            <Button type="submit" disabled={isUploading}>
+              Add Candidate
             </Button>
           </DialogFooter>
         </form>
