@@ -57,7 +57,7 @@ export default function ResumeSourcing() {
         () => {
           // Invalidate and refetch candidates
           queryClient.invalidateQueries({ queryKey: ["candidates"] });
-        },
+        }
       )
       .subscribe();
 
@@ -94,12 +94,12 @@ export default function ResumeSourcing() {
     // Filter by job ID
     if (filters.jobId) {
       filtered = filtered.filter(
-        (candidate) => candidate.job_id === filters.jobId,
+        (candidate) => candidate.job_id === filters.jobId
       );
     } else if (selectedJobId) {
       // Legacy support for job selection from tabs
       filtered = filtered.filter(
-        (candidate) => candidate.job_id === selectedJobId,
+        (candidate) => candidate.job_id === selectedJobId
       );
     }
 
@@ -115,11 +115,11 @@ export default function ResumeSourcing() {
     if (filters.source) {
       if (filters.source === "direct") {
         filtered = filtered.filter(
-          (candidate) => candidate.candidate_source === "Direct Apply",
+          (candidate) => candidate.candidate_source === "Direct Apply"
         );
       } else if (filters.source === "hiring_partner") {
         filtered = filtered.filter(
-          (candidate) => candidate.candidate_source === "Hiring Partner",
+          (candidate) => candidate.candidate_source === "Hiring Partner"
         );
       }
     }
@@ -127,7 +127,7 @@ export default function ResumeSourcing() {
     // Filter by hiring partner ID
     if (filters.hiringPartnerId) {
       filtered = filtered.filter(
-        (candidate) => candidate.hiring_partner_id === filters.hiringPartnerId,
+        (candidate) => candidate.hiring_partner_id === filters.hiringPartnerId
       );
     }
 
@@ -177,7 +177,7 @@ export default function ResumeSourcing() {
           candidate.name?.toLowerCase().includes(searchLower) ||
           candidate.email?.toLowerCase().includes(searchLower) ||
           candidate.position?.toLowerCase().includes(searchLower) ||
-          candidate.skills?.toLowerCase().includes(searchLower),
+          candidate.skills?.toLowerCase().includes(searchLower)
       );
     }
 
@@ -187,7 +187,7 @@ export default function ResumeSourcing() {
   const handleFileUpload = async (
     files: FileList,
     jobId?: string,
-    hiringPartnerId?: string,
+    hiringPartnerId?: string
   ) => {
     const maxFileSize = 5 * 1024 * 1024; // 5MB
     const allowedTypes = [
@@ -270,12 +270,12 @@ export default function ResumeSourcing() {
             file,
             jobId,
             requiredSkills,
-            jobTitle,
+            jobTitle
           );
 
           console.log("Parsed resume data:", parsedData);
           console.log(
-            `Match score for ${file.name}: ${parsedData.matchScore || 0}%`,
+            `Match score for ${file.name}: ${parsedData.matchScore || 0}%`
           );
           console.log("Skill matches:", parsedData.skillMatches || []);
 
@@ -322,7 +322,9 @@ export default function ResumeSourcing() {
       if (successCount > 0) {
         toast({
           title: "Upload Complete",
-          description: `Successfully processed ${successCount} file(s). ${failedCount > 0 ? `${failedCount} file(s) failed.` : ""}`,
+          description: `Successfully processed ${successCount} file(s). ${
+            failedCount > 0 ? `${failedCount} file(s) failed.` : ""
+          }`,
         });
       } else if (failedCount > 0) {
         toast({
@@ -428,7 +430,7 @@ export default function ResumeSourcing() {
   const [showViewResumeModal, setShowViewResumeModal] = useState(false);
   const [showViewProfileModal, setShowViewProfileModal] = useState(false);
   const [selectedCandidate, setSelectedCandidate] = useState<Candidate | null>(
-    null,
+    null
   );
 
   // Updated view resume handler
@@ -453,13 +455,26 @@ export default function ResumeSourcing() {
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <Button
+          {/* <Button
             onClick={downloadSampleTemplate}
             variant="outline"
             className="flex items-center gap-2"
           >
             <Download className="h-4 w-4" /> Download Template
-          </Button>
+          </Button> */}
+          {/* <div className="flex items-center space-x-2 bg-white p-4 rounded-lg border"> */}
+          <Input
+            placeholder="Search by name, email, position, or skills..."
+            value={filters.searchTerm}
+            onChange={(e) =>
+              setFilters((prev) => ({ ...prev, searchTerm: e.target.value }))
+            }
+            className="flex-1"
+          />
+          {/* <Button type="submit" size="icon">
+            <Search className="h-4 w-4" />
+          </Button> */}
+          {/* </div> */}
           <input
             type="file"
             ref={fileInputRef}
@@ -484,7 +499,7 @@ export default function ResumeSourcing() {
       </div>
 
       {/* Search Bar */}
-      <div className="flex items-center space-x-2 bg-white p-4 rounded-lg border">
+      {/* <div className="flex items-center space-x-2 bg-white p-4 rounded-lg border">
         <Input
           placeholder="Search by name, email, position, or skills..."
           value={filters.searchTerm}
@@ -496,7 +511,7 @@ export default function ResumeSourcing() {
         <Button type="submit" size="icon">
           <Search className="h-4 w-4" />
         </Button>
-      </div>
+      </div> */}
 
       <ResumeFilters
         jobs={jobs || []}

@@ -61,7 +61,7 @@ export function ResumeFilters({
 
   const handleFilterChange = (
     key: keyof FilterOptions,
-    value: string | null,
+    value: string | null
   ) => {
     setFilters((prev) => ({
       ...prev,
@@ -108,7 +108,7 @@ export function ResumeFilters({
               <SelectValue placeholder="All Positions" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">All Positions</SelectItem>
+              <SelectItem value="all">All Positions</SelectItem>
               {jobs.map((job) => (
                 <SelectItem key={job.id} value={job.id}>
                   {job.title}
@@ -131,7 +131,7 @@ export function ResumeFilters({
               <SelectValue placeholder="All Departments" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">All Departments</SelectItem>
+              <SelectItem value="all">All Departments</SelectItem>
               {departments.map((dept) => (
                 <SelectItem key={dept.id} value={dept.id}>
                   {dept.name}
@@ -154,7 +154,7 @@ export function ResumeFilters({
               <SelectValue placeholder="All Sources" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">All Sources</SelectItem>
+              <SelectItem value="all">All Sources</SelectItem>
               {sourceOptions.map((option) => (
                 <SelectItem key={option.value} value={option.value}>
                   {option.label}
@@ -177,7 +177,7 @@ export function ResumeFilters({
               <SelectValue placeholder="All Notice Periods" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">All Notice Periods</SelectItem>
+              <SelectItem value="all">All Notice Periods</SelectItem>
               {noticePeriodOptions.map((option) => (
                 <SelectItem key={option.value} value={option.value}>
                   {option.label}

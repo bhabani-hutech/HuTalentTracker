@@ -431,7 +431,6 @@ export function AddCandidateModal({ isOpen, onClose }: AddCandidateModalProps) {
             <div className="flex flex-col gap-2">
               {/* Select Dropdown */}
               <Select
-                value=""
                 onValueChange={(value) => {
                   if (!formData.skills.includes(value)) {
                     setFormData({
