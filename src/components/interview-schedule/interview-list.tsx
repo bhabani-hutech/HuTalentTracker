@@ -155,7 +155,7 @@ export function InterviewList() {
                       }
                       onValueChange={(value) => {
                         console.log(
-                          `Changed status for ${interview.id} to ${value}`,
+                          `Changed status for ${interview.id} to ${value}`
                         );
                       }}
                     >

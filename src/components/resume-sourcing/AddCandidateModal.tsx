@@ -124,10 +124,10 @@ export function AddCandidateModal({
         ) {
           // Count matching skills
           const jobSkills = selectedJob.skills.map((skill) =>
-            typeof skill === "string" ? skill.toLowerCase() : "",
+            typeof skill === "string" ? skill.toLowerCase() : ""
           );
           const candidateSkills = formData.skills.map((skill) =>
-            skill.toLowerCase(),
+            skill.toLowerCase()
           );
 
           let matchCount = 0;
@@ -137,7 +137,7 @@ export function AddCandidateModal({
                 (jobSkill) =>
                   jobSkill === skill ||
                   jobSkill.includes(skill) ||
-                  skill.includes(jobSkill),
+                  skill.includes(jobSkill)
               )
             ) {
               matchCount++;
@@ -236,6 +236,60 @@ export function AddCandidateModal({
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
+            {/* Position/Job - Dropdown */}
+            <div className="space-y-2">
+              <Label>Position</Label>
+              <Select
+                value={formData.job_id || ""}
+                onValueChange={(value) => {
+                  const selectedJob = jobs?.find((job) => job.id === value);
+                  setFormData({
+                    ...formData,
+                    job_id: value,
+                    position: selectedJob?.title || formData.position,
+                  });
+                }}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select position" />
+                </SelectTrigger>
+                <SelectContent>
+                  {jobs?.map((job) => (
+                    <SelectItem key={job.id} value={job.id}>
+                      {job.title}({job.location})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Location - Editable */}
+            <div className="space-y-2">
+              <Label>Location</Label>
+              <Select
+                value={formData.job_id || ""}
+                onValueChange={(value) => {
+                  const selectedJob = jobs?.find((job) => job.id === value);
+                  setFormData({
+                    ...formData,
+                    job_id: value,
+                    position: selectedJob?.title || formData.position,
+                  });
+                }}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select position" />
+                </SelectTrigger>
+                <SelectContent>
+                  {jobs?.map((job) => (
+                    <SelectItem key={job.id} value={job.id}>
+                    {job.location}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
             {/* Full Name - Editable */}
             <div className="space-y-2">
               <Label>Full Name</Label>
@@ -312,46 +366,6 @@ export function AddCandidateModal({
               </Select>
             </div>
 
-            {/* Position/Job - Dropdown */}
-            <div className="space-y-2">
-              <Label>Position</Label>
-              <Select
-                value={formData.job_id || ""}
-                onValueChange={(value) => {
-                  const selectedJob = jobs?.find((job) => job.id === value);
-                  setFormData({
-                    ...formData,
-                    job_id: value,
-                    position: selectedJob?.title || formData.position,
-                  });
-                }}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select position" />
-                </SelectTrigger>
-                <SelectContent>
-                  {jobs?.map((job) => (
-                    <SelectItem key={job.id} value={job.id}>
-                      {job.title}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Location - Editable */}
-            <div className="space-y-2">
-              <Label>Location</Label>
-              <Input
-                required
-                value={formData.location}
-                onChange={(e) =>
-                  setFormData({ ...formData, location: e.target.value })
-                }
-                placeholder="e.g. Remote, New York, etc."
-              />
-            </div>
-
             {/* Employment Type - Dropdown */}
             <div className="space-y-2">
               <Label>Employment Type</Label>
@@ -382,7 +396,7 @@ export function AddCandidateModal({
                 onChange={(e) =>
                   setFormData({ ...formData, experience: e.target.value })
                 }
-                placeholder="e.g. 2-3 years"
+                placeholder="e.g. 2.4 years"
               />
             </div>
           </div>

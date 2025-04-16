@@ -138,6 +138,7 @@ export function ViewProfileModal({
                   {candidate.candidate_source || "N/A"}
                 </p>
               </div>
+              {/* {console.log(candidate)} */}
               {candidate.candidate_source === "Hiring Partner" && (
                 <div>
                   <p className="text-sm text-muted-foreground">
