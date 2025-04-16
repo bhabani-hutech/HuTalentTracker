@@ -29,6 +29,8 @@ import { Alert, AlertDescription } from "../ui/alert";
 interface AddCandidateModalProps {
   isOpen: boolean;
   onClose: () => void;
+  candidateData?: Candidate;
+  isEditing?: boolean;
 }
 
 interface CandidateData {
@@ -49,7 +51,12 @@ interface CandidateData {
   department?: string;
 }
 
-export function AddCandidateModal({ isOpen, onClose }: AddCandidateModalProps) {
+export function AddCandidateModal({
+  isOpen,
+  onClose,
+  candidateData,
+  isEditing = false,
+}: AddCandidateModalProps) {
   const { toast } = useToast();
   const { skills: domainSkills } = useSkills("domain");
   const { skills: technicalSkills } = useSkills("technical");
@@ -60,20 +67,26 @@ export function AddCandidateModal({ isOpen, onClose }: AddCandidateModalProps) {
   const hiringPartners = organizations?.filter((org) => !org.is_own_org) || [];
 
   const [formData, setFormData] = useState<CandidateData>({
-    name: "",
-    email: "",
-    phone: "",
-    position: "",
-    location: "Remote",
-    notice_period: "",
-    skills: [],
-    type: "Full Time",
-    experience: "0-1 years",
-    candidate_source: "Direct Apply",
+    name: candidateData?.name || "",
+    email: candidateData?.email || "",
+    phone: candidateData?.phone || "",
+    position: candidateData?.position || "",
+    location: candidateData?.location || "Remote",
+    notice_period: candidateData?.notice_period || "",
+    skills: candidateData?.skills
+      ? candidateData.skills.split(", ").filter(Boolean)
+      : [],
+    type: (candidateData?.type as JobType) || "Full Time",
+    experience: candidateData?.experience || "0-1 years",
+    candidate_source:
+      candidateData?.candidate_source === "Hiring Partner"
+        ? "Hiring Partner"
+        : "Direct Apply",
     resume_file: undefined,
-    file_url: undefined,
-    job_id: undefined,
-    department: undefined,
+    file_url: candidateData?.file_url,
+    job_id: candidateData?.job_id,
+    department: candidateData?.department_id,
+    hiring_partner_id: candidateData?.hiring_partner_id,
   });
 
   const [isUploading, setIsUploading] = useState(false);
@@ -98,10 +111,10 @@ export function AddCandidateModal({ isOpen, onClose }: AddCandidateModalProps) {
 
     try {
       // Calculate match score based on skills match with job requirements
-      let matchScore = 0;
+      let matchScore = candidateData?.match_score || 0;
       let selectedJob = null;
 
-      if (formData.job_id) {
+      if (formData.job_id && !isEditing) {
         selectedJob = jobs?.find((job) => job.id === formData.job_id);
 
         if (
@@ -161,7 +174,7 @@ export function AddCandidateModal({ isOpen, onClose }: AddCandidateModalProps) {
         setIsUploading(false);
       }
 
-      await createCandidate({
+      const candidatePayload = {
         name: formData.name,
         email: formData.email,
         phone: formData.phone,
@@ -174,26 +187,41 @@ export function AddCandidateModal({ isOpen, onClose }: AddCandidateModalProps) {
             : "Direct Application",
         match_score: matchScore,
         job_id: formData.job_id,
-        stage_id: 1, // Default to screening stage
+        stage_id: candidateData?.stage_id || 1, // Default to screening stage
         type: formData.type,
         experience: formData.experience,
         skills: formData.skills.join(", "),
         candidate_source: formData.candidate_source,
         hiring_partner_id: formData.hiring_partner_id,
         file_url: fileUrl,
-      });
+      };
 
-      toast({
-        title: "Success",
-        description: "Candidate added successfully",
-      });
+      if (isEditing && candidateData?.id) {
+        // Update existing candidate
+        await updateCandidate(candidateData.id, candidatePayload);
+        toast({
+          title: "Success",
+          description: "Candidate updated successfully",
+        });
+      } else {
+        // Create new candidate
+        await createCandidate(candidatePayload);
+        toast({
+          title: "Success",
+          description: "Candidate added successfully",
+        });
+      }
+
       onClose();
     } catch (error) {
-      console.error("Error adding candidate:", error);
+      console.error(
+        `Error ${isEditing ? "updating" : "adding"} candidate:`,
+        error,
+      );
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Failed to add candidate",
+        description: `Failed to ${isEditing ? "update" : "add"} candidate`,
       });
     }
   };
@@ -202,7 +230,9 @@ export function AddCandidateModal({ isOpen, onClose }: AddCandidateModalProps) {
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-[800px] max-h-[85vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Add New Candidate</DialogTitle>
+          <DialogTitle>
+            {isEditing ? "Edit Candidate" : "Add New Candidate"}
+          </DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
@@ -572,7 +602,7 @@ export function AddCandidateModal({ isOpen, onClose }: AddCandidateModalProps) {
               Cancel
             </Button>
             <Button type="submit" disabled={isUploading}>
-              Add Candidate
+              {isEditing ? "Update Candidate" : "Add Candidate"}
             </Button>
           </DialogFooter>
         </form>
