@@ -27,6 +27,9 @@ interface InterviewSchedulerProps {
   onClose: () => void;
   interviewId: string;
   candidateName: string;
+  candidateId?: string;
+  jobId?: string;
+  jobTitle?: string;
 }
 
 export function InterviewScheduler({
@@ -34,9 +37,17 @@ export function InterviewScheduler({
   onClose,
   interviewId,
   candidateName,
+  candidateId,
+  jobId,
+  jobTitle,
 }: InterviewSchedulerProps) {
   const [date, setDate] = useState<Date>();
   const [time, setTime] = useState<string>("10:00");
+  const [interviewType, setInterviewType] = useState<string>("online");
+  const [interviewRound, setInterviewRound] = useState<string>("");
+  const [interviewerEmail, setInterviewerEmail] = useState<string>("");
+  const [meetingLink, setMeetingLink] = useState<string>("");
+  const [reason, setReason] = useState<string>("");
 
   const timeSlots = [
     "09:00",
@@ -59,16 +70,32 @@ export function InterviewScheduler({
     "17:30",
   ];
 
+  const interviewRounds = [
+    "Technical Round",
+    "HR Round",
+    "Managerial Round",
+    "Final Round",
+    "Screening",
+  ];
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Reschedule Interview - {candidateName}</DialogTitle>
+          <DialogTitle>
+            {interviewId ? "Reschedule" : "Schedule"} Interview -{" "}
+            {candidateName}
+            {jobTitle && (
+              <span className="block text-sm text-muted-foreground mt-1">
+                Position: {jobTitle}
+              </span>
+            )}
+          </DialogTitle>
         </DialogHeader>
         <div className="grid gap-4 py-4">
           <div className="space-y-2">
             <Label>Interview Type</Label>
-            <Select defaultValue="technical">
+            <Select value={interviewType} onValueChange={setInterviewType}>
               <SelectTrigger>
                 <SelectValue placeholder="Select interview type" />
               </SelectTrigger>
@@ -122,18 +149,48 @@ export function InterviewScheduler({
           </div>
 
           <div className="space-y-2">
+            <Label>Interview Round</Label>
+            <Select value={interviewRound} onValueChange={setInterviewRound}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select interview round" />
+              </SelectTrigger>
+              <SelectContent>
+                {interviewRounds.map((round) => (
+                  <SelectItem key={round} value={round}>
+                    {round}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
             <Label>Interviewer Email</Label>
-            <Input type="email" placeholder="interviewer@company.com" />
+            <Input
+              type="email"
+              placeholder="interviewer@company.com"
+              value={interviewerEmail}
+              onChange={(e) => setInterviewerEmail(e.target.value)}
+            />
           </div>
 
           <div className="space-y-2">
             <Label>Meeting Link</Label>
-            <Input type="url" placeholder="https://meet.google.com/..." />
+            <Input
+              type="url"
+              placeholder="https://meet.google.com/..."
+              value={meetingLink}
+              onChange={(e) => setMeetingLink(e.target.value)}
+            />
           </div>
 
           <div className="space-y-2">
             <Label>Reason for Rescheduling</Label>
-            <Input placeholder="Brief reason for rescheduling" />
+            <Input
+              placeholder="Brief reason for rescheduling"
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
+            />
           </div>
         </div>
         <DialogFooter>
@@ -142,15 +199,24 @@ export function InterviewScheduler({
           </Button>
           <Button
             onClick={() => {
-              console.log("Rescheduling interview:", {
+              console.log("Scheduling interview:", {
                 interviewId,
+                candidateId,
+                candidateName,
+                jobId,
+                jobTitle,
                 date,
                 time,
+                interviewType,
+                interviewRound,
+                interviewerEmail,
+                meetingLink,
+                reason,
               });
               onClose();
             }}
           >
-            Reschedule & Send Invite
+            {interviewId ? "Reschedule" : "Schedule"} & Send Invite
           </Button>
         </DialogFooter>
       </DialogContent>

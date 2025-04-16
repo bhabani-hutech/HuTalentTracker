@@ -109,6 +109,16 @@ export function AddCandidateModal({
       return;
     }
 
+    // Validate required fields
+    if (!formData.name || !formData.email || !formData.phone) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Please fill in all required fields",
+      });
+      return;
+    }
+
     try {
       // Calculate match score based on skills match with job requirements
       let matchScore = candidateData?.match_score || 0;
@@ -124,10 +134,10 @@ export function AddCandidateModal({
         ) {
           // Count matching skills
           const jobSkills = selectedJob.skills.map((skill) =>
-            typeof skill === "string" ? skill.toLowerCase() : ""
+            typeof skill === "string" ? skill.toLowerCase() : "",
           );
           const candidateSkills = formData.skills.map((skill) =>
-            skill.toLowerCase()
+            skill.toLowerCase(),
           );
 
           let matchCount = 0;
@@ -137,7 +147,7 @@ export function AddCandidateModal({
                 (jobSkill) =>
                   jobSkill === skill ||
                   jobSkill.includes(skill) ||
-                  skill.includes(jobSkill)
+                  skill.includes(jobSkill),
               )
             ) {
               matchCount++;
@@ -247,6 +257,10 @@ export function AddCandidateModal({
                     ...formData,
                     job_id: value,
                     position: selectedJob?.title || formData.position,
+                    location: selectedJob?.location || formData.location,
+                    department:
+                      selectedJob?.department_id || formData.department,
+                    type: (selectedJob?.type as JobType) || formData.type,
                   });
                 }}
               >
@@ -256,7 +270,7 @@ export function AddCandidateModal({
                 <SelectContent>
                   {jobs?.map((job) => (
                     <SelectItem key={job.id} value={job.id}>
-                      {job.title}({job.location})
+                      {job.title} ({job.location})
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -266,28 +280,13 @@ export function AddCandidateModal({
             {/* Location - Editable */}
             <div className="space-y-2">
               <Label>Location</Label>
-              <Select
-                value={formData.job_id || ""}
-                onValueChange={(value) => {
-                  const selectedJob = jobs?.find((job) => job.id === value);
-                  setFormData({
-                    ...formData,
-                    job_id: value,
-                    position: selectedJob?.title || formData.position,
-                  });
-                }}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select position" />
-                </SelectTrigger>
-                <SelectContent>
-                  {jobs?.map((job) => (
-                    <SelectItem key={job.id} value={job.id}>
-                    {job.location}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Input
+                value={formData.location}
+                onChange={(e) =>
+                  setFormData({ ...formData, location: e.target.value })
+                }
+                placeholder="Enter location"
+              />
             </div>
 
             {/* Full Name - Editable */}
@@ -376,7 +375,7 @@ export function AddCandidateModal({
                 }
               >
                 <SelectTrigger>
-                  <SelectValue />
+                  <SelectValue placeholder="Select employment type" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="Full Time">Full Time</SelectItem>
