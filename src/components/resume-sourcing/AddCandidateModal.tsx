@@ -17,7 +17,11 @@ import {
 } from "../ui/select";
 import { useState, useEffect, useRef } from "react";
 import { useToast } from "../ui/use-toast";
-import { createCandidate, uploadResume } from "@/lib/api/candidates";
+import {
+  createCandidate,
+  updateCandidate,
+  uploadResume,
+} from "@/lib/api/candidates";
 import { Job, JobType } from "@/types/database";
 import { useSkills } from "@/lib/api/hooks/useSkills";
 import { useOrganizations } from "@/lib/api/hooks/useOrganizations";
@@ -85,7 +89,7 @@ export function AddCandidateModal({
     resume_file: undefined,
     file_url: candidateData?.file_url,
     job_id: candidateData?.job_id,
-    department: candidateData?.department_id,
+    department: candidateData?.department,
     hiring_partner_id: candidateData?.hiring_partner_id,
   });
 
@@ -109,16 +113,6 @@ export function AddCandidateModal({
       return;
     }
 
-    // Validate required fields
-    if (!formData.name || !formData.email || !formData.phone) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Please fill in all required fields",
-      });
-      return;
-    }
-
     try {
       // Calculate match score based on skills match with job requirements
       let matchScore = candidateData?.match_score || 0;
@@ -134,10 +128,10 @@ export function AddCandidateModal({
         ) {
           // Count matching skills
           const jobSkills = selectedJob.skills.map((skill) =>
-            typeof skill === "string" ? skill.toLowerCase() : "",
+            typeof skill === "string" ? skill.toLowerCase() : ""
           );
           const candidateSkills = formData.skills.map((skill) =>
-            skill.toLowerCase(),
+            skill.toLowerCase()
           );
 
           let matchCount = 0;
@@ -147,7 +141,7 @@ export function AddCandidateModal({
                 (jobSkill) =>
                   jobSkill === skill ||
                   jobSkill.includes(skill) ||
-                  skill.includes(jobSkill),
+                  skill.includes(jobSkill)
               )
             ) {
               matchCount++;
@@ -190,6 +184,7 @@ export function AddCandidateModal({
         phone: formData.phone,
         position: formData.position,
         location: formData.location,
+        department: formData.department,
         notice_period: formData.notice_period,
         source:
           formData.candidate_source === "Hiring Partner"
@@ -226,7 +221,7 @@ export function AddCandidateModal({
     } catch (error) {
       console.error(
         `Error ${isEditing ? "updating" : "adding"} candidate:`,
-        error,
+        error
       );
       toast({
         variant: "destructive",
@@ -257,10 +252,8 @@ export function AddCandidateModal({
                     ...formData,
                     job_id: value,
                     position: selectedJob?.title || formData.position,
+                    department: selectedJob?.department || formData.department,
                     location: selectedJob?.location || formData.location,
-                    department:
-                      selectedJob?.department_id || formData.department,
-                    type: (selectedJob?.type as JobType) || formData.type,
                   });
                 }}
               >
@@ -270,7 +263,7 @@ export function AddCandidateModal({
                 <SelectContent>
                   {jobs?.map((job) => (
                     <SelectItem key={job.id} value={job.id}>
-                      {job.title} ({job.location})
+                      {job.title}({job.location})
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -282,11 +275,31 @@ export function AddCandidateModal({
               <Label>Location</Label>
               <Input
                 value={formData.location}
-                onChange={(e) =>
-                  setFormData({ ...formData, location: e.target.value })
-                }
-                placeholder="Enter location"
+                disabled
+                placeholder="Department"
               />
+              {/* <Select
+                value={formData.job_id || ""}
+                onValueChange={(value) => {
+                  const selectedJob = jobs?.find((job) => job.id === value);
+                  setFormData({
+                    ...formData,
+                    job_id: value,
+                    position: selectedJob?.title || formData.position,
+                  });
+                }}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select position" />
+                </SelectTrigger>
+                <SelectContent>
+                  {jobs?.map((job) => (
+                    <SelectItem key={job.id} value={job.id}>
+                      {job.location}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select> */}
             </div>
 
             {/* Full Name - Editable */}
@@ -346,11 +359,18 @@ export function AddCandidateModal({
             {/* Department - Dropdown */}
             <div className="space-y-2">
               <Label>Department</Label>
-              <Select
+              <Input
+                value={formData.department}
+                disabled
+                placeholder="Department"
+              />
+              {/* <Select
                 value={formData.department || ""}
                 onValueChange={(value) => {
                   setFormData({ ...formData, department: value });
                 }}
+                value={formData.job_id || ""}
+              
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select department" />
@@ -362,20 +382,21 @@ export function AddCandidateModal({
                     </SelectItem>
                   ))}
                 </SelectContent>
-              </Select>
+              </Select> */}
             </div>
 
             {/* Employment Type - Dropdown */}
             <div className="space-y-2">
               <Label>Employment Type</Label>
-              <Select
+              <Input value={formData.type} disabled placeholder="Type" />
+              {/* <Select
                 value={formData.type}
                 onValueChange={(value) =>
                   setFormData({ ...formData, type: value as JobType })
                 }
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Select employment type" />
+                  <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="Full Time">Full Time</SelectItem>
@@ -383,7 +404,7 @@ export function AddCandidateModal({
                   <SelectItem value="Contract">Contract</SelectItem>
                   <SelectItem value="Internship">Internship</SelectItem>
                 </SelectContent>
-              </Select>
+              </Select> */}
             </div>
 
             {/* Experience - Editable */}

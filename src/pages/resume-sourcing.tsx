@@ -27,6 +27,7 @@ import { ViewResumeModal } from "../components/resume-sourcing/ViewResumeModal";
 import { ViewProfileModal } from "../components/resume-sourcing/ViewProfileModal";
 import { InterviewScheduler } from "../components/interview-schedule/interview-scheduler";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { InterviewForm } from "@/components/interviews/interview-form";
 
 export default function ResumeSourcing() {
   const {
@@ -448,7 +449,6 @@ export default function ResumeSourcing() {
   };
 
   return (
-
     <div className="container py-8 space-y-8">
       <div className="flex items-center justify-between">
         <div>
@@ -538,15 +538,24 @@ export default function ResumeSourcing() {
           )}
 
           {scheduleInterviewModalOpen && selectedCandidateForInterview && (
-            <InterviewScheduler
+            <InterviewForm
               isOpen={scheduleInterviewModalOpen}
               onClose={() => {
                 setScheduleInterviewModalOpen(false);
                 setSelectedCandidateForInterview(null);
               }}
-              interviewId={selectedCandidateForInterview.id}
-              candidateName={selectedCandidateForInterview.name}
+              //  onSubmit={handleSubmit}
+              initialData={selectedCandidateForInterview}
             />
+            // <InterviewScheduler
+            //   isOpen={scheduleInterviewModalOpen}
+            // onClose={() => {
+            //   setScheduleInterviewModalOpen(false);
+            //   setSelectedCandidateForInterview(null);
+            // }}
+            //   interviewId={selectedCandidateForInterview.id}
+            //   candidateName={selectedCandidateForInterview.name}
+            // />
           )}
 
           {showViewResumeModal && selectedCandidate && (

@@ -24,16 +24,29 @@ export function ViewResumeModal({
   const [isLoading, setIsLoading] = useState(false);
 
   if (!candidate) return null;
+  const handleDownload = async () => {
+    const response = await fetch(candidate.file_url);
+    const blob = await response.blob();
+    const url = window.URL.createObjectURL(blob);
 
-  const handleDownload = () => {
-    if (candidate.file_url) {
-      window.open(candidate.file_url, "_blank");
-    }
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "resume.pdf";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    window.URL.revokeObjectURL(url);
   };
-
+  const getColor = () => {
+    if (candidate?.match_score >= 80) return "bg-green-500";
+    if (candidate?.match_score >= 50) return "bg-yellow-500";
+    return "bg-red-500";
+  };
+  console.log(candidate);
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-[800px] max-h-[85vh]">
+      <DialogContent className="max-w-[880px] max-h-[90vh] overflow-auto flex flex-col">
         <DialogHeader>
           <DialogTitle>Resume Preview</DialogTitle>
         </DialogHeader>
@@ -41,8 +54,22 @@ export function ViewResumeModal({
         <div className="space-y-4">
           {/* Candidate Basic Info */}
           <div className="bg-muted p-4 rounded-md">
-            <h3 className="text-lg font-semibold mb-2">{candidate.name}</h3>
-            <div className="grid grid-cols-2 gap-2 text-sm">
+            <h3 className="text-lg font-semibold mb-2">
+              {candidate.name} ({candidate.position})
+            </h3>
+            <div className="w-full">
+              <div className="flex justify-between text-sm font-medium mb-1">
+                <span>Match Score</span>
+                <span>{candidate?.match_score}%</span>
+              </div>
+              <div className="w-full h-3 bg-gray-200 rounded-full">
+                <div
+                  className={`h-3 rounded-full ${getColor()}`}
+                  style={{ width: `${candidate?.match_score}%` }}
+                ></div>
+              </div>
+            </div>
+            {/* <div className="grid grid-cols-2 gap-2 text-sm">
               <div>
                 <span className="text-muted-foreground">Position: </span>
                 {candidate.position || "N/A"}
@@ -59,7 +86,7 @@ export function ViewResumeModal({
                 <span className="text-muted-foreground">Location: </span>
                 {candidate.location || "N/A"}
               </div>
-            </div>
+            </div> */}
           </div>
 
           {/* Resume Content or Embed */}
@@ -94,20 +121,20 @@ export function ViewResumeModal({
           </div>
 
           {/* Skills Section */}
-          {candidate.skills && (
+          {/* {candidate.skills && (
             <div className="space-y-2">
               <h3 className="text-md font-semibold">Skills</h3>
               <p className="text-sm">{candidate.skills}</p>
             </div>
-          )}
+          )} */}
 
           {/* Experience Section */}
-          {candidate.experience && (
+          {/* {candidate.experience && (
             <div className="space-y-2">
               <h3 className="text-md font-semibold">Experience</h3>
               <p className="text-sm">{candidate.experience}</p>
             </div>
-          )}
+          )} */}
         </div>
 
         <DialogFooter className="gap-2">
