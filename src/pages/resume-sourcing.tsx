@@ -25,6 +25,7 @@ import { Input } from "@/components/ui/input";
 import { AddCandidateModal } from "../components/resume-sourcing/AddCandidateModal";
 import { ViewResumeModal } from "../components/resume-sourcing/ViewResumeModal";
 import { ViewProfileModal } from "../components/resume-sourcing/ViewProfileModal";
+import { InterviewScheduler } from "../components/interview-schedule/interview-scheduler";
 
 export default function ResumeSourcing() {
   const {
@@ -57,7 +58,7 @@ export default function ResumeSourcing() {
         () => {
           // Invalidate and refetch candidates
           queryClient.invalidateQueries({ queryKey: ["candidates"] });
-        }
+        },
       )
       .subscribe();
 
@@ -94,12 +95,12 @@ export default function ResumeSourcing() {
     // Filter by job ID
     if (filters.jobId) {
       filtered = filtered.filter(
-        (candidate) => candidate.job_id === filters.jobId
+        (candidate) => candidate.job_id === filters.jobId,
       );
     } else if (selectedJobId) {
       // Legacy support for job selection from tabs
       filtered = filtered.filter(
-        (candidate) => candidate.job_id === selectedJobId
+        (candidate) => candidate.job_id === selectedJobId,
       );
     }
 
@@ -115,11 +116,11 @@ export default function ResumeSourcing() {
     if (filters.source) {
       if (filters.source === "direct") {
         filtered = filtered.filter(
-          (candidate) => candidate.candidate_source === "Direct Apply"
+          (candidate) => candidate.candidate_source === "Direct Apply",
         );
       } else if (filters.source === "hiring_partner") {
         filtered = filtered.filter(
-          (candidate) => candidate.candidate_source === "Hiring Partner"
+          (candidate) => candidate.candidate_source === "Hiring Partner",
         );
       }
     }
@@ -127,7 +128,7 @@ export default function ResumeSourcing() {
     // Filter by hiring partner ID
     if (filters.hiringPartnerId) {
       filtered = filtered.filter(
-        (candidate) => candidate.hiring_partner_id === filters.hiringPartnerId
+        (candidate) => candidate.hiring_partner_id === filters.hiringPartnerId,
       );
     }
 
@@ -177,7 +178,7 @@ export default function ResumeSourcing() {
           candidate.name?.toLowerCase().includes(searchLower) ||
           candidate.email?.toLowerCase().includes(searchLower) ||
           candidate.position?.toLowerCase().includes(searchLower) ||
-          candidate.skills?.toLowerCase().includes(searchLower)
+          candidate.skills?.toLowerCase().includes(searchLower),
       );
     }
 
@@ -187,7 +188,7 @@ export default function ResumeSourcing() {
   const handleFileUpload = async (
     files: FileList,
     jobId?: string,
-    hiringPartnerId?: string
+    hiringPartnerId?: string,
   ) => {
     const maxFileSize = 5 * 1024 * 1024; // 5MB
     const allowedTypes = [
@@ -270,12 +271,12 @@ export default function ResumeSourcing() {
             file,
             jobId,
             requiredSkills,
-            jobTitle
+            jobTitle,
           );
 
           console.log("Parsed resume data:", parsedData);
           console.log(
-            `Match score for ${file.name}: ${parsedData.matchScore || 0}%`
+            `Match score for ${file.name}: ${parsedData.matchScore || 0}%`,
           );
           console.log("Skill matches:", parsedData.skillMatches || []);
 
@@ -365,22 +366,22 @@ export default function ResumeSourcing() {
     // Implementation for profile view would go here
   };
 
+  const [editCandidateModalOpen, setEditCandidateModalOpen] = useState(false);
+  const [scheduleInterviewModalOpen, setScheduleInterviewModalOpen] =
+    useState(false);
+  const [selectedCandidateForEdit, setSelectedCandidateForEdit] =
+    useState<Candidate | null>(null);
+  const [selectedCandidateForInterview, setSelectedCandidateForInterview] =
+    useState<Candidate | null>(null);
+
   const handleEditCandidate = (candidate: Candidate) => {
-    // This would typically open the edit modal
-    toast({
-      title: "Edit Candidate",
-      description: `Editing ${candidate.name}`,
-    });
-    // Implementation for edit would go here
+    setSelectedCandidateForEdit(candidate);
+    setEditCandidateModalOpen(true);
   };
 
   const handleScheduleInterview = (candidate: Candidate) => {
-    // This would typically open the interview scheduler
-    toast({
-      title: "Schedule Interview",
-      description: `Scheduling interview for ${candidate.name}`,
-    });
-    // Implementation for interview scheduling would go here
+    setSelectedCandidateForInterview(candidate);
+    setScheduleInterviewModalOpen(true);
   };
 
   const handleDeleteCandidate = async (id: string) => {
@@ -430,7 +431,7 @@ export default function ResumeSourcing() {
   const [showViewResumeModal, setShowViewResumeModal] = useState(false);
   const [showViewProfileModal, setShowViewProfileModal] = useState(false);
   const [selectedCandidate, setSelectedCandidate] = useState<Candidate | null>(
-    null
+    null,
   );
 
   // Updated view resume handler
@@ -533,6 +534,32 @@ export default function ResumeSourcing() {
         <AddCandidateModal
           isOpen={showAddModal}
           onClose={() => setShowAddModal(false)}
+        />
+      )}
+
+      {/* Edit Candidate Modal */}
+      {editCandidateModalOpen && selectedCandidateForEdit && (
+        <AddCandidateModal
+          isOpen={editCandidateModalOpen}
+          onClose={() => {
+            setEditCandidateModalOpen(false);
+            setSelectedCandidateForEdit(null);
+          }}
+          candidateData={selectedCandidateForEdit}
+          isEditing={true}
+        />
+      )}
+
+      {/* Schedule Interview Modal */}
+      {scheduleInterviewModalOpen && selectedCandidateForInterview && (
+        <InterviewScheduler
+          isOpen={scheduleInterviewModalOpen}
+          onClose={() => {
+            setScheduleInterviewModalOpen(false);
+            setSelectedCandidateForInterview(null);
+          }}
+          interviewId={selectedCandidateForInterview.id}
+          candidateName={selectedCandidateForInterview.name}
         />
       )}
 
