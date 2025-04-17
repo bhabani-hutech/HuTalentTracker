@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { createInterview, updateInterview } from "@/lib/api/interviews";
+import { useToast } from "@/components/ui/use-toast";
 import {
   Dialog,
   DialogContent,
@@ -48,6 +50,7 @@ export function InterviewScheduler({
   const [interviewerEmail, setInterviewerEmail] = useState<string>("");
   const [meetingLink, setMeetingLink] = useState<string>("");
   const [reason, setReason] = useState<string>("");
+  const { toast } = useToast();
 
   const timeSlots = [
     "09:00",
@@ -77,6 +80,81 @@ export function InterviewScheduler({
     "Final Round",
     "Screening",
   ];
+
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<boolean>(false);
+
+  // Import the createInterview and updateInterview functions
+  // We're already importing these at the top of the file, so we don't need to require them again
+
+  const handleSubmit = async () => {
+    if (!date) {
+      setError("Please select a date");
+      return;
+    }
+
+    if (!interviewRound) {
+      setError("Please select an interview round");
+      return;
+    }
+
+    setIsSubmitting(true);
+    setError(null);
+
+    try {
+      // Format the date and time for the database
+      const formattedDate = date
+        ? `${format(date, "yyyy-MM-dd")}T${time}:00`
+        : "";
+
+      // Prepare the interview data
+      const interviewData = {
+        candidate_id: candidateId,
+        job_id: jobId,
+        date: formattedDate,
+        type: interviewType,
+        status: "HR round", // Default status
+        // Find the round_id based on the selected round name
+        // For now, we'll pass the name and handle it in the API
+        round_id: interviewRound,
+        feedback: "",
+        rating: 0,
+        // Additional fields
+        interviewer_email: interviewerEmail,
+        meeting_link: meetingLink,
+        reason: reason,
+      };
+
+      // Create or update the interview
+      if (interviewId) {
+        await updateInterview(interviewId, interviewData);
+        toast({
+          title: "Interview Rescheduled",
+          description: `Interview for ${candidateName} has been rescheduled successfully.`,
+        });
+      } else {
+        await createInterview(interviewData);
+        toast({
+          title: "Interview Scheduled",
+          description: `Interview for ${candidateName} has been scheduled successfully.`,
+        });
+      }
+
+      setSuccess(true);
+      onClose();
+    } catch (err) {
+      console.error("Error saving interview:", err);
+      setError("Failed to save interview. Please try again.");
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to save interview. Please try again.",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -184,39 +262,32 @@ export function InterviewScheduler({
             />
           </div>
 
-          <div className="space-y-2">
-            <Label>Reason for Rescheduling</Label>
-            <Input
-              placeholder="Brief reason for rescheduling"
-              value={reason}
-              onChange={(e) => setReason(e.target.value)}
-            />
-          </div>
+          {interviewId && (
+            <div className="space-y-2">
+              <Label>Reason for Rescheduling</Label>
+              <Input
+                placeholder="Brief reason for rescheduling"
+                value={reason}
+                onChange={(e) => setReason(e.target.value)}
+              />
+            </div>
+          )}
+
+          {error && (
+            <div className="text-sm font-medium text-destructive">{error}</div>
+          )}
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={onClose}>
+          <Button variant="outline" onClick={onClose} disabled={isSubmitting}>
             Cancel
           </Button>
-          <Button
-            onClick={() => {
-              console.log("Scheduling interview:", {
-                interviewId,
-                candidateId,
-                candidateName,
-                jobId,
-                jobTitle,
-                date,
-                time,
-                interviewType,
-                interviewRound,
-                interviewerEmail,
-                meetingLink,
-                reason,
-              });
-              onClose();
-            }}
-          >
-            {interviewId ? "Reschedule" : "Schedule"} & Send Invite
+          <Button onClick={handleSubmit} disabled={isSubmitting}>
+            {isSubmitting
+              ? "Saving..."
+              : interviewId
+                ? "Reschedule"
+                : "Schedule"}{" "}
+            & Send Invite
           </Button>
         </DialogFooter>
       </DialogContent>

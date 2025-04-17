@@ -28,6 +28,7 @@ import { ViewProfileModal } from "../components/resume-sourcing/ViewProfileModal
 import { InterviewScheduler } from "../components/interview-schedule/interview-scheduler";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { InterviewForm } from "@/components/interviews/interview-form";
+import { createInterview, updateInterview } from "@/lib/api/interviews";
 
 export default function ResumeSourcing() {
   const {
@@ -46,6 +47,7 @@ export default function ResumeSourcing() {
   const queryClient = useQueryClient();
   const subscriptionRef = useRef(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [searchTerm, setSearchTerm] = useState("");
 
   // Set up real-time subscription for candidates
   useEffect(() => {
@@ -60,7 +62,7 @@ export default function ResumeSourcing() {
         () => {
           // Invalidate and refetch candidates
           queryClient.invalidateQueries({ queryKey: ["candidates"] });
-        }
+        },
       )
       .subscribe();
 
@@ -85,6 +87,14 @@ export default function ResumeSourcing() {
     searchTerm: "",
   });
 
+  // Update filters when search term changes
+  useEffect(() => {
+    setFilters((prev) => ({
+      ...prev,
+      searchTerm: searchTerm,
+    }));
+  }, [searchTerm]);
+
   // Filter candidates based on all filter criteria
   useEffect(() => {
     if (!candidates) {
@@ -97,12 +107,12 @@ export default function ResumeSourcing() {
     // Filter by job ID
     if (filters.jobId) {
       filtered = filtered.filter(
-        (candidate) => candidate.job_id === filters.jobId
+        (candidate) => candidate.job_id === filters.jobId,
       );
     } else if (selectedJobId) {
       // Legacy support for job selection from tabs
       filtered = filtered.filter(
-        (candidate) => candidate.job_id === selectedJobId
+        (candidate) => candidate.job_id === selectedJobId,
       );
     }
 
@@ -118,11 +128,11 @@ export default function ResumeSourcing() {
     if (filters.source) {
       if (filters.source === "direct") {
         filtered = filtered.filter(
-          (candidate) => candidate.candidate_source === "Direct Apply"
+          (candidate) => candidate.candidate_source === "Direct Apply",
         );
       } else if (filters.source === "hiring_partner") {
         filtered = filtered.filter(
-          (candidate) => candidate.candidate_source === "Hiring Partner"
+          (candidate) => candidate.candidate_source === "Hiring Partner",
         );
       }
     }
@@ -130,7 +140,7 @@ export default function ResumeSourcing() {
     // Filter by hiring partner ID
     if (filters.hiringPartnerId) {
       filtered = filtered.filter(
-        (candidate) => candidate.hiring_partner_id === filters.hiringPartnerId
+        (candidate) => candidate.hiring_partner_id === filters.hiringPartnerId,
       );
     }
 
@@ -179,7 +189,7 @@ export default function ResumeSourcing() {
         (candidate) =>
           candidate.name?.toLowerCase().includes(searchLower) ||
           candidate.position?.toLowerCase().includes(searchLower) ||
-          candidate.department?.toLowerCase().includes(searchLower)
+          candidate.department?.toLowerCase().includes(searchLower),
         // candidate.skills?.toLowerCase().includes(searchLower),
       );
     }
@@ -190,7 +200,7 @@ export default function ResumeSourcing() {
   const handleFileUpload = async (
     files: FileList,
     jobId?: string,
-    hiringPartnerId?: string
+    hiringPartnerId?: string,
   ) => {
     const maxFileSize = 5 * 1024 * 1024; // 5MB
     const allowedTypes = [
@@ -273,12 +283,12 @@ export default function ResumeSourcing() {
             file,
             jobId,
             requiredSkills,
-            jobTitle
+            jobTitle,
           );
 
           console.log("Parsed resume data:", parsedData);
           console.log(
-            `Match score for ${file.name}: ${parsedData.matchScore || 0}%`
+            `Match score for ${file.name}: ${parsedData.matchScore || 0}%`,
           );
           console.log("Skill matches:", parsedData.skillMatches || []);
 
@@ -386,6 +396,30 @@ export default function ResumeSourcing() {
     setScheduleInterviewModalOpen(true);
   };
 
+  const handleSubmit = async (interviewData: any) => {
+    try {
+      // Create a new interview
+      const result = await createInterview(interviewData);
+
+      toast({
+        title: "Interview Scheduled",
+        description: "The interview has been successfully scheduled.",
+      });
+
+      // Refresh data if needed
+      queryClient.invalidateQueries({ queryKey: ["interviews"] });
+
+      return result;
+    } catch (error) {
+      console.error("Error scheduling interview:", error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to schedule the interview. Please try again.",
+      });
+    }
+  };
+
   const handleDeleteCandidate = async (id: string) => {
     try {
       await deleteCandidateHook(id);
@@ -433,7 +467,7 @@ export default function ResumeSourcing() {
   const [showViewResumeModal, setShowViewResumeModal] = useState(false);
   const [showViewProfileModal, setShowViewProfileModal] = useState(false);
   const [selectedCandidate, setSelectedCandidate] = useState<Candidate | null>(
-    null
+    null,
   );
 
   // Updated view resume handler
@@ -491,13 +525,8 @@ export default function ResumeSourcing() {
             <div className="flex w-full max-w-sm items-center space-x-2">
               <Input
                 placeholder="Search by name, position or department..."
-                value={filters.searchTerm}
-                onChange={(e) =>
-                  setFilters((prev) => ({
-                    ...prev,
-                    searchTerm: e.target.value,
-                  }))
-                }
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
                 className="flex-1"
               />
               <Button type="submit" size="icon">
@@ -544,18 +573,12 @@ export default function ResumeSourcing() {
                 setScheduleInterviewModalOpen(false);
                 setSelectedCandidateForInterview(null);
               }}
-              //  onSubmit={handleSubmit}
-              initialData={selectedCandidateForInterview}
+              onSubmit={handleSubmit}
+              initialData={{
+                candidate_id: selectedCandidateForInterview.id,
+                job_id: selectedCandidateForInterview.job_id,
+              }}
             />
-            // <InterviewScheduler
-            //   isOpen={scheduleInterviewModalOpen}
-            // onClose={() => {
-            //   setScheduleInterviewModalOpen(false);
-            //   setSelectedCandidateForInterview(null);
-            // }}
-            //   interviewId={selectedCandidateForInterview.id}
-            //   candidateName={selectedCandidateForInterview.name}
-            // />
           )}
 
           {showViewResumeModal && selectedCandidate && (
