@@ -293,7 +293,7 @@ export function EditCandidateDialog({
               onValueChange={(value) => {
                 setValue(
                   "candidate_source",
-                  value as "Direct Apply" | "Hiring Partner",
+                  value as "Direct Apply" | "Hiring Partner"
                 );
                 if (value === "Direct Apply") {
                   setValue("hiring_partner_id", undefined);
@@ -324,7 +324,7 @@ export function EditCandidateDialog({
               <Select
                 value={watch("hiring_partner_id") || ""}
                 onValueChange={(value) => {
-                  setValue("hiring_partner_id", value);
+                  setValue("hiring_partner_name", value);
                 }}
                 required
               >
@@ -365,7 +365,7 @@ export function EditCandidateDialog({
                         "skills",
                         typeof watch("skills") === "string"
                           ? newSkillsArray.join(", ")
-                          : newSkillsArray,
+                          : newSkillsArray
                       );
                     }
                   } catch (error) {
@@ -405,14 +405,14 @@ export function EditCandidateDialog({
                         try {
                           const skillsArray = getSkillsArray();
                           const updatedSkills = skillsArray.filter(
-                            (s) => s !== skill,
+                            (s) => s !== skill
                           );
 
                           setValue(
                             "skills",
                             typeof watch("skills") === "string"
                               ? updatedSkills.join(", ")
-                              : updatedSkills,
+                              : updatedSkills
                           );
                         } catch (error) {
                           console.error("Error removing skill:", error);

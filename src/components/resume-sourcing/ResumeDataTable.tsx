@@ -62,7 +62,7 @@ export function ResumeDataTable({
   const totalPages = Math.ceil(candidates.length / resultsPerPage);
   const paginatedCandidates = candidates.slice(
     (currentPage - 1) * resultsPerPage,
-    currentPage * resultsPerPage,
+    currentPage * resultsPerPage
   );
 
   const handleDelete = async (id: string) => {
@@ -75,7 +75,7 @@ export function ResumeDataTable({
       }
     }
   };
-
+  console.log(paginatedCandidates);
   return (
     <div className="w-full">
       <Table>
@@ -88,7 +88,7 @@ export function ResumeDataTable({
             <TableHead>Date</TableHead>
             <TableHead>Resume Score</TableHead>
             <TableHead>Notice Period</TableHead>
-            <TableHead className="text-right">Actions</TableHead>
+            <TableHead className="text-center">Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -100,7 +100,7 @@ export function ResumeDataTable({
               <TableCell>
                 <Badge variant="secondary">
                   {candidate.candidate_source === "Hiring Partner"
-                    ? `Hiring Partner: ${candidate.hiring_partner_name || "Unknown"}`
+                    ? `Hiring Partner: ${candidate.Organization?.name}`
                     : "Self"}
                 </Badge>
               </TableCell>
@@ -142,14 +142,14 @@ export function ResumeDataTable({
                 >
                   <PenSquare className="h-4 w-4" />
                 </Button>
-                <Button
+                {/* <Button
                   variant="ghost"
                   size="icon"
                   onClick={() => onScheduleInterview(candidate)}
                   title="Schedule Interview"
                 >
                   <CalendarPlus className="h-4 w-4" />
-                </Button>
+                </Button> */}
                 <Button
                   variant="ghost"
                   size="icon"

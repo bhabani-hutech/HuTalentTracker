@@ -20,6 +20,9 @@ export interface Candidate {
   updated_at?: string;
   candidate_source?: "Direct Apply" | "Hiring Partner";
   hiring_partner_id?: string; // UUID reference to organizations table
+  Organization: {
+    name: string
+  }
 }
 
 export async function uploadResume(file: File): Promise<string> {
@@ -180,11 +183,39 @@ export async function createCandidate(
   return data;
 }
 
+// export async function getCandidates() {
+//   try {
+//     const { data, error } = await supabase
+//       .from("candidates")
+//       .select("*")
+//       .order("created_at", { ascending: false });
+
+//     if (error) {
+//       console.error("Supabase error fetching candidates:", error);
+//       throw error;
+//     }
+
+//     if (!data) {
+//       console.warn("No data returned from candidates query");
+//       return [];
+//     }
+
+//     return data;
+//   } catch (error) {
+//     console.error("Error in getCandidates:", error);
+//     throw error;
+//   }
+// }
 export async function getCandidates() {
   try {
     const { data, error } = await supabase
       .from("candidates")
-      .select("*")
+      .select(`
+        *,
+        Organization:hiring_partner_id (
+          name
+        )
+      `)
       .order("created_at", { ascending: false });
 
     if (error) {
@@ -203,6 +234,7 @@ export async function getCandidates() {
     throw error;
   }
 }
+
 
 export async function updateCandidate(id: string, updates: Partial<Candidate>) {
   // Validate hiring_partner_id is only set when candidate_source is "Hiring Partner"

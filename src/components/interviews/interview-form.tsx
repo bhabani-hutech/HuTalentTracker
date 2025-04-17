@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
   Dialog,
   DialogContent,
@@ -9,10 +9,9 @@ import {
 import { Button } from "../ui/button";
 import { Label } from "../ui/label";
 import { Calendar } from "../ui/calendar";
-import { format, parse } from "date-fns";
+import { format } from "date-fns";
 import { CalendarIcon } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
-import { cn } from "@/lib/utils";
 import {
   Select,
   SelectContent,
@@ -24,7 +23,6 @@ import { useJobs } from "@/lib/api/hooks/useJobs";
 import { useCandidates } from "@/lib/api/hooks/useCandidates";
 import { useInterviewers } from "@/lib/api/hooks/useInterviewers";
 import { useInterviewRounds } from "@/lib/api/interviewRounds";
-import { Input } from "../ui/input";
 
 interface InterviewFormProps {
   isOpen: boolean;
@@ -45,7 +43,7 @@ export function InterviewForm({
     interviewer_id: "",
     round_id: null,
     date: new Date(),
-    time: "09:00", // Default time
+    time: "09:00",
     type: "F2F",
   });
 
@@ -54,11 +52,8 @@ export function InterviewForm({
   const { data: interviewers } = useInterviewers();
   const { data: interviewRounds } = useInterviewRounds();
 
-  // This useEffect hook will run only when the `initialData` changes.
   useEffect(() => {
-    if (initialData && initialData.id) {
-      // Set form data directly from initialData without conditional checks
-      // Ensure all UUID fields have valid values and not empty strings
+    if (initialData && initialData.id !== undefined) {
       setFormData({
         job_id: initialData.job_id || "",
         candidate_id: initialData.candidate_id || "",
@@ -67,30 +62,24 @@ export function InterviewForm({
         date: initialData.date ? new Date(initialData.date) : new Date(),
         time: initialData.date
           ? format(new Date(initialData.date), "HH:mm")
-          : "09:00", // Extract time
+          : "09:00",
         type: initialData.type || "F2F",
       });
-
-      console.log("Populated form with initial data:", initialData);
     } else {
-      // Reset form when not editing
       setFormData({
         job_id: "",
         candidate_id: "",
         interviewer_id: "",
         round_id: null,
         date: new Date(),
-        time: "09:00", // Default time
+        time: "09:00",
         type: "F2F",
       });
     }
-  }, [initialData]); // This effect only triggers when `initialData` changes
-  // Only runs when `initialData` changes
-  // Remove console.log to avoid unnecessary logging
+  }, [initialData]);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-
-    // Validate required fields
     if (
       !formData.job_id ||
       !formData.candidate_id ||
@@ -101,12 +90,10 @@ export function InterviewForm({
       return;
     }
 
-    // Merge Date & Time into a timestamp
     const [hours, minutes] = formData.time.split(":").map(Number);
     const interviewTimestamp = new Date(formData.date);
     interviewTimestamp.setHours(hours, minutes, 0, 0);
 
-    // Prepare data for submission
     const { time, ...interviewData } = formData;
     const submissionData = {
       ...interviewData,
@@ -117,36 +104,43 @@ export function InterviewForm({
     onClose();
   };
 
-  const filteredCandidates = candidates?.filter(
-    (c) => c.job_id === formData.job_id,
-  );
+  const filteredCandidates = useMemo(() => {
+    return candidates?.filter((c) => c.job_id === formData.job_id) || [];
+  }, [candidates, formData.job_id]);
 
-  const generateTimeOptions = () => {
+  const timeOptions = useMemo(() => {
     const times = [];
     for (let hour = 9; hour < 18; hour++) {
       times.push(`${hour.toString().padStart(2, "0")}:00`);
       times.push(`${hour.toString().padStart(2, "0")}:30`);
     }
     return times;
-  };
-
+  }, []);
+  console.log(initialData);
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-[800px] max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
-            {initialData ? "Edit Interview" : "Schedule New Interview"}
+            {initialData && initialData?.interviewer_id
+              ? "Edit Interview"
+              : "Schedule New Interview"}
           </DialogTitle>
         </DialogHeader>
+
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Job Position */}
           <div className="space-y-2">
             <Label>Job Position</Label>
             <Select
               value={formData.job_id}
-              onValueChange={(value) =>
-                setFormData({ ...formData, job_id: value, candidate_id: "" })
-              }
+              onValueChange={(value) => {
+                setFormData((prev) => ({
+                  ...prev,
+                  job_id: value,
+                  candidate_id: value !== prev.job_id ? "" : prev.candidate_id,
+                }));
+              }}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Select job" />
@@ -174,11 +168,18 @@ export function InterviewForm({
                 <SelectValue placeholder="Select candidate" />
               </SelectTrigger>
               <SelectContent>
-                {filteredCandidates?.map((candidate) => (
-                  <SelectItem key={candidate.id} value={candidate.id}>
-                    {candidate.name}
-                  </SelectItem>
-                ))}
+                {[
+                  ...filteredCandidates.filter(
+                    (c) => c.id !== formData.candidate_id
+                  ),
+                  candidates?.find((c) => c.id === formData.candidate_id),
+                ]
+                  .filter(Boolean)
+                  .map((candidate) => (
+                    <SelectItem key={candidate.id} value={candidate.id}>
+                      {candidate.name}
+                    </SelectItem>
+                  ))}
               </SelectContent>
             </Select>
           </div>
@@ -187,17 +188,13 @@ export function InterviewForm({
           <div className="space-y-2">
             <Label>Interview Round</Label>
             <Select
-              value={formData.round_id?.toString()} // Ensure it's a string
-              onValueChange={
-                (value) => setFormData({ ...formData, round_id: Number(value) }) // Convert back to number
+              value={formData.round_id?.toString()}
+              onValueChange={(value) =>
+                setFormData({ ...formData, round_id: Number(value) })
               }
             >
               <SelectTrigger>
-                <SelectValue placeholder="Select interview round">
-                  {interviewRounds?.find(
-                    (r) => r.id === Number(formData.round_id),
-                  )?.name || "Select interview round"}
-                </SelectValue>
+                <SelectValue placeholder="Select interview round" />
               </SelectTrigger>
               <SelectContent>
                 {interviewRounds?.map((round) => (
@@ -267,7 +264,7 @@ export function InterviewForm({
                   onSelect={(date) => {
                     if (date) {
                       const today = new Date();
-                      today.setHours(0, 0, 0, 0); // Normalize today's date
+                      today.setHours(0, 0, 0, 0);
                       if (date >= today) {
                         setFormData({ ...formData, date });
                       } else {
@@ -277,7 +274,7 @@ export function InterviewForm({
                   }}
                   disabled={(date) =>
                     date.getTime() < new Date().setHours(0, 0, 0, 0)
-                  } // Disable past dates
+                  }
                   initialFocus
                 />
               </PopoverContent>
@@ -297,7 +294,7 @@ export function InterviewForm({
                 <SelectValue placeholder="Select time" />
               </SelectTrigger>
               <SelectContent>
-                {generateTimeOptions().map((time) => (
+                {timeOptions.map((time) => (
                   <SelectItem key={time} value={time}>
                     {time}
                   </SelectItem>

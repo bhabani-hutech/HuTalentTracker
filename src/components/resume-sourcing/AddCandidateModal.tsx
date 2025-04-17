@@ -53,6 +53,7 @@ interface CandidateData {
   file_url?: string;
   job_id?: string;
   department?: string;
+  hiring_partner_name?: string;
 }
 
 export function AddCandidateModal({
@@ -91,8 +92,40 @@ export function AddCandidateModal({
     job_id: candidateData?.job_id,
     department: candidateData?.department,
     hiring_partner_id: candidateData?.hiring_partner_id,
+    hiring_partner_name: candidateData?.Organization?.name,
   });
 
+  useEffect(() => {
+    if (candidateData) {
+      setFormData({
+        name: candidateData.name || "",
+        email: candidateData.email || "",
+        phone: candidateData.phone || "",
+        position: candidateData.position || "",
+        location: candidateData.location || "Remote",
+        notice_period: candidateData.notice_period || "",
+        skills: candidateData.skills
+          ? candidateData.skills.split(", ").filter(Boolean)
+          : [],
+        type: (candidateData.type as JobType) || "Full Time",
+        experience: candidateData.experience || "0-1 years",
+        candidate_source:
+          candidateData.candidate_source === "Hiring Partner"
+            ? "Hiring Partner"
+            : "Direct Apply",
+        resume_file: undefined,
+        file_url: candidateData.file_url,
+        job_id: candidateData.job_id,
+        department: candidateData.department,
+        hiring_partner_id: candidateData.hiring_partner_id || null, // Ensure this is set
+        hiring_partner_name:
+          candidateData.hiring_partner_name ||
+          candidateData.Organization?.name ||
+          "", // Ensure this is set
+      });
+    }
+  }, [candidateData]);
+  console.log(formData);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -210,7 +243,10 @@ export function AddCandidateModal({
         });
       } else {
         // Create new candidate
-        await createCandidate(candidatePayload);
+        await createCandidate({
+          ...candidatePayload,
+          Organization: candidateData?.Organization || null, // Add Organization property
+        });
         toast({
           title: "Success",
           description: "Candidate added successfully",
@@ -278,28 +314,6 @@ export function AddCandidateModal({
                 disabled
                 placeholder="Department"
               />
-              {/* <Select
-                value={formData.job_id || ""}
-                onValueChange={(value) => {
-                  const selectedJob = jobs?.find((job) => job.id === value);
-                  setFormData({
-                    ...formData,
-                    job_id: value,
-                    position: selectedJob?.title || formData.position,
-                  });
-                }}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select position" />
-                </SelectTrigger>
-                <SelectContent>
-                  {jobs?.map((job) => (
-                    <SelectItem key={job.id} value={job.id}>
-                      {job.location}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select> */}
             </div>
 
             {/* Full Name - Editable */}
@@ -364,47 +378,12 @@ export function AddCandidateModal({
                 disabled
                 placeholder="Department"
               />
-              {/* <Select
-                value={formData.department || ""}
-                onValueChange={(value) => {
-                  setFormData({ ...formData, department: value });
-                }}
-                value={formData.job_id || ""}
-              
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select department" />
-                </SelectTrigger>
-                <SelectContent>
-                  {departments?.map((dept) => (
-                    <SelectItem key={dept.id} value={dept.id}>
-                      {dept.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select> */}
             </div>
 
             {/* Employment Type - Dropdown */}
             <div className="space-y-2">
               <Label>Employment Type</Label>
               <Input value={formData.type} disabled placeholder="Type" />
-              {/* <Select
-                value={formData.type}
-                onValueChange={(value) =>
-                  setFormData({ ...formData, type: value as JobType })
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Full Time">Full Time</SelectItem>
-                  <SelectItem value="Part Time">Part Time</SelectItem>
-                  <SelectItem value="Contract">Contract</SelectItem>
-                  <SelectItem value="Internship">Internship</SelectItem>
-                </SelectContent>
-              </Select> */}
             </div>
 
             {/* Experience - Editable */}
@@ -420,7 +399,6 @@ export function AddCandidateModal({
               />
             </div>
           </div>
-
           {/* Candidate Source */}
           <div className="space-y-2">
             <Label>How was this candidate sourced?</Label>
@@ -435,6 +413,10 @@ export function AddCandidateModal({
                     value === "Direct Apply"
                       ? undefined
                       : formData.hiring_partner_id,
+                  hiring_partner_name:
+                    value === "Direct Apply"
+                      ? undefined
+                      : formData.hiring_partner_name,
                 });
               }}
             >
@@ -450,21 +432,25 @@ export function AddCandidateModal({
             </Select>
           </div>
 
-          {/* Hiring Partner Selection - Only show if candidate_source is Hiring Partner */}
           {formData.candidate_source === "Hiring Partner" && (
             <div className="space-y-2">
               <Label>
                 <span className="flex items-center gap-1">
-                  Select Hiring Partner
-                  <span className="text-red-500">*</span>
+                  Select Hiring Partner <span className="text-red-500">*</span>
                 </span>
               </Label>
+              {console.log(formData.hiring_partner_name, hiringPartners)}
               <Select
-                value={formData.hiring_partner_id || ""}
+                value={formData.hiring_partner_name}
                 onValueChange={(value) => {
+                  const selectedPartner = hiringPartners.find(
+                    (partner) => partner.name.toString() === value
+                  );
+                  console.log(selectedPartner);
                   setFormData({
                     ...formData,
-                    hiring_partner_id: value,
+                    hiring_partner_id: selectedPartner?.id || "",
+                    hiring_partner_name: selectedPartner?.name || "",
                   });
                 }}
                 required
@@ -474,18 +460,18 @@ export function AddCandidateModal({
                 </SelectTrigger>
                 <SelectContent>
                   {hiringPartners.map((partner) => (
-                    <SelectItem key={partner.id} value={partner.id.toString()}>
+                    <SelectItem key={partner.id} value={partner.name}>
                       {partner.name}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
-              {formData.candidate_source === "Hiring Partner" &&
-                !formData.hiring_partner_id && (
-                  <p className="text-sm text-red-500 mt-1">
-                    Hiring partner selection is required
-                  </p>
-                )}
+
+              {!formData.hiring_partner_name && (
+                <p className="text-sm text-red-500 mt-1">
+                  Hiring partner selection is required
+                </p>
+              )}
             </div>
           )}
 

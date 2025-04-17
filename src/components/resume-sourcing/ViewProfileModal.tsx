@@ -145,7 +145,7 @@ export function ViewProfileModal({
                     Hiring Partner
                   </p>
                   <p className="font-medium">
-                    {candidate.hiring_partner_name || "Unknown Partner"}
+                    {candidate.Organization?.name || "Unknown Partner"}
                   </p>
                 </div>
               )}
