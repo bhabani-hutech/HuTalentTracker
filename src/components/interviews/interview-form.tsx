@@ -20,6 +20,7 @@ import {
   SelectValue,
 } from "../ui/select";
 import { useJobs } from "@/lib/api/hooks/useJobs";
+import { useToast } from "../ui/use-toast";
 import { useCandidates } from "@/lib/api/hooks/useCandidates";
 import { useInterviewers } from "@/lib/api/hooks/useInterviewers";
 import { useInterviewRounds } from "@/lib/api/interviewRounds";
@@ -38,23 +39,26 @@ export function InterviewForm({
   initialData,
 }: InterviewFormProps) {
   const [formData, setFormData] = useState({
-    job_id: "",
-    candidate_id: "",
-    interviewer_id: "",
-    round_id: null,
-    date: new Date(),
-    time: "09:00",
-    type: "F2F",
+    job_id: initialData?.job_id || "",
+    candidate_id: initialData?.candidate_id || "",
+    interviewer_id: initialData?.interviewer_id || "",
+    round_id: initialData?.round_id || null,
+    date: initialData?.date ? new Date(initialData.date) : new Date(),
+    time: initialData?.date
+      ? format(new Date(initialData.date), "HH:mm")
+      : "09:00",
+    type: initialData?.type || "F2F",
   });
-
+  const { toast } = useToast();
   const { jobs } = useJobs();
   const { data: candidates } = useCandidates();
   const { data: interviewers } = useInterviewers();
   const { data: interviewRounds } = useInterviewRounds();
 
   useEffect(() => {
-    if (initialData && initialData.id !== undefined) {
-      setFormData({
+    if (initialData && initialData.id) {
+      console.log(initialData);
+      const dataObj = {
         job_id: initialData.job_id || "",
         candidate_id: initialData.candidate_id || "",
         interviewer_id: initialData.interviewer_id || "",
@@ -64,20 +68,12 @@ export function InterviewForm({
           ? format(new Date(initialData.date), "HH:mm")
           : "09:00",
         type: initialData.type || "F2F",
-      });
-    } else {
-      setFormData({
-        job_id: "",
-        candidate_id: "",
-        interviewer_id: "",
-        round_id: null,
-        date: new Date(),
-        time: "09:00",
-        type: "F2F",
-      });
+      };
+      console.log(dataObj);
+      setFormData(dataObj);
     }
   }, [initialData]);
-
+  console.log(initialData);
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (
@@ -86,7 +82,11 @@ export function InterviewForm({
       !formData.interviewer_id ||
       !formData.round_id
     ) {
-      alert("Please fill in all required fields");
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Please select all required fields.",
+      });
       return;
     }
 
@@ -116,7 +116,22 @@ export function InterviewForm({
     }
     return times;
   }, []);
-  console.log(initialData);
+  console.log(formData);
+  // const allOptions = useMemo(() => {
+  const selectedCandidate = candidates?.find(
+    (c) => c.id === initialData.candidate_id
+  );
+  console.log(candidates, formData, selectedCandidate);
+  const candidateOptions = selectedCandidate
+    ? [
+        ...filteredCandidates.filter((c) => c.id !== initialData.candidate_id),
+        selectedCandidate,
+      ]
+    : filteredCandidates;
+  console.log(candidateOptions);
+
+  // }, [filteredCandidates, candidates, formData.candidate_id]);
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-[800px] max-h-[85vh] overflow-y-auto">
@@ -135,11 +150,11 @@ export function InterviewForm({
             <Select
               value={formData.job_id}
               onValueChange={(value) => {
-                setFormData((prev) => ({
-                  ...prev,
+                setFormData({
+                  ...formData,
                   job_id: value,
-                  candidate_id: value !== prev.job_id ? "" : prev.candidate_id,
-                }));
+                  // candidate_id:value !== formData.job_id ? "" : formData.candidate_id,
+                });
               }}
             >
               <SelectTrigger>
@@ -154,11 +169,11 @@ export function InterviewForm({
               </SelectContent>
             </Select>
           </div>
-
+          {/* {console.log(formData)} */}
           {/* Candidate */}
           <div className="space-y-2">
             <Label>Candidate</Label>
-            <Select
+            {/* <Select
               value={formData.candidate_id}
               onValueChange={(value) =>
                 setFormData({ ...formData, candidate_id: value })
@@ -180,6 +195,23 @@ export function InterviewForm({
                       {candidate.name}
                     </SelectItem>
                   ))}
+              </SelectContent>
+            </Select> */}
+            <Select
+              value={formData.candidate_id}
+              onValueChange={(value) =>
+                setFormData({ ...formData, candidate_id: value })
+              }
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select candidate" />
+              </SelectTrigger>
+              <SelectContent>
+                {candidateOptions.map((candidate) => (
+                  <SelectItem key={candidate.id} value={candidate.id}>
+                    {candidate.name}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>

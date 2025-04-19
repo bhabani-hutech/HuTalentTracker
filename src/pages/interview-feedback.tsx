@@ -126,7 +126,7 @@ export default function InterviewFeedback() {
       >
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-background">
           <DialogHeader>
-            <DialogTitle>Edit Candidate</DialogTitle>
+            <DialogTitle>Edit Feedback</DialogTitle>
           </DialogHeader>
           <InterviewFeedbackForm
             existingFeedback={selectedFeedback}

@@ -115,14 +115,14 @@ export function CandidateList({
                   <TableCell>
                     <Badge
                       className={getRecommendationColor(
-                        feedback.recommendation,
+                        feedback.recommendation
                       )}
                     >
                       {feedback.recommendation}
                     </Badge>
                   </TableCell>
                   <TableCell>
-                    <div className="flex gap-2 justify-end">
+                    <div className="flex gap-2">
                       <Button
                         variant="ghost"
                         size="icon"

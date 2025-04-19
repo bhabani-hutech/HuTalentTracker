@@ -18,9 +18,8 @@ import { supabase } from "@/lib/supabase";
 export default function InterviewSchedule() {
   const [interviews, setInterviews] = useState<Interview[]>([]);
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [selectedInterview, setSelectedInterview] = useState<
-    Interview | undefined
-  >();
+  const [selectedInterview, setSelectedInterview] =
+    useState<Interview | null>();
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
@@ -60,7 +59,7 @@ export default function InterviewSchedule() {
         { event: "*", schema: "public", table: "interviews" },
         () => {
           fetchInterviews();
-        },
+        }
       )
       .subscribe();
 
@@ -74,9 +73,9 @@ export default function InterviewSchedule() {
       }
     };
   }, []);
-
+  console.log(selectedInterview);
   const handleSubmit = async (
-    data: Omit<Interview, "id" | "created_at" | "updated_at">,
+    data: Omit<Interview, "id" | "created_at" | "updated_at">
   ) => {
     try {
       if (selectedInterview) {
@@ -94,7 +93,7 @@ export default function InterviewSchedule() {
       }
       await fetchInterviews();
       setIsFormOpen(false);
-      setSelectedInterview(undefined);
+      setSelectedInterview(null);
     } catch (error) {
       toast({
         variant: "destructive",
@@ -130,7 +129,7 @@ export default function InterviewSchedule() {
 
   const handleCloseForm = () => {
     setIsFormOpen(false);
-    setSelectedInterview(undefined);
+    setSelectedInterview(null);
   };
 
   // Filter interviews based on search query
@@ -239,7 +238,7 @@ export default function InterviewSchedule() {
         isOpen={isFormOpen}
         onClose={handleCloseForm}
         onSubmit={handleSubmit}
-        initialData={selectedInterview}
+        initialData={selectedInterview||{}}
       />
     </div>
   );

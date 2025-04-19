@@ -146,7 +146,7 @@ export async function updateInterview(
     console.error("Error updating interview:", error);
     throw error;
   }
-
+console.log(data)
   return data as Interview;
 }
 
