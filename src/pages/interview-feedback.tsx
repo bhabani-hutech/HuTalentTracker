@@ -17,6 +17,7 @@ export default function InterviewFeedback() {
   const interviewId = params.get("interview");
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [selectedFeedback, setSelectedFeedback] = useState(null);
+  const [isNew, setIsNew] = useState(false);
 
   const {
     feedback,
@@ -30,7 +31,7 @@ export default function InterviewFeedback() {
   } = useInterviews(interviewId || undefined);
 
   const [selectedInterviewId, setSelectedInterviewId] = useState<string | null>(
-    null
+    null,
   );
 
   const [selectedInterview, setSelectedInterview] = useState<any>(null);
@@ -38,6 +39,7 @@ export default function InterviewFeedback() {
   useEffect(() => {
     const loadData = async () => {
       if (interviewId) {
+        setIsNew(params.get("new") === "true");
         try {
           // First get the interview details
           const { data: interview, error: interviewError } = await supabase
@@ -47,7 +49,7 @@ export default function InterviewFeedback() {
               *,
               candidate:candidates!candidate_id(*),
               interviewer:users!interviewer_id(*)
-              `
+              `,
             )
             .eq("id", interviewId)
             .single();
@@ -62,7 +64,7 @@ export default function InterviewFeedback() {
               await supabase
                 .from("feedback")
                 .select(
-                  "*, interview:interviews(*), candidate:candidates(*), interviewer:users(*)"
+                  "*, interview:interviews(*), candidate:candidates(*), interviewer:users(*)",
                 )
                 .eq("interview_id", interviewId)
                 .order("created_at", { ascending: false })

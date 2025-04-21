@@ -85,9 +85,6 @@ export function InterviewScheduler({
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<boolean>(false);
 
-  // Import the createInterview and updateInterview functions
-  // We're already importing these at the top of the file, so we don't need to require them again
-
   const handleSubmit = async () => {
     if (!date) {
       setError("Please select a date");

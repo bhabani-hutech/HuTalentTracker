@@ -5,6 +5,7 @@ export type Interview = {
   candidate_id?: string;
   interviewer_id?: string;
   round_id?: string;
+  job_id?: string; // Added job_id property
   date: string;
   type: string;
   status:
@@ -23,6 +24,7 @@ export type Interview = {
     name: string;
     job_id?: string;
     stage_id?: string;
+    position?: string; // Added position property
     jobs?: {
       id: string;
       title: string;
@@ -146,7 +148,7 @@ export async function updateInterview(
     console.error("Error updating interview:", error);
     throw error;
   }
-console.log(data)
+  console.log(data);
   return data as Interview;
 }
 
