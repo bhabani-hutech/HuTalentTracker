@@ -574,11 +574,11 @@ export default function ResumeSourcing() {
                 setSelectedCandidateForInterview(null);
               }}
               onSubmit={handleSubmit}
-              // initialData={{
-              //   candidate_id: selectedCandidateForInterview.id,
-              //   job_id: selectedCandidateForInterview.job_id,
-              // }}
-              initialData={selectedCandidateForInterview}
+              initialData={{
+                candidate_id: selectedCandidateForInterview.id,
+                job_id: selectedCandidateForInterview.job_id,
+              }}
+              // initialData={selectedCandidateForInterview}
             />
           )}
 

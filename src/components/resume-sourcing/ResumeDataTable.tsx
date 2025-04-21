@@ -142,14 +142,14 @@ export function ResumeDataTable({
                 >
                   <PenSquare className="h-4 w-4" />
                 </Button>
-                {/* <Button
+                <Button
                   variant="ghost"
                   size="icon"
                   onClick={() => onScheduleInterview(candidate)}
                   title="Schedule Interview"
                 >
                   <CalendarPlus className="h-4 w-4" />
-                </Button> */}
+                </Button>
                 <Button
                   variant="ghost"
                   size="icon"

@@ -30,7 +30,8 @@ export default function StatusTracking() {
       try {
         const { data, error } = await supabase
           .from("jobs")
-          .select("id, title")
+          .select("id, title,location")
+          // .eq("is_active", true)
           .order("title");
         if (error) throw error;
         setJobPositions(data || []);
@@ -143,7 +144,7 @@ export default function StatusTracking() {
             <SelectContent>
               {jobPositions.map((job) => (
                 <SelectItem key={job.id} value={job.id}>
-                  {job.title}
+                  {job.title}({job.location})
                 </SelectItem>
               ))}
             </SelectContent>

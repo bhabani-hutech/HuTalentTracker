@@ -336,7 +336,11 @@ export function InterviewForm({
           </div>
 
           <DialogFooter>
-            <Button type="submit">{initialData ? "Update" : "Schedule"}</Button>
+            <Button type="submit">
+              {initialData && initialData?.interviewer_id
+                ? "Update"
+                : "Schedule"}
+            </Button>
           </DialogFooter>
         </form>
       </DialogContent>

@@ -109,6 +109,7 @@ export function InterviewTable({
                   <Button
                     variant="ghost"
                     size="icon"
+                    className="text-red-500 hover:text-red-600"
                     onClick={() => setDeleteId(interview.id)}
                   >
                     <Trash2 className="h-4 w-4" />

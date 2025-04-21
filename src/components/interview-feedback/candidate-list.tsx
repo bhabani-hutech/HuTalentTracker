@@ -59,7 +59,7 @@ export function CandidateList({
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
   const currentFeedback = filteredFeedback.slice(startIndex, endIndex);
-
+  console.log(currentFeedback);
   return (
     <Card>
       <CardHeader>
@@ -92,7 +92,7 @@ export function CandidateList({
             <TableHeader>
               <TableRow>
                 <TableHead>Name</TableHead>
-
+                <TableHead>Position</TableHead>
                 <TableHead>Interview Date</TableHead>
                 <TableHead>Interviewer</TableHead>
                 <TableHead>Recommendation</TableHead>
@@ -104,6 +104,9 @@ export function CandidateList({
                 <TableRow key={feedback.id}>
                   <TableCell className="font-medium">
                     {feedback.candidate?.name}
+                  </TableCell>
+                  <TableCell className="font-medium">
+                    {feedback.candidate?.position}
                   </TableCell>
 
                   <TableCell>
@@ -133,6 +136,7 @@ export function CandidateList({
                       <Button
                         variant="ghost"
                         size="icon"
+                        className="text-red-500 hover:text-red-600"
                         onClick={() => handleDelete(feedback.id)}
                       >
                         <Trash2 className="h-4 w-4" />

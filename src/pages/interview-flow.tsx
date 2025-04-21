@@ -59,7 +59,8 @@ export default function InterviewFlow() {
       try {
         const { data, error } = await supabase
           .from("jobs")
-          .select("id, title")
+          .select("id, title,location")
+          // .eq("is_active", true)
           .order("title");
         if (error) throw error;
         setJobPositions(data || []);
@@ -110,7 +111,6 @@ export default function InterviewFlow() {
     fetchData();
   }, [selectedJobId]);
 
-  
   // Use a ref to prevent multiple subscriptions
   const subscriptionRef = useRef(null);
 
@@ -391,7 +391,6 @@ export default function InterviewFlow() {
           Manage candidate progression through interview stages
         </p>
       </div>
-
       <div className="space-y-2">
         <Label>Job Position</Label>
         <Select value={selectedJobId} onValueChange={setSelectedJobId}>
@@ -401,7 +400,7 @@ export default function InterviewFlow() {
           <SelectContent>
             {jobPositions.map((job) => (
               <SelectItem key={job.id} value={job.id}>
-                {job.title}
+                {job.title}({job.location})
               </SelectItem>
             ))}
           </SelectContent>
