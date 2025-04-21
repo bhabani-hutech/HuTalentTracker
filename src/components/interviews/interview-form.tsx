@@ -280,59 +280,62 @@ export function InterviewForm({
           </div>
 
           {/* Date */}
-          <div className="space-y-2">
-            <Label>Date</Label>
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button variant="outline" className="w-full text-left">
-                  <CalendarIcon className="mr-2 h-4 w-4" />
-                  {format(formData.date, "PPP")}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
-                <Calendar
-                  mode="single"
-                  selected={formData.date}
-                  onSelect={(date) => {
-                    if (date) {
-                      const today = new Date();
-                      today.setHours(0, 0, 0, 0);
-                      if (date >= today) {
-                        setFormData({ ...formData, date });
-                      } else {
-                        alert("You cannot select a past date.");
+          <div className="flex flex-col md:flex-row gap-4">
+            {/* Date Field */}
+            <div className="flex-1 space-y-1">
+              <Label>Date</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" className="w-full text-left">
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {format(formData.date, "PPP")}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={formData.date}
+                    onSelect={(date) => {
+                      if (date) {
+                        const today = new Date();
+                        today.setHours(0, 0, 0, 0);
+                        if (date >= today) {
+                          setFormData({ ...formData, date });
+                        } else {
+                          alert("You cannot select a past date.");
+                        }
                       }
+                    }}
+                    disabled={(date) =>
+                      date.getTime() < new Date().setHours(0, 0, 0, 0)
                     }
-                  }}
-                  disabled={(date) =>
-                    date.getTime() < new Date().setHours(0, 0, 0, 0)
-                  }
-                  initialFocus
-                />
-              </PopoverContent>
-            </Popover>
-          </div>
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
 
-          {/* Time */}
-          <div className="space-y-2">
-            <Label>Time</Label>
-            <Select
-              value={formData.time}
-              onValueChange={(value) =>
-                setFormData({ ...formData, time: value })
-              }
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select time" />
-              </SelectTrigger>
-              <SelectContent>
-                {timeOptions.map((time) => (
-                  <SelectItem key={time} value={time}>
-                    {time}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            {/* Time Field */}
+            <div className="flex-1 space-y-1">
+              <Label>Time</Label>
+              <Select
+                value={formData.time}
+                onValueChange={(value) =>
+                  setFormData({ ...formData, time: value })
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select time" />
+                </SelectTrigger>
+                <SelectContent>
+                  {timeOptions.map((time) => (
+                    <SelectItem key={time} value={time}>
+                      {time}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
           <DialogFooter>

@@ -62,7 +62,15 @@ export function SiteHeader({ items }: SiteHeaderProps) {
       }`}
     >
       <div className="flex h-14 items-center px-4 border-b border-white/10 justify-between">
-        {!isCollapsed && <h1 className="text-lg font-bold">Hutech</h1>}
+        {!isCollapsed && (
+          <>
+            <div>
+              {" "}
+              <img src="/hutalent.svg" alt="Logo" className="h-10 mx-auto" />
+            </div>
+            <h1 className="text-lg font-bold">HuTalent</h1>
+          </>
+        )}
         <Button
           variant="ghost"
           size="icon"
@@ -70,7 +78,12 @@ export function SiteHeader({ items }: SiteHeaderProps) {
           onClick={() => setIsCollapsed(!isCollapsed)}
         >
           {isCollapsed ? (
-            <ChevronRight className="h-5 w-5" />
+            <div className="flex flex-row items-center gap-3">
+              <img src="/hutalent.svg" alt="Logo" className="h-7" />
+              <span>
+                <ChevronRight className="h-4 w-4" />
+              </span>
+            </div>
           ) : (
             <ChevronLeft className="h-5 w-5" />
           )}

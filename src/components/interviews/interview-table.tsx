@@ -10,7 +10,7 @@ import {
 } from "../ui/table";
 import { Badge } from "../ui/badge";
 import { format } from "date-fns";
-import { Pencil, Trash2, FileText } from "lucide-react";
+import {  Trash2, FileText, PenSquare } from "lucide-react";
 import { Interview } from "@/lib/api/interviews";
 import {
   AlertDialog,
@@ -94,7 +94,7 @@ export function InterviewTable({
                     size="icon"
                     onClick={() => onEdit(interview)}
                   >
-                    <Pencil className="h-4 w-4" />
+                    <PenSquare className="h-4 w-4" />
                   </Button>
                   <Button
                     variant="ghost"

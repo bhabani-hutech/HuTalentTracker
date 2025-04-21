@@ -9,7 +9,21 @@ import {
 } from "../ui/table";
 import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
-import { PenSquare, CalendarPlus, Trash2, User, FileText } from "lucide-react";
+import {
+  PenSquare,
+  CalendarPlus,
+  Trash2,
+  User,
+  FileText,
+  MoreVertical,
+} from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from "@/components/ui/dropdown-menu";
+
 import { Candidate } from "@/lib/api/candidates";
 
 interface ResumeDataTableProps {
@@ -30,6 +44,21 @@ const getScoreColor = (score?: number): string => {
   if (score >= 50) return "bg-orange-500 hover:bg-orange-600 text-white";
   return "bg-red-500 hover:bg-red-600 text-white";
 };
+const getSourceColor = (partner?: string): string => {
+  const baseStyles =
+    "inline-flex items-center justify-center px-0 py-1 min-w-[50px] rounded-[7px] text-xs font-medium text-white transition-colors duration-200 text-center";
+
+  if (!partner && partner !== "")
+    return `${baseStyles} bg-gray-500 hover:bg-gray-600`;
+
+  if (partner === "Direct Apply")
+    return `${baseStyles} bg-[#3F7D58] hover:bg-[#33664A]`;
+
+  if (partner === "Hiring Partner")
+    return `${baseStyles} bg-[#102E50] hover:bg-[#0C2340]`;
+
+  return `${baseStyles} bg-red-500 hover:bg-red-600`;
+};
 
 export function ResumeDataTable({
   candidates,
@@ -41,7 +70,9 @@ export function ResumeDataTable({
   onScheduleInterview,
 }: ResumeDataTableProps) {
   const [currentPage, setCurrentPage] = useState(1);
-  const resultsPerPage = 10;
+  const resultsPerPage = 5;
+  const startIndex = (currentPage - 1) * resultsPerPage;
+  const endIndex = currentPage * resultsPerPage;
 
   if (isLoading) {
     return (
@@ -60,6 +91,7 @@ export function ResumeDataTable({
   }
 
   const totalPages = Math.ceil(candidates.length / resultsPerPage);
+
   const paginatedCandidates = candidates.slice(
     (currentPage - 1) * resultsPerPage,
     currentPage * resultsPerPage
@@ -75,7 +107,7 @@ export function ResumeDataTable({
       }
     }
   };
-  console.log(paginatedCandidates);
+  console.log(paginatedCandidates, totalPages);
   return (
     <div className="w-full">
       <Table>
@@ -98,11 +130,11 @@ export function ResumeDataTable({
               <TableCell>{candidate.position || "N/A"}</TableCell>
               <TableCell>{candidate.department || "N/A"}</TableCell>
               <TableCell>
-                <Badge variant="secondary">
+                <div className={getSourceColor(candidate.candidate_source)}>
                   {candidate.candidate_source === "Hiring Partner"
-                    ? `Hiring Partner: ${candidate.Organization?.name}`
+                    ? `${candidate.Organization?.name}`
                     : "Self"}
-                </Badge>
+                </div>
               </TableCell>
               <TableCell>
                 {new Date(candidate?.created_at || "").toLocaleDateString()}
@@ -115,7 +147,7 @@ export function ResumeDataTable({
                 </Badge>
               </TableCell>
               <TableCell>{candidate.notice_period || "N/A"}</TableCell>
-              <TableCell className="text-right space-x-2">
+              {/* <TableCell className="text-right space-x-2">
                 <Button
                   variant="ghost"
                   size="icon"
@@ -137,19 +169,20 @@ export function ResumeDataTable({
                 <Button
                   variant="ghost"
                   size="icon"
-                  onClick={() => onEdit(candidate)}
-                  title="Edit Candidate"
-                >
-                  <PenSquare className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
                   onClick={() => onScheduleInterview(candidate)}
                   title="Schedule Interview"
                 >
                   <CalendarPlus className="h-4 w-4" />
                 </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => onEdit(candidate)}
+                  title="Edit Candidate"
+                >
+                  <PenSquare className="h-4 w-4" />
+                </Button>
+
                 <Button
                   variant="ghost"
                   size="icon"
@@ -159,6 +192,58 @@ export function ResumeDataTable({
                 >
                   <Trash2 className="h-4 w-4" />
                 </Button>
+              </TableCell> */}
+
+              <TableCell className="text-right">
+                {/* First 3 buttons visible */}
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => onViewResume(candidate)}
+                  disabled={!candidate.file_url}
+                  className={!candidate.file_url ? "opacity-50" : ""}
+                  title="View Resume"
+                >
+                  <FileText className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => onViewProfile(candidate)}
+                  title="View Profile"
+                >
+                  <User className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => onScheduleInterview(candidate)}
+                  title="Schedule Interview"
+                >
+                  <CalendarPlus className="h-4 w-4" />
+                </Button>
+
+                {/* Last 2 buttons inside dropdown */}
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon" title="More actions">
+                      <MoreVertical className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={() => onEdit(candidate)}>
+                      <PenSquare className="mr-2 h-4 w-4" />
+                      Edit
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => handleDelete(candidate.id)}
+                      className="text-red-500 focus:text-red-600"
+                    >
+                      <Trash2 className="mr-2 h-4 w-4" />
+                      Delete
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </TableCell>
             </TableRow>
           ))}
@@ -166,7 +251,7 @@ export function ResumeDataTable({
       </Table>
 
       {/* Pagination Controls */}
-      {totalPages > 1 && (
+      {/* {totalPages > 1 && (
         <div className="flex items-center justify-center space-x-2 py-4">
           <Button
             variant="outline"
@@ -199,6 +284,38 @@ export function ResumeDataTable({
           >
             Next
           </Button>
+        </div>
+      )} */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between space-x-2 py-4">
+          {/* Pagination Info */}
+          <div className="text-sm text-muted-foreground">
+            Showing {startIndex + 1} to{" "}
+            {Math.min(endIndex, paginatedCandidates.length)} of{" "}
+            {paginatedCandidates.length} interviews
+          </div>
+
+          {/* Pagination Controls */}
+          <div className="flex space-x-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+              disabled={currentPage === 1}
+            >
+              Previous
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() =>
+                setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+              }
+              disabled={currentPage === totalPages}
+            >
+              Next
+            </Button>
+          </div>
         </div>
       )}
     </div>

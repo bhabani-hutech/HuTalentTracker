@@ -60,15 +60,15 @@ export function Login() {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-50">
+    <div className="flex items-center justify-center pt-12">
       <Card className="w-full max-w-md">
-        <CardHeader className="space-y-1">
-          <CardTitle className="text-2xl font-bold text-center">
-            Sign In
-          </CardTitle>
-          <CardDescription className="text-center">
-            Enter your email and password to sign in to your account
-          </CardDescription>
+        <CardHeader className="space-y-10">
+          <img src="/logo.svg" alt="Logo" className="h-10 mx-auto" />
+
+          <div className="space-y-1 text-center">
+            <CardTitle className="text-2xl font-bold">Sign In</CardTitle>
+            <CardDescription>Enter your email and password</CardDescription>
+          </div>
         </CardHeader>
         <CardContent>
           {error && (
@@ -77,7 +77,7 @@ export function Login() {
             </div>
           )}
           <form onSubmit={handleSubmit}>
-            <div className="grid gap-4">
+            <div className="grid gap-10">
               <div className="grid gap-2">
                 <Label htmlFor="email">Email</Label>
                 <Input
@@ -92,13 +92,14 @@ export function Login() {
               <div className="grid gap-2">
                 <div className="flex items-center justify-between">
                   <Label htmlFor="password">Password</Label>
-                  <a href="#" className="text-sm text-primary hover:underline">
+                  {/* <a href="#" className="text-sm text-primary hover:underline">
                     Forgot password?
-                  </a>
+                  </a> */}
                 </div>
                 <Input
                   id="password"
                   type="password"
+                  placeholder="&#9679;&#9679;&#9679;&#9679;&#9679;&#9679;"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
@@ -112,7 +113,7 @@ export function Login() {
               </Button>
             </div>
           </form>
-          <div className="relative my-4">
+          {/* <div className="relative my-4">
             <div className="absolute inset-0 flex items-center">
               <span className="w-full border-t" />
             </div>
@@ -121,10 +122,10 @@ export function Login() {
                 Or continue with
               </span>
             </div>
-          </div>
-          <GoogleAuthButton />
+          </div> */}
+          {/* <GoogleAuthButton /> */}
         </CardContent>
-        <CardFooter className="flex flex-col">
+        {/* <CardFooter className="flex flex-col">
           <div className="text-sm text-center text-muted-foreground mt-2">
             Don't have an account?{" "}
             <a
@@ -134,7 +135,7 @@ export function Login() {
               Sign up
             </a>
           </div>
-        </CardFooter>
+        </CardFooter> */}
       </Card>
     </div>
   );

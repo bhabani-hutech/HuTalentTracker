@@ -38,19 +38,18 @@ export function MainNav({ items, isCollapsed }: MainNavProps) {
                             ? "bg-white/10 text-white"
                             : "text-white/70 hover:bg-white/10 hover:text-white",
                           item.disabled && "cursor-not-allowed opacity-80",
-                          isCollapsed ? "justify-center px-2" : "px-4",
+                          isCollapsed ? "justify-center px-2" : "px-4"
                         )}
                       >
                         {item.icon && <item.icon className="h-4 w-4" />}
                         {!isCollapsed && item.title}
                       </Link>
                     </TooltipTrigger>
-                    {isCollapsed && (
-                      <TooltipContent side="right">{item.title}</TooltipContent>
-                    )}
+
+                    <TooltipContent side="right">{item.title}</TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
-              ),
+              )
           )}
         </div>
       </ScrollArea>
@@ -78,13 +77,13 @@ export function MainNav({ items, isCollapsed }: MainNavProps) {
                         location.pathname === item.href
                           ? "bg-white/10 text-white"
                           : "text-white/70 hover:bg-white/10 hover:text-white",
-                        item.disabled && "cursor-not-allowed opacity-80",
+                        item.disabled && "cursor-not-allowed opacity-80"
                       )}
                     >
                       {item.icon && <item.icon className="h-4 w-4" />}
                       {item.title}
                     </Link>
-                  ),
+                  )
               )}
             </div>
           </ScrollArea>
