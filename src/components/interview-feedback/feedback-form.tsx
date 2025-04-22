@@ -18,6 +18,13 @@ import { useCandidates } from "@/lib/api/hooks/useCandidates";
 import { useInterviews } from "@/lib/api/hooks/useInterviews";
 import { format } from "date-fns";
 import { useSkills } from "@/lib/api/hooks/useSkills";
+import {
+  Interview,
+  getInterviews,
+  createInterview,
+  updateInterview,
+  deleteInterview,
+} from "@/lib/api/interviews";
 
 interface Props {
   existingFeedback?: InterviewFeedback;
@@ -78,7 +85,7 @@ export function InterviewFeedbackForm({
           interviewer: selectedInterview?.interviewer,
         }
   );
-
+  console.log(interviews);
   // Initialize skill ratings based on existing feedback or candidate skills
   useEffect(() => {
     try {
@@ -263,24 +270,83 @@ export function InterviewFeedbackForm({
       <div className="grid gap-4 md:grid-cols-2">
         <div className="space-y-2">
           <Label>Candidate Name</Label>
-          <Input
+          {/* <Input
             value={
               formData?.interview?.candidate?.name ||
               formData?.candidate?.name ||
               ""
             }
-            disabled
+            disabled = { formData?.interview?.candidate?.name ||
+              formData?.candidate?.name?true:false}
             placeholder="Candidate name"
-          />
+          /> */}
+          <Select
+            value={formData?.candidate?.id || ""}
+            disabled={
+              !!formData?.interview?.candidate?.name ||
+              !!formData?.candidate?.name
+            }
+            onValueChange={(value) => {
+              const selectedInterview = interviews?.find(
+                (ele) => ele?.candidate?.id === value
+              );
+
+              if (selectedInterview?.candidate) {
+                setFormData({
+                  ...formData,
+                  candidate: selectedInterview.candidate,
+                  interview: {
+                    ...(formData.interview || {}),
+                    date: selectedInterview.date,
+                    candidate: selectedInterview.candidate,
+                  },
+                });
+              }
+            }}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Select Candidate name" />
+            </SelectTrigger>
+            <SelectContent>
+              {interviews?.map((ele) => (
+                <SelectItem key={ele?.candidate?.id} value={ele?.candidate?.id}>
+                  {ele?.candidate?.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
         <div className="space-y-2">
           <Label>Interviewer</Label>
-          <Input
+          {/* <Input
             value={formData.interviewer?.name || ""}
-            disabled
+            disabled={formData.interviewer?.name ? true : false}
             placeholder="Interviewer name"
-          />
+          /> */}
+          <Select
+            value={formData.interviewer?.id || ""}
+            disabled={!!formData.interviewer?.name}
+            onValueChange={(value) => {
+              const selectedInterviewer = interviewers?.find(
+                (ele) => ele?.id === value
+              );
+              if (selectedInterviewer) {
+                setFormData({ ...formData, interviewer: selectedInterviewer });
+              }
+            }}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Select Interviewer name" />
+            </SelectTrigger>
+            <SelectContent>
+              {interviewers?.map((ele) => (
+                <SelectItem key={ele?.id} value={ele?.id}>
+                  {ele?.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
       </div>
 
@@ -289,13 +355,11 @@ export function InterviewFeedbackForm({
         <Input
           type="text"
           value={
-            formData.interview
-              ? `${format(new Date(formData.interview.date), "PPp")} - ${
-                  formData.interview.type
-                }`
+            formData.interview?.date
+              ? format(new Date(formData.interview.date), "PPp")
               : ""
           }
-          disabled
+          disabled={formData.interview?.date ? true : false}
           placeholder="Interview details"
         />
       </div>

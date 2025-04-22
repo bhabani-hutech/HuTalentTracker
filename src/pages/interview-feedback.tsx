@@ -7,7 +7,7 @@ import { useFeedback } from "@/lib/api/hooks/useFeedback";
 import { supabase } from "@/lib/supabase";
 import { useInterviews } from "@/lib/api/hooks/useInterviews";
 import { Icons } from "@/components/icons";
-import { FileText } from "lucide-react";
+import { FileText, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { DialogTitle } from "@radix-ui/react-dialog";
 
@@ -31,7 +31,7 @@ export default function InterviewFeedback() {
   } = useInterviews(interviewId || undefined);
 
   const [selectedInterviewId, setSelectedInterviewId] = useState<string | null>(
-    null,
+    null
   );
 
   const [selectedInterview, setSelectedInterview] = useState<any>(null);
@@ -49,7 +49,7 @@ export default function InterviewFeedback() {
               *,
               candidate:candidates!candidate_id(*),
               interviewer:users!interviewer_id(*)
-              `,
+              `
             )
             .eq("id", interviewId)
             .single();
@@ -64,7 +64,7 @@ export default function InterviewFeedback() {
               await supabase
                 .from("feedback")
                 .select(
-                  "*, interview:interviews(*), candidate:candidates(*), interviewer:users(*)",
+                  "*, interview:interviews(*), candidate:candidates(*), interviewer:users(*)"
                 )
                 .eq("interview_id", interviewId)
                 .order("created_at", { ascending: false })
@@ -106,15 +106,25 @@ export default function InterviewFeedback() {
 
   return (
     <div className="container py-8 space-y-8">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">
-          Interview Feedback
-        </h1>
-        <p className="text-muted-foreground">
-          Submit and review candidate interview feedback
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">
+            Interview Feedback
+          </h1>
+          <p className="text-muted-foreground">
+            Submit and review candidate interview feedback
+          </p>
+        </div>
+        <Button
+          onClick={() => {
+            setShowCreateForm(true);
+            setSelectedFeedback(null);
+            setSelectedInterviewId(null);
+          }}
+        >
+          <Plus className="mr-2 h-4 w-4" /> Interview Feedback
+        </Button>
       </div>
-
       <CandidateList onFeedback={setSelectedFeedback} feedbackData={feedback} />
 
       <Dialog
@@ -128,7 +138,9 @@ export default function InterviewFeedback() {
       >
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-background">
           <DialogHeader>
-            <DialogTitle>Edit Feedback</DialogTitle>
+            <DialogTitle>
+              {selectedFeedback ? "Edit Feedback" : "Create New Feedback"}
+            </DialogTitle>
           </DialogHeader>
           <InterviewFeedbackForm
             existingFeedback={selectedFeedback}
