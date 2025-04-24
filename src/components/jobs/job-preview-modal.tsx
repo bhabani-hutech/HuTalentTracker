@@ -21,8 +21,35 @@ export function JobPreviewModal({
   onClose,
 }: JobPreviewModalProps) {
   if (!job) return null;
+  const BASE_URL =
+    import.meta.env.MODE === "development"
+      ? window.location.origin
+      : `http://106.51.17.150:5172`;
 
-  const jobUrl = `${window.location.origin}/careers/${job.id}`;
+  const jobUrl = `${BASE_URL}/careers/${job.id}`;
+  console.log(jobUrl, BASE_URL, import.meta.env.MODE);
+  const copyToClipboard = async (text: string) => {
+    console.log(text);
+    try {
+      await navigator.clipboard.writeText(text);
+      alert("Job posting URL copied to clipboard!");
+    } catch (err) {
+      try {
+        // Fallback for older browsers or insecure context
+        const textarea = document.createElement("textarea");
+        textarea.value = text;
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand("copy");
+        document.body.removeChild(textarea);
+        console.log(textarea.value);
+        alert("Job posting URL copied to clipboard!");
+      } catch (fallbackErr) {
+        console.error("Both clipboard methods failed:", fallbackErr);
+        alert("Failed to copy. Your browser may not support clipboard access.");
+      }
+    }
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -35,7 +62,6 @@ export function JobPreviewModal({
           <div className="space-y-2">
             <h2 className="text-2xl font-bold">{job.title}</h2>
             <div className="flex flex-wrap gap-2">
-              {console.log(job)}
               <Badge variant="secondary">{job.type}</Badge>
               <Badge variant="secondary">
                 {job.experience_min} yr - {job.experience_max} yr
@@ -93,10 +119,7 @@ export function JobPreviewModal({
             <div className="pt-4">
               <Button
                 className="w-full"
-                onClick={() => {
-                  navigator.clipboard.writeText(jobUrl);
-                  alert("Job posting URL copied to clipboard!");
-                }}
+                onClick={() => copyToClipboard(jobUrl)}
               >
                 <Link2 className="h-4 w-4 mr-2" />
                 Copy Job Posting URL

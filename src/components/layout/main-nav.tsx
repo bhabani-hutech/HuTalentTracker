@@ -27,32 +27,52 @@ export function MainNav({ items, isCollapsed }: MainNavProps) {
           {items?.map(
             (item) =>
               item.href && (
-                <TooltipProvider key={item.href} delayDuration={0}>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Link
-                        to={item.href}
-                        className={cn(
-                          "flex items-center gap-3 py-2 text-sm font-medium transition-colors",
-                          location.pathname === item.href
-                            ? "bg-white/10 text-white"
-                            : "text-white/70 hover:bg-white/10 hover:text-white",
-                          item.disabled && "cursor-not-allowed opacity-80",
-                          isCollapsed ? "justify-center px-2" : "px-4"
-                        )}
-                      >
-                        {item.icon && <item.icon className="h-4 w-4" />}
-                        {!isCollapsed && item.title}
-                      </Link>
-                    </TooltipTrigger>
-
-                    <TooltipContent side="right">{item.title}</TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
+                <div key={item.href}>
+                  {isCollapsed ? (
+                    <TooltipProvider delayDuration={0}>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Link
+                            to={item.href}
+                            className={cn(
+                              "flex items-center gap-3 py-2 text-sm font-medium transition-colors",
+                              location.pathname === item.href
+                                ? "bg-white/10 text-white"
+                                : "text-white/70 hover:bg-white/10 hover:text-white",
+                              item.disabled && "cursor-not-allowed opacity-80",
+                              "justify-center px-2"
+                            )}
+                          >
+                            {item.icon && <item.icon className="h-4 w-4" />}
+                          </Link>
+                        </TooltipTrigger>
+                        <TooltipContent side="right">
+                          {item.title}
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  ) : (
+                    <Link
+                      to={item.href}
+                      className={cn(
+                        "flex items-center gap-3 py-2 text-sm font-medium transition-colors",
+                        location.pathname === item.href
+                          ? "bg-white/10 text-white"
+                          : "text-white/70 hover:bg-white/10 hover:text-white",
+                        item.disabled && "cursor-not-allowed opacity-80",
+                        "px-4"
+                      )}
+                    >
+                      {item.icon && <item.icon className="h-4 w-4" />}
+                      {item.title}
+                    </Link>
+                  )}
+                </div>
               )
           )}
         </div>
       </ScrollArea>
+
       <Sheet>
         <SheetTrigger asChild>
           <Button

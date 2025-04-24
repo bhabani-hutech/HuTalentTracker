@@ -62,6 +62,7 @@ export function AddCandidateModal({
   candidateData,
   isEditing = false,
 }: AddCandidateModalProps) {
+  console.log("Candidate Data:", candidateData);
   const { toast } = useToast();
   const { skills: domainSkills } = useSkills("domain");
   const { skills: technicalSkills } = useSkills("technical");
@@ -82,7 +83,7 @@ export function AddCandidateModal({
       ? candidateData.skills.split(", ").filter(Boolean)
       : [],
     type: (candidateData?.type as JobType) || "Full Time",
-    experience: candidateData?.experience || "0-1 years",
+    experience: candidateData?.experience || "1",
     candidate_source:
       candidateData?.candidate_source === "Hiring Partner"
         ? "Hiring Partner"
@@ -108,7 +109,7 @@ export function AddCandidateModal({
           ? candidateData.skills.split(", ").filter(Boolean)
           : [],
         type: (candidateData.type as JobType) || "Full Time",
-        experience: candidateData.experience || "0-1 years",
+        experience: candidateData.experience || "0",
         candidate_source:
           candidateData.candidate_source === "Hiring Partner"
             ? "Hiring Partner"
@@ -242,6 +243,7 @@ export function AddCandidateModal({
           description: "Candidate updated successfully",
         });
       } else {
+        console.log(candidateData);
         // Create new candidate
         await createCandidate({
           ...candidatePayload,
@@ -266,7 +268,16 @@ export function AddCandidateModal({
       });
     }
   };
+  const handleExperienceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
 
+    // Allow only digits and one optional decimal point
+    const regex = /^\d*\.?\d*$/;
+
+    if (value === "" || regex.test(value)) {
+      setFormData({ ...formData, experience: value });
+    }
+  };
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-[800px] max-h-[85vh] overflow-y-auto">
@@ -392,9 +403,7 @@ export function AddCandidateModal({
               <Input
                 required
                 value={formData.experience}
-                onChange={(e) =>
-                  setFormData({ ...formData, experience: e.target.value })
-                }
+                onChange={handleExperienceChange}
                 placeholder="e.g. 2.4 years"
               />
             </div>
@@ -555,7 +564,7 @@ export function AddCandidateModal({
             {formData.file_url || formData.resume_file ? (
               <div className="flex items-center gap-2 p-2 border rounded-md">
                 <div className="flex-1 truncate">
-                  {formData.resume_file?.name || "Resume uploaded"}
+                  {formData.resume_file?.name || formData.file_url.split("/").pop() ||"Resume uploaded"}
                 </div>
                 <Button
                   type="button"

@@ -93,7 +93,7 @@ export async function createCandidate(
     email: candidate.email || "",
     stage_id: candidate.stage_id || 1, // Default to stage 1 (Screening) if not provided
     type: candidate.type || "Full Time",
-    experience: candidate.experience || "0-1 years",
+    experience: candidate.experience || "0",
     skills: candidate.skills || "",
     location: candidate.location || "Remote",
     position:

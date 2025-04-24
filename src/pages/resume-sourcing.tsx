@@ -312,7 +312,7 @@ export default function ResumeSourcing() {
             notice_period: "",
             stage_id: 1, // Default to screening stage
             type: "Full Time",
-            experience: parsedData.experience?.join(", ") || "0-1 years",
+            experience: parsedData.experience?.join(", ") || "0",
             skills: parsedData.skills?.join(", ") || "",
             location: parsedData.location || "Remote",
             candidate_source: hiringPartnerId

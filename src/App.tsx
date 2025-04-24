@@ -46,6 +46,7 @@ import {
 } from "@tanstack/react-query";
 import { Toaster } from "./components/ui/toaster";
 import MasterData from "./pages/masterdata";
+import CareerPost from "./components/careers/careerpost";
 
 const navigationItems: NavItem[] = [
   { title: "Dashboard", href: "/dashboard", icon: HomeIcon },
@@ -117,6 +118,7 @@ function AppContent() {
             {/* Public Routes */}
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
+            <Route path="/careers/:id" element={<CareerPost />} />
 
             {/* Protected Routes */}
             {user ? (

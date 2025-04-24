@@ -46,7 +46,7 @@ export function ViewResumeModal({
   console.log(candidate);
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-[880px] max-h-[90vh] overflow-auto flex flex-col">
+      <DialogContent className="max-w-[900px] max-h-[90vh] overflow-auto flex flex-col">
         <DialogHeader>
           <DialogTitle>Resume Preview</DialogTitle>
         </DialogHeader>

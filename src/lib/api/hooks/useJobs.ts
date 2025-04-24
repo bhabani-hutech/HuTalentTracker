@@ -29,7 +29,6 @@ export function useJobs() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["jobs"] }),
     onError: (error) => {
       console.error("Error creating job:", error);
-      // Handle error (e.g., show a toast)
     },
   });
 
@@ -41,7 +40,6 @@ export function useJobs() {
     },
     onError: (error) => {
       console.error("Error updating job:", error);
-      // Handle error (e.g., show a toast)
     },
   });
 
@@ -50,7 +48,6 @@ export function useJobs() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["jobs"] }),
     onError: (error) => {
       console.error("Error deleting job:", error);
-      // Handle error (e.g., show a toast)
     },
   });
 
@@ -59,7 +56,6 @@ export function useJobs() {
 
   // Set up real-time subscription
   useEffect(() => {
-    // Skip if already subscribed
     if (subscriptionRef.current) return;
     const subscription = supabase
       .channel("jobs-changes")
@@ -68,11 +64,10 @@ export function useJobs() {
         { event: "*", schema: "public", table: "jobs" },
         () => {
           queryClient.invalidateQueries({ queryKey: ["jobs"] });
-        },
+        }
       )
       .subscribe();
 
-    // Store subscription reference
     subscriptionRef.current = subscription;
 
     return () => {
@@ -82,6 +77,11 @@ export function useJobs() {
       }
     };
   }, [queryClient]);
+
+  // ✅ Function to get a single job from cached jobs array
+  const getJobByIdFromCache = (id: string | undefined) => {
+    return jobs?.find((job) => job.id === id);
+  };
 
   return {
     jobs,
@@ -93,5 +93,6 @@ export function useJobs() {
     updateJobError: updateMutation.error,
     deleteJob: deleteMutation.mutate,
     deleteJobError: deleteMutation.error,
+    getJobByIdFromCache, // Exported utility function
   };
 }

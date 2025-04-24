@@ -18,13 +18,6 @@ import { useCandidates } from "@/lib/api/hooks/useCandidates";
 import { useInterviews } from "@/lib/api/hooks/useInterviews";
 import { format } from "date-fns";
 import { useSkills } from "@/lib/api/hooks/useSkills";
-import {
-  Interview,
-  getInterviews,
-  createInterview,
-  updateInterview,
-  deleteInterview,
-} from "@/lib/api/interviews";
 
 interface Props {
   existingFeedback?: InterviewFeedback;
@@ -161,6 +154,7 @@ export function InterviewFeedbackForm({
   ]);
 
   const handleSubmit = async () => {
+    console.log(formData);
     try {
       if (!formData.interviewer_id) {
         toast({
@@ -281,7 +275,11 @@ export function InterviewFeedbackForm({
             placeholder="Candidate name"
           /> */}
           <Select
-            value={formData?.candidate?.id || ""}
+            value={
+              formData?.interview?.candidate?.name ||
+              formData?.candidate?.name ||
+              ""
+            }
             disabled={
               !!formData?.interview?.candidate?.name ||
               !!formData?.candidate?.name
@@ -332,7 +330,10 @@ export function InterviewFeedbackForm({
                 (ele) => ele?.id === value
               );
               if (selectedInterviewer) {
-                setFormData({ ...formData, interviewer: selectedInterviewer });
+                setFormData({
+                  ...formData,
+                  interviewer_id: selectedInterviewer?.id,
+                });
               }
             }}
           >

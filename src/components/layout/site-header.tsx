@@ -68,7 +68,7 @@ export function SiteHeader({ items }: SiteHeaderProps) {
               {" "}
               <img src="/hutalent.svg" alt="Logo" className="h-10 mx-auto" />
             </div>
-            <h1 className="text-lg font-bold">HuTalent</h1>
+            {/* <h1 className="text-lg font-bold">HuTalent</h1> */}
           </>
         )}
         <Button
@@ -79,7 +79,7 @@ export function SiteHeader({ items }: SiteHeaderProps) {
         >
           {isCollapsed ? (
             <div className="flex flex-row items-center gap-3">
-              <img src="/hutalent.svg" alt="Logo" className="h-7" />
+              <img src="/favicon.ico" alt="Logo" className="h-7" />
               <span>
                 <ChevronRight className="h-4 w-4" />
               </span>

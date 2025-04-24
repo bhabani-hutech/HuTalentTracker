@@ -199,14 +199,14 @@ export function OrganizationForm({
                 />
               </div>
               <div className="space-y-2">
-                <Label>Email Domain</Label>
+                <Label>Hiring Contact Email</Label>
                 <Input
                   type="text"
                   value={formData.email_domain}
                   onChange={(e) =>
                     setFormData({ ...formData, email_domain: e.target.value })
                   }
-                  placeholder="e.g. company.com"
+                  placeholder="e.g. hr@company.com"
                 />
               </div>
             </div>

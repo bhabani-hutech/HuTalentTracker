@@ -33,7 +33,7 @@ export function ViewProfileModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-[600px]">
+      <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Candidate Profile</DialogTitle>
         </DialogHeader>
