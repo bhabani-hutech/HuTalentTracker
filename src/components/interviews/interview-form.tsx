@@ -94,6 +94,16 @@ export function InterviewForm({
     const interviewTimestamp = new Date(formData.date);
     interviewTimestamp.setHours(hours, minutes, 0, 0);
 
+    const now = new Date();
+    if (interviewTimestamp < now) {
+      toast({
+        variant: "destructive",
+        title: "Invalid Time",
+        description: "Interview time cannot be in the past.",
+      });
+      return;
+    }
+
     const { time, ...interviewData } = formData;
     const submissionData = {
       ...interviewData,
@@ -116,6 +126,26 @@ export function InterviewForm({
     }
     return times;
   }, []);
+
+  const getFilteredTimeSlots = useMemo(() => {
+    if (!formData.date) return timeOptions;
+
+    const now = new Date();
+    const isToday = formData.date.toDateString() === now.toDateString();
+
+    return timeOptions.filter((time) => {
+      const [hours, minutes] = time.split(":").map(Number);
+      const slotTime = new Date(formData.date);
+      slotTime.setHours(hours, minutes, 0, 0);
+
+      // If the selected date is today, filter out past time slots
+      if (isToday) {
+        return slotTime > now;
+      }
+      return true; // Include all time slots for future dates
+    });
+  }, [formData.date, timeOptions]);
+
   console.log(formData);
   // const allOptions = useMemo(() => {
   const selectedCandidate = candidates?.find(
@@ -146,9 +176,16 @@ export function InterviewForm({
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Job Position */}
           <div className="space-y-2">
-            <Label>Job Position</Label>
+            <Label>
+              <span className="flex items-center gap-1">
+                Job Position
+                <span className="text-red-500">*</span>
+              </span>
+            </Label>
+
             <Select
               value={formData.job_id}
+              disabled={!!formData.job_id}
               onValueChange={(value) => {
                 setFormData({
                   ...formData,
@@ -169,36 +206,17 @@ export function InterviewForm({
               </SelectContent>
             </Select>
           </div>
-          {/* {console.log(formData)} */}
-          {/* Candidate */}
           <div className="space-y-2">
-            <Label>Candidate</Label>
-            {/* <Select
-              value={formData.candidate_id}
-              onValueChange={(value) =>
-                setFormData({ ...formData, candidate_id: value })
-              }
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select candidate" />
-              </SelectTrigger>
-              <SelectContent>
-                {[
-                  ...filteredCandidates.filter(
-                    (c) => c.id !== formData.candidate_id
-                  ),
-                  candidates?.find((c) => c.id === formData.candidate_id),
-                ]
-                  .filter(Boolean)
-                  .map((candidate) => (
-                    <SelectItem key={candidate.id} value={candidate.id}>
-                      {candidate.name}
-                    </SelectItem>
-                  ))}
-              </SelectContent>
-            </Select> */}
+            <Label>
+              <span className="flex items-center gap-1">
+                Candidate
+                <span className="text-red-500">*</span>
+              </span>
+            </Label>
+
             <Select
               value={formData.candidate_id}
+              disabled={!!formData.candidate_id}
               onValueChange={(value) =>
                 setFormData({ ...formData, candidate_id: value })
               }
@@ -218,7 +236,13 @@ export function InterviewForm({
 
           {/* Interview Round */}
           <div className="space-y-2">
-            <Label>Interview Round</Label>
+            <Label>
+              <span className="flex items-center gap-1">
+                Interview Round
+                <span className="text-red-500">*</span>
+              </span>
+            </Label>
+
             <Select
               value={formData.round_id?.toString()}
               onValueChange={(value) =>
@@ -240,7 +264,12 @@ export function InterviewForm({
 
           {/* Interviewer */}
           <div className="space-y-2">
-            <Label>Interviewer</Label>
+            <Label>
+              <span className="flex items-center gap-1">
+                Interviewer
+                <span className="text-red-500">*</span>
+              </span>
+            </Label>
             <Select
               value={formData.interviewer_id}
               onValueChange={(value) =>
@@ -262,7 +291,13 @@ export function InterviewForm({
 
           {/* Interview Type */}
           <div className="space-y-2">
-            <Label>Interview Type</Label>
+            <Label>
+              <span className="flex items-center gap-1">
+                Interview Type
+                <span className="text-red-500">*</span>
+              </span>
+            </Label>
+
             <Select
               value={formData.type}
               onValueChange={(value) =>
@@ -283,7 +318,12 @@ export function InterviewForm({
           <div className="flex flex-col md:flex-row gap-4">
             {/* Date Field */}
             <div className="flex-1 space-y-1">
-              <Label>Date</Label>
+              <Label>
+                <span className="flex items-center gap-1">
+                  Date
+                  <span className="text-red-500">*</span>
+                </span>
+              </Label>
               <Popover>
                 <PopoverTrigger asChild>
                   <Button variant="outline" className="w-full text-left">
@@ -317,22 +357,42 @@ export function InterviewForm({
 
             {/* Time Field */}
             <div className="flex-1 space-y-1">
-              <Label>Time</Label>
+              <Label>
+                <span className="flex items-center gap-1">
+                  Time
+                  <span className="text-red-500">*</span>
+                </span>
+              </Label>
               <Select
                 value={formData.time}
+                // disabled={!formData.date || getFilteredTimeSlots.length === 0}
                 onValueChange={(value) =>
                   setFormData({ ...formData, time: value })
                 }
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Select time" />
+                  <SelectValue
+                    placeholder={
+                      !formData.date
+                        ? "Select a date first"
+                        : getFilteredTimeSlots.length === 0
+                        ? "No available time slots"
+                        : "Select time"
+                    }
+                  />
                 </SelectTrigger>
                 <SelectContent>
-                  {timeOptions.map((time) => (
-                    <SelectItem key={time} value={time}>
-                      {time}
-                    </SelectItem>
-                  ))}
+                  {getFilteredTimeSlots.length > 0 ? (
+                    getFilteredTimeSlots.map((time) => (
+                      <SelectItem key={time} value={time}>
+                        {time}
+                      </SelectItem>
+                    ))
+                  ) : (
+                    <div className="px-4 py-2 text-sm text-muted-foreground">
+                      No available time slots
+                    </div>
+                  )}
                 </SelectContent>
               </Select>
             </div>

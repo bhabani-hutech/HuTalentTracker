@@ -308,11 +308,13 @@ export function AddCandidateModal({
                   <SelectValue placeholder="Select position" />
                 </SelectTrigger>
                 <SelectContent>
-                  {jobs?.map((job) => (
-                    <SelectItem key={job.id} value={job.id}>
-                      {job.title}({job.location})
-                    </SelectItem>
-                  ))}
+                  {jobs
+                    ?.filter((job) => job.status === "Published")
+                    .map((job) => (
+                      <SelectItem key={job.id} value={job.id}>
+                        {job.title} ({job.location})
+                      </SelectItem>
+                    ))}
                 </SelectContent>
               </Select>
             </div>
@@ -448,7 +450,6 @@ export function AddCandidateModal({
                   Select Hiring Partner <span className="text-red-500">*</span>
                 </span>
               </Label>
-              {console.log(formData.hiring_partner_name, hiringPartners)}
               <Select
                 value={formData.hiring_partner_name}
                 onValueChange={(value) => {
@@ -564,7 +565,9 @@ export function AddCandidateModal({
             {formData.file_url || formData.resume_file ? (
               <div className="flex items-center gap-2 p-2 border rounded-md">
                 <div className="flex-1 truncate">
-                  {formData.resume_file?.name || formData.file_url.split("/").pop() ||"Resume uploaded"}
+                  {formData.resume_file?.name ||
+                    formData.file_url.split("/").pop() ||
+                    "Resume uploaded"}
                 </div>
                 <Button
                   type="button"

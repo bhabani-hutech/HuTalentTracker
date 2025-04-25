@@ -132,13 +132,33 @@ export default function NewJob() {
   );
 
   useEffect(() => {
-    if (id && jobs) {
+    if (id && jobs && positions.length > 0) {
       const jobToEdit = jobs.find((job) => job.id === id);
       if (jobToEdit) {
-        form.reset(jobToEdit);
+        form.reset({
+          title: jobToEdit.title || "",
+          department: jobToEdit.department || "",
+          location: jobToEdit.location || "",
+          type: jobToEdit.type || "Full Time",
+          level: jobToEdit.level || "Mid Level",
+          status: jobToEdit.status || "Draft",
+          description: jobToEdit.description || "",
+          requirements: jobToEdit.requirements || [],
+          responsibilities: jobToEdit.responsibilities || [],
+          skills: jobToEdit.skills || [],
+          domain_skills: jobToEdit.domain_skills || [],
+          technical_skills: jobToEdit.technical_skills || [],
+          soft_skills: jobToEdit.soft_skills || [],
+          openings: jobToEdit.openings || 1,
+          interview_rounds: jobToEdit.interview_rounds || [
+            { name: "Initial Screening", type: "HR", duration: 30 },
+          ],
+          experience_min: jobToEdit.experience_min || 1,
+          experience_max: jobToEdit.experience_max || 3,
+        });
       }
     }
-  }, [id, jobs, form]);
+  }, [id, jobs, positions, form]);
 
   // Fetch locations from own organizations
   // useEffect(() => {
@@ -206,6 +226,10 @@ export default function NewJob() {
       setNewResponsibility("");
     }
   };
+
+  if (!positions.length) {
+    return <div>Loading...</div>;
+  }
 
   return (
     <div className="container py-8 space-y-8">
