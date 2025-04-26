@@ -58,11 +58,10 @@ export async function uploadResume(file: File): Promise<string> {
     throw error;
   }
 }
-
 export async function createCandidate(
   candidate: Omit<Candidate, "id" | "created_at" | "updated_at">,
 ) {
-  // Validate hiring_partner_id is only set when candidate_source is "Hiring Partner"
+  // Validate hiring_partner_id for source
   if (candidate.candidate_source === "Direct Apply") {
     candidate.hiring_partner_id = undefined;
   } else if (
@@ -76,8 +75,26 @@ export async function createCandidate(
       "A hiring partner must be selected when 'Hiring Partner' is the source",
     );
   }
-  console.log("Creating candidate with data:", candidate);
-  // Convert skills from string to array if needed for match score calculation
+
+  // Check for duplicate email or mobile number
+  const { data: existingCandidate, error: checkError } = await supabase
+    .from("candidates")
+    .select("id")
+    .or(`email.eq.${candidate.email},mobile.eq.${candidate.mobile}`)
+    .maybeSingle();
+
+  if (checkError) {
+    console.error("Error checking for existing candidate:", checkError);
+    throw new Error("Could not verify uniqueness. Please try again.");
+  }
+
+  if (existingCandidate) {
+    throw new Error(
+      "A candidate with the same email or mobile number already exists.",
+    );
+  }
+
+  // Normalize skills
   const skillsArray =
     typeof candidate.skills === "string"
       ? candidate.skills
@@ -87,11 +104,12 @@ export async function createCandidate(
       : Array.isArray(candidate.skills)
         ? candidate.skills
         : [];
+
   const candidateWithDefaults = {
     ...candidate,
     source: candidate.source || "Manual Upload",
     email: candidate.email || "",
-    stage_id: candidate.stage_id || 1, // Default to stage 1 (Screening) if not provided
+    stage_id: candidate.stage_id || 1,
     type: candidate.type || "Full Time",
     experience: candidate.experience || "0",
     skills: candidate.skills || "",
@@ -100,7 +118,7 @@ export async function createCandidate(
       candidate.position ||
       (candidate.job_id ? undefined : "Unspecified Position"),
     match_score:
-      candidate.match_score !== undefined ? candidate.match_score : 0, // Use provided match_score if available
+      candidate.match_score !== undefined ? candidate.match_score : 0,
     candidate_source: candidate.candidate_source || "Direct Apply",
     hiring_partner_id:
       candidate.candidate_source === "Hiring Partner"
@@ -108,7 +126,7 @@ export async function createCandidate(
         : undefined,
   };
 
-  // If job_id is provided but position isn't, try to get the job title
+  // Fetch job title and calculate match score if needed
   if (candidate.job_id && !candidate.position) {
     try {
       const { data: job } = await supabase
@@ -120,7 +138,6 @@ export async function createCandidate(
       if (job) {
         candidateWithDefaults.position = job.title;
 
-        // If match_score isn't provided and we have job skills, calculate a basic match score
         if (
           candidate.match_score === undefined &&
           job.skills &&
@@ -132,41 +149,31 @@ export async function createCandidate(
               )
             : [];
 
-          if (jobSkills.length > 0) {
-            let matchCount = 0;
-            for (const skill of skillsArray) {
-              const skillLower = skill.toLowerCase();
-              if (
-                jobSkills.some(
-                  (js) =>
-                    js === skillLower ||
-                    js.includes(skillLower) ||
-                    skillLower.includes(js),
-                )
-              ) {
-                matchCount++;
-              }
+          let matchCount = 0;
+          for (const skill of skillsArray) {
+            const skillLower = skill.toLowerCase();
+            if (
+              jobSkills.some(
+                (js) =>
+                  js === skillLower ||
+                  js.includes(skillLower) ||
+                  skillLower.includes(js),
+              )
+            ) {
+              matchCount++;
             }
-
-            // Calculate percentage match
-            const matchScore = Math.round(
-              (matchCount / jobSkills.length) * 100,
-            );
-            candidateWithDefaults.match_score = Math.min(matchScore, 100); // Cap at 100%
           }
+
+          const matchScore = Math.round(
+            (matchCount / jobSkills.length) * 100,
+          );
+          candidateWithDefaults.match_score = Math.min(matchScore, 100);
         }
       }
     } catch (err) {
       console.error("Error fetching job title:", err);
     }
   }
-
-  // Set the stage_id to the screening stage (1) by default for new candidates
-  if (!candidateWithDefaults.stage_id) {
-    candidateWithDefaults.stage_id = 1; // Default to screening stage
-  }
-
-  console.log("Final candidate data to insert:", candidateWithDefaults);
 
   const { data, error } = await supabase
     .from("candidates")
@@ -182,6 +189,7 @@ export async function createCandidate(
   console.log("Created candidate:", data);
   return data;
 }
+
 
 // export async function getCandidates() {
 //   try {
@@ -234,10 +242,8 @@ export async function getCandidates() {
     throw error;
   }
 }
-
-
 export async function updateCandidate(id: string, updates: Partial<Candidate>) {
-  // Validate hiring_partner_id is only set when candidate_source is "Hiring Partner"
+  // Validate hiring_partner_id
   if (updates.candidate_source === "Direct Apply") {
     updates.hiring_partner_id = undefined;
   } else if (
@@ -252,12 +258,10 @@ export async function updateCandidate(id: string, updates: Partial<Candidate>) {
     );
   }
 
-  // If we're updating the source but not explicitly setting hiring_partner_id, check current value
   if (
     updates.candidate_source === "Hiring Partner" &&
     updates.hiring_partner_id === undefined
   ) {
-    // Get current candidate data to check if hiring_partner_id exists
     const { data: currentCandidate, error: fetchError } = await supabase
       .from("candidates")
       .select("hiring_partner_id")
@@ -269,7 +273,6 @@ export async function updateCandidate(id: string, updates: Partial<Candidate>) {
       throw fetchError;
     }
 
-    // If current candidate doesn't have a hiring_partner_id, throw error
     if (!currentCandidate.hiring_partner_id) {
       throw new Error(
         "A hiring partner must be selected when 'Hiring Partner' is the source",
@@ -277,7 +280,35 @@ export async function updateCandidate(id: string, updates: Partial<Candidate>) {
     }
   }
 
-  // Update source field based on candidate_source
+  // 🔒 Check for uniqueness of email or mobile if they are being updated
+  if (updates.email || updates.mobile) {
+    const { data: conflictCandidate, error: conflictError } = await supabase
+      .from("candidates")
+      .select("id")
+      .or(
+        [
+          updates.email ? `email.eq.${updates.email}` : null,
+          updates.mobile ? `mobile.eq.${updates.mobile}` : null,
+        ]
+          .filter(Boolean)
+          .join(","),
+      )
+      .neq("id", id) // Ensure we’re not comparing with the same candidate
+      .maybeSingle();
+
+    if (conflictError) {
+      console.error("Error checking for duplicates:", conflictError);
+      throw new Error("Could not verify uniqueness. Please try again.");
+    }
+
+    if (conflictCandidate) {
+      throw new Error(
+        "Another candidate with the same email or mobile number already exists.",
+      );
+    }
+  }
+
+  // Set source defaults
   if (updates.candidate_source === "Hiring Partner" && !updates.source) {
     updates.source = "Hiring Partner Referral";
   } else if (updates.candidate_source === "Direct Apply" && !updates.source) {
@@ -291,10 +322,13 @@ export async function updateCandidate(id: string, updates: Partial<Candidate>) {
     .select()
     .single();
 
-  if (error) throw error;
+  if (error) {
+    console.error("Error updating candidate:", error);
+    throw error;
+  }
+
   return data;
 }
-
 export async function deleteCandidate(id: string) {
   const { error } = await supabase.from("candidates").delete().eq("id", id);
 

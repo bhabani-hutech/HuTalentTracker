@@ -128,6 +128,118 @@ export async function updateInterview(
     round_id: updates.round_id || null,
   };
 
+  // Check for interviewer time conflicts if interviewer_id and date are being updated
+  if (
+    (sanitizedData.interviewer_id || sanitizedData.date) &&
+    (sanitizedData.interviewer_id || sanitizedData.date)
+  ) {
+    // Get the current interview data to determine if interviewer or date is changing
+    const { data: currentInterview, error: fetchError } = await supabase
+      .from("interviews")
+      .select("interviewer_id, date")
+      .eq("id", id)
+      .single();
+
+    if (fetchError) {
+      console.error("Error fetching current interview:", fetchError);
+      throw fetchError;
+    }
+
+    const interviewerChanged =
+      sanitizedData.interviewer_id &&
+      sanitizedData.interviewer_id !== currentInterview.interviewer_id;
+    const dateChanged =
+      sanitizedData.date && sanitizedData.date !== currentInterview.date;
+
+    // Only check for conflicts if interviewer or date is changing
+    if (interviewerChanged || dateChanged) {
+      const interviewDate = new Date(
+        sanitizedData.date || currentInterview.date,
+      );
+      const interviewerId =
+        sanitizedData.interviewer_id || currentInterview.interviewer_id;
+
+      // Create a time window of 1 hour (typical interview duration)
+      const startTime = new Date(interviewDate.getTime());
+      const endTime = new Date(interviewDate.getTime() + 60 * 60 * 1000); // Add 1 hour
+
+      // Format dates for comparison
+      const formattedStartTime = startTime.toISOString();
+      const formattedEndTime = endTime.toISOString();
+
+      // Check for existing interviews for this interviewer in the same time slot
+      const { data: existingInterviews, error: conflictError } = await supabase
+        .from("interviews")
+        .select("id, date")
+        .eq("interviewer_id", interviewerId)
+        .gte("date", formattedStartTime)
+        .lt("date", formattedEndTime)
+        .neq("id", id); // Exclude the current interview
+
+      if (conflictError) {
+        console.error(
+          "Error checking for interviewer conflicts:",
+          conflictError,
+        );
+        throw conflictError;
+      }
+
+      if (existingInterviews && existingInterviews.length > 0) {
+        const error = new Error(
+          "The selected interviewer is already scheduled at this time.",
+        );
+        error.name = "InterviewerConflict";
+        throw error;
+      }
+    }
+
+    // Check for duplicate rounds if candidate_id or round_id is changing
+    if (
+      (sanitizedData.candidate_id || sanitizedData.round_id) &&
+      sanitizedData.round_id
+    ) {
+      const { data: currentData, error: currentError } = await supabase
+        .from("interviews")
+        .select("candidate_id, round_id")
+        .eq("id", id)
+        .single();
+
+      if (currentError) {
+        console.error("Error fetching current interview data:", currentError);
+        throw currentError;
+      }
+
+      const candidateId =
+        sanitizedData.candidate_id || currentData.candidate_id;
+      const roundId = sanitizedData.round_id;
+
+      if (
+        roundId !== currentData.round_id ||
+        sanitizedData.candidate_id !== currentData.candidate_id
+      ) {
+        const { data: existingRounds, error: roundsError } = await supabase
+          .from("interviews")
+          .select("id, round_id")
+          .eq("candidate_id", candidateId)
+          .eq("round_id", roundId)
+          .neq("id", id); // Exclude the current interview
+
+        if (roundsError) {
+          console.error("Error checking for duplicate rounds:", roundsError);
+          throw roundsError;
+        }
+
+        if (existingRounds && existingRounds.length > 0) {
+          const error = new Error(
+            "This candidate has already been scheduled for this interview round.",
+          );
+          error.name = "DuplicateRound";
+          throw error;
+        }
+      }
+    }
+  }
+
   console.log("Updating interview with sanitized data:", sanitizedData);
 
   const { data, error } = await supabase

@@ -275,40 +275,36 @@ export function InterviewFeedbackForm({
             placeholder="Candidate name"
           /> */}
           <Select
-            value={
-              formData?.interview?.candidate?.name ||
-              formData?.candidate?.name ||
-              ""
-            }
-            disabled={
-              !!formData?.interview?.candidate?.name ||
-              !!formData?.candidate?.name
-            }
+            value={formData.candidate_id || ""}
+            disabled={!!selectedInterview?.candidate_id}
             onValueChange={(value) => {
+              const selectedCandidate = candidates?.find(
+                (candidate) => candidate.id === value
+              );
               const selectedInterview = interviews?.find(
-                (ele) => ele?.candidate?.id === value
+                (interview) => interview?.candidate?.id === value
               );
 
-              if (selectedInterview?.candidate) {
-                setFormData({
-                  ...formData,
-                  candidate: selectedInterview.candidate,
-                  interview: {
-                    ...(formData.interview || {}),
-                    date: selectedInterview.date,
-                    candidate: selectedInterview.candidate,
-                  },
-                });
-              }
+              setFormData({
+                ...formData,
+                candidate_id: value,
+                candidate: selectedCandidate,
+                interview_id: selectedInterview?.id || formData.interview_id,
+                interview: selectedInterview || formData.interview
+              });
             }}
           >
             <SelectTrigger>
-              <SelectValue placeholder="Select Candidate name" />
+              <SelectValue placeholder="Select Candidate name">
+                {formData?.interview?.candidate?.name || 
+                 formData?.candidate?.name || 
+                 "Select Candidate"}
+              </SelectValue>
             </SelectTrigger>
             <SelectContent>
-              {interviews?.map((ele) => (
-                <SelectItem key={ele?.candidate?.id} value={ele?.candidate?.id}>
-                  {ele?.candidate?.name}
+              {candidates?.map((candidate) => (
+                <SelectItem key={candidate.id} value={candidate.id}>
+                  {candidate.name}
                 </SelectItem>
               ))}
             </SelectContent>

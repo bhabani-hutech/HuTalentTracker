@@ -211,15 +211,32 @@ export default function HiringPartners() {
     const fetchCount = async () => {
       const { data, error } = await supabase
         .from("candidates")
-        .select("*")
+        .select(
+          `
+    location,
+    stages (
+    id,
+      stage
+    ),
+    jobs (
+      created_at,
+      title
+    )
+  `
+        )
         .eq("hiring_partner_id", selectedPartner?.id);
+      // const { data, error } = await supabase
+      //   .from("candidates")
+      //   .select("*")
+      //   .eq("hiring_partner_id", selectedPartner?.id);
       console.log(data);
       if (error) {
         console.error("Error fetching candidates:", error);
       } else {
         setPartnerCand(data);
-        setStageDataCount(data.filter((c) => c.stage_id === 2).length);
-        console.log("Candidates:", data.filter((c) => c.stage_id === 2).length);
+        setStageDataCount(
+          data.filter((c) => c.stages[0]?.id === 2).length
+        );
       }
     };
 
@@ -600,7 +617,8 @@ export default function HiringPartners() {
                                 ele.hiring_partner_id == selectedPartner?.id
                             ).length || 0,
                           position: job.title,
-                          location: job.location, // for job-specific row
+                          location: job.location,
+                          created_at: job.created_at, // for job-specific row
                         }))
                       );
 

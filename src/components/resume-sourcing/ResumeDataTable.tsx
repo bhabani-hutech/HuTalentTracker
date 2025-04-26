@@ -23,6 +23,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
 } from "@/components/ui/dropdown-menu";
+import { useToast } from "@/components/ui/use-toast";
 
 import { Candidate } from "@/lib/api/candidates";
 
@@ -46,7 +47,7 @@ const getScoreColor = (score?: number): string => {
 };
 const getSourceColor = (partner?: string): string => {
   const baseStyles =
-    "inline-flex items-center justify-center px-0 py-1 min-w-[50px] rounded-[7px] text-xs font-medium text-white transition-colors duration-200 text-center";
+    "inline-flex items-center justify-center px-2 py-1 min-w-[50px] rounded-[7px] text-xs font-medium text-white transition-colors duration-200 text-center";
 
   if (!partner && partner !== "")
     return `${baseStyles} bg-gray-500 hover:bg-gray-600`;
@@ -73,7 +74,7 @@ export function ResumeDataTable({
   const resultsPerPage = 5;
   const startIndex = (currentPage - 1) * resultsPerPage;
   const endIndex = currentPage * resultsPerPage;
-
+  const { toast } = useToast();
   if (isLoading) {
     return (
       <div className="w-full text-center py-8">
@@ -103,7 +104,13 @@ export function ResumeDataTable({
         await onDelete(id);
       } catch (error) {
         console.error("Error deleting candidate:", error);
-        alert("Error deleting candidate");
+        // alert("Error deleting candidate");
+        toast({
+          variant: "destructive",
+          title: "Conflict Error",
+          description:
+            "Cannot delete candidate due to a conflict. The candidate may be linked to another resource.",
+        });
       }
     }
   };

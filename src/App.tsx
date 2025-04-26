@@ -4,7 +4,6 @@ import { AuthProvider } from "./lib/auth/AuthContext";
 import Home from "./components/home";
 import ResumeSourcing from "./pages/resume-sourcing";
 import InterviewFeedback from "./pages/interview-feedback";
-import InterviewKanban from "./pages/interview-kanban";
 import InterviewFlow from "./pages/interview-flow";
 import Settings from "./pages/settings";
 import { Icons } from "@/components/icons";
@@ -133,7 +132,7 @@ function AppContent() {
                   path="/interview-scheduling"
                   element={<InterviewSchedule />}
                 />
-                <Route path="/interview-kanban" element={<InterviewKanban />} />
+              
                 <Route path="/interview-flow" element={<InterviewFlow />} />
                 <Route
                   path="/interview-feedback"

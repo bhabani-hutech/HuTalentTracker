@@ -59,7 +59,7 @@ export default function InterviewSchedule() {
         { event: "*", schema: "public", table: "interviews" },
         () => {
           fetchInterviews();
-        },
+        }
       )
       .subscribe();
 
@@ -75,7 +75,7 @@ export default function InterviewSchedule() {
   }, []);
   console.log(selectedInterview);
   const handleSubmit = async (
-    data: Omit<Interview, "id" | "created_at" | "updated_at">,
+    data: Omit<Interview, "id" | "created_at" | "updated_at">
   ) => {
     try {
       if (selectedInterview) {
@@ -240,7 +240,7 @@ export default function InterviewSchedule() {
         isOpen={isFormOpen}
         onClose={handleCloseForm}
         onSubmit={handleSubmit}
-        initialData={selectedInterview || {}}
+        initialData={selectedInterview || null}
       />
     </div>
   );

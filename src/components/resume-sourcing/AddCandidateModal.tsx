@@ -49,8 +49,7 @@ interface CandidateData {
   experience: string;
   candidate_source: "Direct Apply" | "Hiring Partner";
   hiring_partner_id?: string;
-  resume_file?: File;
-  file_url?: string;
+  file_url?: File;
   job_id?: string;
   department?: string;
   hiring_partner_name?: string;
@@ -88,7 +87,6 @@ export function AddCandidateModal({
       candidateData?.candidate_source === "Hiring Partner"
         ? "Hiring Partner"
         : "Direct Apply",
-    resume_file: undefined,
     file_url: candidateData?.file_url,
     job_id: candidateData?.job_id,
     department: candidateData?.department,
@@ -114,7 +112,6 @@ export function AddCandidateModal({
           candidateData.candidate_source === "Hiring Partner"
             ? "Hiring Partner"
             : "Direct Apply",
-        resume_file: undefined,
         file_url: candidateData.file_url,
         job_id: candidateData.job_id,
         department: candidateData.department,
@@ -195,10 +192,15 @@ export function AddCandidateModal({
 
       // Upload resume if it exists and we don't have a URL yet
       let fileUrl = formData.file_url;
-      if (formData.resume_file && !fileUrl) {
+      if (!fileUrl || fileUrl instanceof File) {
         setIsUploading(true);
         try {
-          fileUrl = await uploadResume(formData.resume_file);
+          if (formData.file_url instanceof File) {
+            // Upload the file and get the URL
+            fileUrl = await uploadResume(formData.file_url);
+          } else {
+            throw new Error("Invalid file type for upload");
+          }
         } catch (error) {
           console.error("Error uploading resume:", error);
           toast({
@@ -232,7 +234,7 @@ export function AddCandidateModal({
         skills: formData.skills.join(", "),
         candidate_source: formData.candidate_source,
         hiring_partner_id: formData.hiring_partner_id,
-        file_url: fileUrl,
+        file_url: fileUrl || "", // Ensure fileUrl is a string
       };
 
       if (isEditing && candidateData?.id) {
@@ -562,12 +564,12 @@ export function AddCandidateModal({
               </span>
             </Label>
 
-            {formData.file_url || formData.resume_file ? (
+            {formData.file_url ? (
               <div className="flex items-center gap-2 p-2 border rounded-md">
                 <div className="flex-1 truncate">
-                  {formData.resume_file?.name ||
-                    formData.file_url.split("/").pop() ||
-                    "Resume uploaded"}
+                  {typeof formData.file_url === "string"
+                    ? (formData.file_url as string).split("/").pop()
+                    : formData.file_url?.name || "Resume uploaded"}
                 </div>
                 <Button
                   type="button"
@@ -576,7 +578,7 @@ export function AddCandidateModal({
                   onClick={() => {
                     setFormData({
                       ...formData,
-                      resume_file: undefined,
+
                       file_url: undefined,
                     });
                     if (fileInputRef.current) {
@@ -596,10 +598,11 @@ export function AddCandidateModal({
                   className="hidden"
                   id="resume-upload"
                   onChange={(e) => {
+                    console.log(e.target.files);
                     if (e.target.files && e.target.files.length > 0) {
                       setFormData({
                         ...formData,
-                        resume_file: e.target.files[0],
+                        file_url: e.target.files[0],
                       });
                       setUploadError(null);
                     }

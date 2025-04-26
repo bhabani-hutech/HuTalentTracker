@@ -419,22 +419,31 @@ export default function ResumeSourcing() {
       });
     }
   };
-
-  const handleDeleteCandidate = async (id: string) => {
-    try {
-      await deleteCandidateHook(id);
-      toast({
-        title: "Candidate Deleted",
-        description: "The candidate has been successfully deleted.",
+  const handleDeleteCandidate = (id: string) => {
+    deleteCandidateHook(id)
+      .then(() => {
+        toast({
+          title: "Candidate Deleted",
+          description: "The candidate has been successfully deleted.",
+        });
+      })
+      .catch((error: any) => {
+         console.error("Error deleting candidate:", error);
+        if (error.response?.status === 409) {
+          toast({
+            variant: "destructive",
+            title: "Conflict Error",
+            description:
+              "Cannot delete candidate due to a conflict. The candidate may be linked to another resource.",
+          });
+        } else {
+          toast({
+            variant: "destructive",
+            title: "Error",
+            description: "Failed to delete candidate. Please try again.",
+          });
+        }
       });
-    } catch (error) {
-      console.error("Error deleting candidate:", error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to delete candidate. Please try again.",
-      });
-    }
   };
 
   // Function to open the Add Candidate modal
@@ -570,8 +579,9 @@ export default function ResumeSourcing() {
             <InterviewForm
               isOpen={scheduleInterviewModalOpen}
               onClose={() => {
-                setScheduleInterviewModalOpen(false);
+                console.log("Data");
                 setSelectedCandidateForInterview(null);
+                setScheduleInterviewModalOpen(false);
               }}
               onSubmit={handleSubmit}
               initialData={{

@@ -20,6 +20,7 @@ interface PipelineStageCountTableProps {
     count: number;
     position: string;
     location: string;
+    created_at: string;
   }[];
   jobs: any[];
   candidates: any[];
@@ -43,32 +44,55 @@ export function PipelineStageCountTable({
   const [stageCounts, setStageCounts] = useState<StageJobCount>({});
   const [relevantJobs, setRelevantJobs] = useState<any[]>([]);
   const [stageNames, setStageNames] = useState<{ [key: string]: string }>({});
+  console.log(partnerCand);
 
   const positionLocationMap: {
-    [key: string]: { position: string; location: string; count: number };
+    [key: string]: {
+      position: string;
+      location: string;
+      createdDate: string;
+      count: number;
+    };
   } = {};
 
   partnerCand.forEach((candidate) => {
-    const key = `${candidate.position}||${candidate.location}`;
+    const position = candidate.jobs?.title || "Unknown Position";
+    const location = candidate.location || "Unknown Location";
+    const createdDate = candidate.jobs?.created_at
+      ? new Date(candidate.jobs.created_at).toISOString().split("T")[0]
+      : "Unknown Date";
+
+    const key = `${position}||${location}||${createdDate}`;
+
     if (!positionLocationMap[key]) {
       positionLocationMap[key] = {
-        position: candidate.position,
-        location: candidate.location,
+        position,
+        location,
+        createdDate,
         count: 0,
       };
     }
+
     positionLocationMap[key].count++;
   });
 
   const resultData = Object.values(positionLocationMap);
 
-  const groupedByJobTitleAndLocation: { [key: string]: typeof stagesData } = {};
+  console.log(resultData);
+  const groupedByJobTitleLocationAndDate: { [key: string]: typeof stagesData } =
+    {};
+
   stagesData.forEach((stageItem) => {
-    const key = `${stageItem.position}||${stageItem.location}`;
-    if (!groupedByJobTitleAndLocation[key]) {
-      groupedByJobTitleAndLocation[key] = [];
+    const createdDate = new Date(stageItem.created_at)
+      .toISOString()
+      .split("T")[0]; // Get YYYY-MM-DD
+    const key = `${stageItem.location}||${stageItem.position}||${createdDate}`;
+
+    if (!groupedByJobTitleLocationAndDate[key]) {
+      groupedByJobTitleLocationAndDate[key] = [];
     }
-    groupedByJobTitleAndLocation[key].push(stageItem);
+
+    groupedByJobTitleLocationAndDate[key].push(stageItem);
   });
 
   useEffect(() => {
@@ -185,11 +209,17 @@ export function PipelineStageCountTable({
     relevantJobsMemo,
   ]);
 
-  const getTotalCountByLocation = (position: string, location: string) => {
+  const getTotalCountByLocation = (
+    position: string,
+    location: string,
+    createdDate: string
+  ) => {
     return resultData
       .filter(
         (item) =>
-          item.position === position && item.location === location
+          item.position === position &&
+          item.location === location &&
+          item.createdDate === createdDate
       )
       .reduce((sum, item) => sum + item.count, 0);
   };
@@ -229,8 +259,9 @@ export function PipelineStageCountTable({
           <TableRow>
             <TableHead className="font-bold">Job Post</TableHead>
             <TableHead className="font-bold">Location</TableHead>
-            {groupedByJobTitleAndLocation[
-              Object.keys(groupedByJobTitleAndLocation)[0]
+            <TableHead className="font-bold">Created Date</TableHead>
+            {groupedByJobTitleLocationAndDate[
+              Object.keys(groupedByJobTitleLocationAndDate)[0]
             ]?.map((stage) => (
               <TableHead key={`head-${stage.stage}`} className="text-center">
                 {getStageName(stage)}
@@ -239,18 +270,19 @@ export function PipelineStageCountTable({
             <TableHead className="text-center font-bold">Total</TableHead>
           </TableRow>
         </TableHeader>
-        <TableBody>
-          {Object.entries(groupedByJobTitleAndLocation).map(
+        {/* <TableBody>
+          {Object.entries(groupedByJobTitleLocationAndDate).map(
             ([jobTitle, stageItems]) => {
-              const [position, location] = jobTitle.split("||");
+              const [location, position, date] = jobTitle.split("||");
 
               return (
                 <TableRow key={`row-${jobTitle}`}>
                   <TableCell className="font-medium">{position}</TableCell>
                   <TableCell className="font-medium">{location}</TableCell>
-
+                  <TableCell className="font-medium">{date}</TableCell>
                   {stageItems.map((stage) => {
                     const cellKey = `${jobTitle}-${stage.stage}`;
+                    console.log(stage.count)
                     return (
                       <TableCell key={cellKey} className="text-center">
                         {stage.count}
@@ -260,7 +292,58 @@ export function PipelineStageCountTable({
 
                   <TableCell className="text-center font-bold">
                     <Badge variant="default">
-                      {getTotalCountByLocation(position, location)}
+                      {getTotalCountByLocation(position, location, date)}
+                    </Badge>
+                  </TableCell>
+                </TableRow>
+              );
+            }
+          )}
+        </TableBody> */}
+        <TableBody>
+          {Object.entries(groupedByJobTitleLocationAndDate).map(
+            ([jobTitle, stageItems]) => {
+              const [location, position, date] = jobTitle.split("||");
+
+              return (
+                <TableRow key={`row-${jobTitle}`}>
+                  <TableCell className="font-medium">{position}</TableCell>
+                  <TableCell className="font-medium">{location}</TableCell>
+                  <TableCell className="font-medium">{date}</TableCell>
+                  {stageItems.map((stage) => {
+                    const count = partnerCand.filter((candidate) => {
+                      const jobTitleMatch =
+                        (candidate.jobs?.title || "Unknown Position") ===
+                        position;
+                      const locationMatch = candidate.location === location;
+                      const dateMatch =
+                        new Date(candidate.jobs?.created_at || "")
+                          .toISOString()
+                          .split("T")[0] === date;
+                      const stageMatch =
+                        candidate.stages?.id?.toString() ===
+                        stage.id.toString();
+
+                      return (
+                        jobTitleMatch &&
+                        locationMatch &&
+                        dateMatch &&
+                        stageMatch
+                      );
+                    }).length;
+
+                    return (
+                      <TableCell
+                        key={`${jobTitle}-${stage.id}`}
+                        className="text-center"
+                      >
+                        {count}
+                      </TableCell>
+                    );
+                  })}
+                  <TableCell className="text-center font-bold">
+                    <Badge variant="default">
+                      {getTotalCountByLocation(position, location, date)}
                     </Badge>
                   </TableCell>
                 </TableRow>

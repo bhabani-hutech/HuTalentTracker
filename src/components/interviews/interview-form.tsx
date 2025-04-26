@@ -38,42 +38,45 @@ export function InterviewForm({
   onSubmit,
   initialData,
 }: InterviewFormProps) {
-  const [formData, setFormData] = useState({
-    job_id: initialData?.job_id || "",
-    candidate_id: initialData?.candidate_id || "",
-    interviewer_id: initialData?.interviewer_id || "",
-    round_id: initialData?.round_id || null,
-    date: initialData?.date ? new Date(initialData.date) : new Date(),
-    time: initialData?.date
-      ? format(new Date(initialData.date), "HH:mm")
-      : "09:00",
-    type: initialData?.type || "F2F",
-  });
   const { toast } = useToast();
   const { jobs } = useJobs();
   const { data: candidates } = useCandidates();
   const { data: interviewers } = useInterviewers();
   const { data: interviewRounds } = useInterviewRounds();
-
-  useEffect(() => {
-    if (initialData && initialData.id) {
-      console.log(initialData);
-      const dataObj = {
-        job_id: initialData.job_id || "",
-        candidate_id: initialData.candidate_id || "",
-        interviewer_id: initialData.interviewer_id || "",
-        round_id: initialData.round_id || null,
-        date: initialData.date ? new Date(initialData.date) : new Date(),
-        time: initialData.date
-          ? format(new Date(initialData.date), "HH:mm")
-          : "09:00",
-        type: initialData.type || "F2F",
-      };
-      console.log(dataObj);
-      setFormData(dataObj);
-    }
-  }, [initialData]);
   console.log(initialData);
+
+  const getInitialFormData = () => ({
+    job_id: initialData?.job_id || "",
+    candidate_id: initialData?.candidate_id || "",
+    interviewer_id: initialData?.interviewer_id || "",
+    round_id: initialData?.round_id || null,
+    date: initialData?.date ? new Date(initialData.date) : new Date(),
+    time: initialData?.time ? initialData?.time : "09:00",
+    type: initialData?.type || "F2F",
+  });
+
+  const [formData, setFormData] = useState(getInitialFormData());
+
+  // Reset form data when modal opens or initialData changes
+  useEffect(() => {
+    if (isOpen && initialData) {
+      setFormData(getInitialFormData());
+    }
+  }, [isOpen, initialData?.id]);
+
+  const handleClose = () => {
+    setFormData({
+      job_id: "",
+      candidate_id: "",
+      interviewer_id: "",
+      round_id: null,
+      date: new Date(),
+      time: "09:00",
+      type: "F2F",
+    });
+    onClose();
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (
@@ -104,14 +107,34 @@ export function InterviewForm({
       return;
     }
 
-    const { time, ...interviewData } = formData;
+    // Check for scheduling conflicts
+    const hasConflict = candidates?.some((candidate) => {
+      return (
+        candidate.interviewer_id === formData.interviewer_id &&
+        new Date(candidate.date).toISOString() ===
+          interviewTimestamp.toISOString() &&
+        // Don't count the current interview as a conflict with itself
+        (!initialData || candidate.id !== initialData.id)
+      );
+    });
+
+    if (hasConflict) {
+      toast({
+        variant: "destructive",
+        title: "Scheduling Conflict",
+        description:
+          "The selected interviewer is already scheduled for another interview at this time.",
+      });
+      return;
+    }
+    console.log(formData);
     const submissionData = {
-      ...interviewData,
+      ...formData,
       date: interviewTimestamp,
     };
 
     onSubmit(submissionData);
-    onClose();
+    handleClose(); // Close the modal
   };
 
   const filteredCandidates = useMemo(() => {
@@ -146,24 +169,23 @@ export function InterviewForm({
     });
   }, [formData.date, timeOptions]);
 
-  console.log(formData);
-  // const allOptions = useMemo(() => {
   const selectedCandidate = candidates?.find(
-    (c) => c.id === initialData.candidate_id
+    (c) => c.id === initialData?.candidate_id
   );
-  console.log(candidates, formData, selectedCandidate);
+
   const candidateOptions = selectedCandidate
     ? [
-        ...filteredCandidates.filter((c) => c.id !== initialData.candidate_id),
+        ...filteredCandidates.filter((c) => c.id !== initialData?.candidate_id),
         selectedCandidate,
       ]
     : filteredCandidates;
-  console.log(candidateOptions);
-
-  // }, [filteredCandidates, candidates, formData.candidate_id]);
-
+  console.log(formData);
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog
+      open={isOpen}
+      onOpenChange={(open) => !open && handleClose()}
+      // key={initialData?.id || "new"}
+    >
       <DialogContent className="max-w-[800px] max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
@@ -182,15 +204,16 @@ export function InterviewForm({
                 <span className="text-red-500">*</span>
               </span>
             </Label>
-
             <Select
               value={formData.job_id}
-              disabled={!!formData.job_id}
+              disabled={!!initialData?.candidate_id}
               onValueChange={(value) => {
                 setFormData({
                   ...formData,
                   job_id: value,
-                  // candidate_id:value !== formData.job_id ? "" : formData.candidate_id,
+                  // Reset candidate if job changes
+                  candidate_id:
+                    value !== formData.job_id ? "" : formData.candidate_id,
                 });
               }}
             >
@@ -216,7 +239,7 @@ export function InterviewForm({
 
             <Select
               value={formData.candidate_id}
-              disabled={!!formData.candidate_id}
+              disabled={!!initialData?.candidate_id}
               onValueChange={(value) =>
                 setFormData({ ...formData, candidate_id: value })
               }
@@ -233,7 +256,6 @@ export function InterviewForm({
               </SelectContent>
             </Select>
           </div>
-
           {/* Interview Round */}
           <div className="space-y-2">
             <Label>
@@ -261,7 +283,6 @@ export function InterviewForm({
               </SelectContent>
             </Select>
           </div>
-
           {/* Interviewer */}
           <div className="space-y-2">
             <Label>
@@ -288,7 +309,6 @@ export function InterviewForm({
               </SelectContent>
             </Select>
           </div>
-
           {/* Interview Type */}
           <div className="space-y-2">
             <Label>
@@ -313,10 +333,8 @@ export function InterviewForm({
               </SelectContent>
             </Select>
           </div>
-
           {/* Date */}
           <div className="flex flex-col md:flex-row gap-4">
-            {/* Date Field */}
             <div className="flex-1 space-y-1">
               <Label>
                 <span className="flex items-center gap-1">
@@ -355,7 +373,6 @@ export function InterviewForm({
               </Popover>
             </div>
 
-            {/* Time Field */}
             <div className="flex-1 space-y-1">
               <Label>
                 <span className="flex items-center gap-1">
@@ -365,7 +382,6 @@ export function InterviewForm({
               </Label>
               <Select
                 value={formData.time}
-                // disabled={!formData.date || getFilteredTimeSlots.length === 0}
                 onValueChange={(value) =>
                   setFormData({ ...formData, time: value })
                 }
@@ -397,7 +413,6 @@ export function InterviewForm({
               </Select>
             </div>
           </div>
-
           <DialogFooter>
             <Button type="submit">
               {initialData && initialData?.interviewer_id

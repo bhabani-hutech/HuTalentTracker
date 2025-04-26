@@ -4,7 +4,6 @@ import { useAuth } from "@/lib/auth/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Icons } from "@/components/icons";
 import { Input } from "@/components/ui/input";
-import { GoogleAuthButton } from "./GoogleAuthButton";
 import {
   Card,
   CardContent,
@@ -113,29 +112,7 @@ export function Login() {
               </Button>
             </div>
           </form>
-          {/* <div className="relative my-4">
-            <div className="absolute inset-0 flex items-center">
-              <span className="w-full border-t" />
-            </div>
-            <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-background px-2 text-muted-foreground">
-                Or continue with
-              </span>
-            </div>
-          </div> */}
-          {/* <GoogleAuthButton /> */}
         </CardContent>
-        {/* <CardFooter className="flex flex-col">
-          <div className="text-sm text-center text-muted-foreground mt-2">
-            Don't have an account?{" "}
-            <a
-              href="/signup"
-              className="text-primary underline-offset-4 hover:underline"
-            >
-              Sign up
-            </a>
-          </div>
-        </CardFooter> */}
       </Card>
     </div>
   );
