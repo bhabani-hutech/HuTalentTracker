@@ -249,7 +249,7 @@ export function AddCandidateModal({
         // Create new candidate
         await createCandidate({
           ...candidatePayload,
-          Organization: candidateData?.Organization || null, // Add Organization property
+          Organization: candidateData?.Organization || null,
         });
         toast({
           title: "Success",
@@ -266,7 +266,9 @@ export function AddCandidateModal({
       toast({
         variant: "destructive",
         title: "Error",
-        description: `Failed to ${isEditing ? "update" : "add"} candidate`,
+        description: `Failed to ${
+          isEditing ? "update" : "add"
+        } candidate due to ${error}`,
       });
     }
   };
@@ -280,6 +282,12 @@ export function AddCandidateModal({
       setFormData({ ...formData, experience: value });
     }
   };
+  const [emailError, setEmailError] = useState<string>("");
+
+  // const emailErrorFormat =(error: string)=>{
+  //   setEmailError(error);
+  // }
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-[800px] max-h-[85vh] overflow-y-auto">
@@ -292,7 +300,7 @@ export function AddCandidateModal({
           <div className="grid grid-cols-2 gap-4">
             {/* Position/Job - Dropdown */}
             <div className="space-y-2">
-              <Label>Position</Label>
+              <Label>Position</Label> <span className="text-red-500">*</span>
               <Select
                 value={formData.job_id || ""}
                 onValueChange={(value) => {
@@ -333,48 +341,87 @@ export function AddCandidateModal({
 
             {/* Full Name - Editable */}
             <div className="space-y-2">
-              <Label>Full Name</Label>
+              <Label>Full Name</Label> <span className="text-red-500">*</span>
               <Input
                 required
                 value={formData.name}
-                onChange={(e) =>
-                  setFormData({ ...formData, name: e.target.value })
-                }
+                onChange={(e) => {
+                  const value = e.target.value;
+                  const formattedValue = value
+                    .split(" ") // Split into words
+                    .map(
+                      (word) =>
+                        word.charAt(0).toUpperCase() +
+                        word.slice(1).toLowerCase()
+                    ) // Capitalize each word
+                    .join(" "); // Join back
+
+                  setFormData({ ...formData, name: formattedValue });
+                }}
                 placeholder="Enter candidate's full name"
               />
             </div>
 
             {/* Email - Editable */}
             <div className="space-y-2">
-              <Label>Email</Label>
+              <Label>Email</Label> <span className="text-red-500">*</span>
               <Input
                 required
                 type="email"
                 value={formData.email}
-                onChange={(e) =>
-                  setFormData({ ...formData, email: e.target.value })
-                }
+                onChange={(e) => {
+                  const value = e.target.value;
+                  setFormData({ ...formData, email: value });
+
+                  // Validate email format
+                  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                  if (value && !emailRegex.test(value)) {
+                    setEmailError("Invalid email format");
+                  } else {
+                    setEmailError(""); // Clear error
+                  }
+                }}
                 placeholder="Enter candidate's email"
               />
+              {emailError && (
+                <p className="text-sm text-red-500">{emailError}</p>
+              )}
             </div>
 
             {/* Phone Number - Editable */}
             <div className="space-y-2">
-              <Label>Phone Number</Label>
+              <Label>Phone Number</Label>{" "}
+              <span className="text-red-500">*</span>
               <Input
                 required
                 type="tel"
                 value={formData.phone}
-                onChange={(e) =>
-                  setFormData({ ...formData, phone: e.target.value })
-                }
+                onChange={(e) => {
+                  let value = e.target.value.replace(/\D/g, ""); // Remove non-numeric characters
+
+                  // Only allow up to 10 digits
+                  if (value.length > 10) {
+                    value = value.slice(0, 10);
+                  }
+
+                  // If first digit exists, it must be 6,7,8,9
+                  if (
+                    value.length === 1 &&
+                    !["6", "7", "8", "9"].includes(value[0])
+                  ) {
+                    value = ""; // Clear if first digit is invalid
+                  }
+
+                  setFormData({ ...formData, phone: value });
+                }}
                 placeholder="Enter candidate's phone number"
               />
             </div>
 
             {/* Notice Period - Editable */}
             <div className="space-y-2">
-              <Label>Notice Period</Label>
+              <Label>Notice Period</Label>{" "}
+              <span className="text-red-500">*</span>
               <Input
                 required
                 value={formData.notice_period}
@@ -403,7 +450,7 @@ export function AddCandidateModal({
 
             {/* Experience - Editable */}
             <div className="space-y-2">
-              <Label>Experience</Label>
+              <Label>Experience (in years)</Label>
               <Input
                 required
                 value={formData.experience}

@@ -24,6 +24,7 @@ import { useToast } from "../ui/use-toast";
 import { useCandidates } from "@/lib/api/hooks/useCandidates";
 import { useInterviewers } from "@/lib/api/hooks/useInterviewers";
 import { useInterviewRounds } from "@/lib/api/interviewRounds";
+import { getInterviews } from "@/lib/api/interviews";
 
 interface InterviewFormProps {
   isOpen: boolean;
@@ -54,7 +55,8 @@ export function InterviewForm({
     time: initialData?.time ? initialData?.time : "09:00",
     type: initialData?.type || "F2F",
   });
-
+  const InterviewData = getInterviews();
+  console.log(InterviewData);
   const [formData, setFormData] = useState(getInitialFormData());
 
   // Reset form data when modal opens or initialData changes
@@ -223,7 +225,7 @@ export function InterviewForm({
               <SelectContent>
                 {jobs?.map((job) => (
                   <SelectItem key={job.id} value={job.id}>
-                    {job.title}
+                    {job.title}-{job.location}
                   </SelectItem>
                 ))}
               </SelectContent>

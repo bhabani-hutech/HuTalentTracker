@@ -80,6 +80,7 @@ export interface InterviewFeedback {
   id: string;
   interview_id: string;
   candidate_id: string;
+  round_id: string| number;
   interviewer_id: string;
   technical_skills: number;
   communication_skills: number;

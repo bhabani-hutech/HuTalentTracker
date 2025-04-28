@@ -47,11 +47,11 @@ export async function createFeedback(feedback: Omit<InterviewFeedback, "id">) {
 
     console.log("Creating feedback with data:", cleanFeedback);
 
-    // 1. Fetch the interview date & time of the candidate
+    // 1. Fetch the interview date & time
     const { data: interviewData, error: interviewError } = await supabase
-      .from("interviews")  // Assuming interview table is "interviews"
-      .select("interview_date_time") // Adjust the field name if needed
-      .eq("id", feedback.interview_id) // Assuming feedback has interviewId
+      .from("interviews")
+      .select("date, time, round_id, candidate_id")
+      .eq("id", feedback.interview_id)
       .single();
 
     if (interviewError) {
@@ -63,7 +63,9 @@ export async function createFeedback(feedback: Omit<InterviewFeedback, "id">) {
       throw new Error("Interview not found for the candidate.");
     }
 
-    const interviewDateTime = new Date(interviewData.interview_date_time);
+    // Combine interview date and time into a single DateTime
+    const interviewDateTimeString = `${interviewData.date}T${interviewData.time}`;
+    const interviewDateTime = new Date(interviewDateTimeString);
     const currentDateTime = new Date();
 
     // 2. Validate current time vs interview time
@@ -71,7 +73,24 @@ export async function createFeedback(feedback: Omit<InterviewFeedback, "id">) {
       throw new Error("Cannot submit feedback before the interview date & time.");
     }
 
-    // 3. Insert feedback if validation passed
+    // 3. Check if feedback already exists for same candidate and round
+    const { data: existingFeedback, error: feedbackError } = await supabase
+      .from("feedback")
+      .select("id")
+      .eq("candidate_id", interviewData.candidate_id)
+      .eq("round_id", interviewData.round_id)
+      .maybeSingle(); // Use maybeSingle to avoid throw error if no record
+
+    if (feedbackError) {
+      console.error("Error checking existing feedback:", feedbackError);
+      throw feedbackError;
+    }
+
+    if (existingFeedback) {
+      throw new Error("Feedback for this candidate and round already exists.");
+    }
+
+    // 4. Insert feedback if all validations passed
     const { data, error } = await supabase
       .from("feedback")
       .insert([cleanFeedback])
@@ -82,13 +101,13 @@ export async function createFeedback(feedback: Omit<InterviewFeedback, "id">) {
       console.error("Error creating feedback:", error);
       throw error;
     }
-
     return data;
   } catch (error) {
     console.error("Error in createFeedback:", error);
     throw error;
   }
 }
+
 
 
 export async function deleteFeedback(id: string) {

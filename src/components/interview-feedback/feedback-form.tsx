@@ -18,6 +18,7 @@ import { useCandidates } from "@/lib/api/hooks/useCandidates";
 import { useInterviews } from "@/lib/api/hooks/useInterviews";
 import { format } from "date-fns";
 import { useSkills } from "@/lib/api/hooks/useSkills";
+import { useInterviewRounds } from "@/lib/api/interviewRounds";
 
 interface Props {
   existingFeedback?: InterviewFeedback;
@@ -37,12 +38,13 @@ export function InterviewFeedbackForm({
   const { data: interviewers } = useInterviewers();
   const { data: candidates } = useCandidates();
   const { interviews } = useInterviews();
+  const { data: interviewRounds } = useInterviewRounds();
   const { skills: technicalSkills } = useSkills("technical");
   const { skills: domainSkills } = useSkills("domain");
   const { skills: softSkills } = useSkills("soft");
 
   const [skillRatings, setSkillRatings] = useState<Record<string, number>>({});
-
+  console.log(selectedInterview);
   const [formData, setFormData] = useState<Partial<InterviewFeedback>>(
     existingFeedback
       ? {
@@ -50,7 +52,6 @@ export function InterviewFeedbackForm({
           technical_skills: existingFeedback.technical_skills || 0,
           domain_skills: existingFeedback.domain_skills || 0,
           soft_skills: existingFeedback.soft_skills || 0,
-
           strengths: existingFeedback.strengths || "",
           improvements: existingFeedback.improvements || "",
           recommendation: existingFeedback.recommendation || "Maybe",
@@ -59,8 +60,8 @@ export function InterviewFeedbackForm({
           interviewer_id: existingFeedback.interviewer_id || "",
           interview_id:
             existingFeedback.interview_id || selectedInterviewId || "",
+          round_id: existingFeedback.round_id || selectedInterviewId || "",
           interview: existingFeedback.interview,
-
           interviewer: existingFeedback.interviewer,
         }
       : {
@@ -76,6 +77,7 @@ export function InterviewFeedbackForm({
           interview_id: selectedInterview?.id || selectedInterviewId || "",
           interview: selectedInterview,
           interviewer: selectedInterview?.interviewer,
+          round_id: selectedInterview?.round_id,
         }
   );
   console.log(interviews);
@@ -201,6 +203,7 @@ export function InterviewFeedbackForm({
       const feedbackData = {
         interview_id: formData.interview_id,
         candidate_id: formData.candidate_id,
+        round_id: formData.round_id,
         interviewer_id: formData.interviewer_id,
         technical_skills: formData.technical_skills || 0,
         domain_skills: formData.domain_skills || 0,
@@ -291,7 +294,7 @@ export function InterviewFeedbackForm({
               const selectedInterview = interviews?.find(
                 (interview) => interview?.candidate?.id === value
               );
-
+              console.log(selectedCandidate, selectedInterview);
               setFormData((prev) => ({
                 ...prev,
                 candidate_id: value,
@@ -301,6 +304,7 @@ export function InterviewFeedbackForm({
                 interviewer_id:
                   selectedInterview?.interviewer?.id || prev.interviewer_id,
                 interviewer: selectedInterview?.interviewer || prev.interviewer,
+                round_id: selectedInterview?.round_id || prev.round_id,
               }));
             }}
           >
@@ -357,19 +361,50 @@ export function InterviewFeedbackForm({
           </Select>
         </div>
       </div>
-
-      <div className="space-y-2">
-        <Label>Interview Date & Time</Label>
-        <Input
-          type="text"
-          value={
-            formData.interview?.date
-              ? format(new Date(formData.interview.date), "PPp")
-              : ""
-          }
-          disabled={formData.interview?.date ? true : false}
-          placeholder="Interview details"
-        />
+      <div className="grid gap-4 md:grid-cols-2">
+        <div className="space-y-2">
+          <Label>Interview Date & Time</Label>
+          <Input
+            type="text"
+            value={
+              formData.interview?.date
+                ? format(new Date(formData.interview.date), "PPp")
+                : ""
+            }
+            disabled={formData.interview?.date ? true : false}
+            placeholder="Interview details"
+          />
+        </div>
+        <div className="space-y-2">
+          <Label>Interview Round</Label>
+          <Select
+            value={formData.round_id || ""}
+            disabled={formData.round_id}
+            onValueChange={(value) => {
+              setFormData((prev) => ({
+                ...prev,
+                round_id: value,
+              }));
+            }}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Select Interview Round">
+                <SelectValue placeholder="Select Interview Round">
+                  {interviewRounds?.find(
+                    (round) => round.id === formData.round_id
+                  )?.name || "Select Interview Round"}
+                </SelectValue>
+              </SelectValue>
+            </SelectTrigger>
+            <SelectContent>
+              {interviewRounds?.map((round) => (
+                <SelectItem key={round.id} value={round.id.toString()}>
+                  {round.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       {/* Skill-specific ratings */}

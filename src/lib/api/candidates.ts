@@ -80,7 +80,7 @@ export async function createCandidate(
   const { data: existingCandidate, error: checkError } = await supabase
     .from("candidates")
     .select("id")
-    .or(`email.eq.${candidate.email},mobile.eq.${candidate.mobile}`)
+    .or(`email.eq.${candidate.email},phone.eq.${candidate.phone}`)
     .maybeSingle();
 
   if (checkError) {
@@ -281,14 +281,14 @@ export async function updateCandidate(id: string, updates: Partial<Candidate>) {
   }
 
   // 🔒 Check for uniqueness of email or mobile if they are being updated
-  if (updates.email || updates.mobile) {
+  if (updates.email || updates.phone) {
     const { data: conflictCandidate, error: conflictError } = await supabase
       .from("candidates")
       .select("id")
       .or(
         [
           updates.email ? `email.eq.${updates.email}` : null,
-          updates.mobile ? `mobile.eq.${updates.mobile}` : null,
+          updates.phone ? `phone.eq.${updates.phone}` : null,
         ]
           .filter(Boolean)
           .join(","),
@@ -303,7 +303,7 @@ export async function updateCandidate(id: string, updates: Partial<Candidate>) {
 
     if (conflictCandidate) {
       throw new Error(
-        "Another candidate with the same email or mobile number already exists.",
+        "This email address or phone  is already linked to another candidate.",
       );
     }
   }
