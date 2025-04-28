@@ -92,6 +92,60 @@ export async function createInterview(
     round_id: interview.round_id || null,
   };
 
+  // --- Check for Interviewer Time Conflict ---
+  if (sanitizedData.interviewer_id && sanitizedData.date) {
+    const interviewDate = new Date(sanitizedData.date);
+
+    const startTime = new Date(interviewDate.getTime());
+    const endTime = new Date(interviewDate.getTime() + 60 * 60 * 1000); // +1 hour
+
+    const formattedStartTime = startTime.toISOString();
+    const formattedEndTime = endTime.toISOString();
+
+    const { data: existingInterviews, error: conflictError } = await supabase
+      .from("interviews")
+      .select("id, date")
+      .eq("interviewer_id", sanitizedData.interviewer_id)
+      .gte("date", formattedStartTime)
+      .lt("date", formattedEndTime);
+
+    if (conflictError) {
+      console.error("Error checking interviewer conflicts:", conflictError);
+      throw conflictError;
+    }
+
+    if (existingInterviews && existingInterviews.length > 0) {
+      const error = new Error(
+        "The selected interviewer is already scheduled at this time."
+      );
+      error.name = "InterviewerConflict";
+      throw error;
+    }
+  }
+
+  // --- Check for Duplicate Candidate Round ---
+  if (sanitizedData.candidate_id && sanitizedData.round_id) {
+    const { data: existingRounds, error: roundsError } = await supabase
+      .from("interviews")
+      .select("id")
+      .eq("candidate_id", sanitizedData.candidate_id)
+      .eq("round_id", sanitizedData.round_id);
+
+    if (roundsError) {
+      console.error("Error checking for duplicate rounds:", roundsError);
+      throw roundsError;
+    }
+
+    if (existingRounds && existingRounds.length > 0) {
+      const error = new Error(
+        "This candidate has already been scheduled for this interview round."
+      );
+      error.name = "DuplicateRound";
+      throw error;
+    }
+  }
+
+  // --- Create Interview ---
   const { data, error } = await supabase
     .from("interviews")
     .insert([sanitizedData])
@@ -99,7 +153,8 @@ export async function createInterview(
       `
       *,
       candidate:candidates!candidate_id(id, name, job_id, stage_id),
-      interviewer:users!interviewer_id(id, name)
+      interviewer:users!interviewer_id(id, name),
+      interview_round:interview_rounds(id, name)
     `,
     )
     .single();
@@ -111,6 +166,7 @@ export async function createInterview(
 
   return data as Interview;
 }
+
 
 /**
  * Update an interview by ID

@@ -182,6 +182,20 @@ export function InterviewFeedbackForm({
         });
         return;
       }
+      if (formData.interview?.date) {
+        const interviewDate = new Date(formData.interview.date);
+        const currentDate = new Date();
+
+        if (currentDate < interviewDate) {
+          toast({
+            title: "Invalid Action",
+            description:
+              "You cannot submit feedback before the interview has occurred.",
+            variant: "destructive",
+          });
+          return;
+        }
+      }
 
       // Create a clean feedback data object without nested objects
       const feedbackData = {
@@ -259,24 +273,17 @@ export function InterviewFeedbackForm({
       ))}
     </div>
   );
+  {
+    console.log(existingFeedback?.candidate?.id);
+  }
   return (
     <div className="grid gap-4 py-4">
       <div className="grid gap-4 md:grid-cols-2">
         <div className="space-y-2">
           <Label>Candidate Name</Label>
-          {/* <Input
-            value={
-              formData?.interview?.candidate?.name ||
-              formData?.candidate?.name ||
-              ""
-            }
-            disabled = { formData?.interview?.candidate?.name ||
-              formData?.candidate?.name?true:false}
-            placeholder="Candidate name"
-          /> */}
           <Select
             value={formData.candidate_id || ""}
-            disabled={!!selectedInterview?.candidate_id}
+            disabled={!!existingFeedback?.candidate?.id}
             onValueChange={(value) => {
               const selectedCandidate = candidates?.find(
                 (candidate) => candidate.id === value
@@ -285,20 +292,23 @@ export function InterviewFeedbackForm({
                 (interview) => interview?.candidate?.id === value
               );
 
-              setFormData({
-                ...formData,
+              setFormData((prev) => ({
+                ...prev,
                 candidate_id: value,
                 candidate: selectedCandidate,
-                interview_id: selectedInterview?.id || formData.interview_id,
-                interview: selectedInterview || formData.interview
-              });
+                interview_id: selectedInterview?.id || prev.interview_id,
+                interview: selectedInterview || prev.interview,
+                interviewer_id:
+                  selectedInterview?.interviewer?.id || prev.interviewer_id,
+                interviewer: selectedInterview?.interviewer || prev.interviewer,
+              }));
             }}
           >
             <SelectTrigger>
               <SelectValue placeholder="Select Candidate name">
-                {formData?.interview?.candidate?.name || 
-                 formData?.candidate?.name || 
-                 "Select Candidate"}
+                {formData?.interview?.candidate?.name ||
+                  formData?.candidate?.name ||
+                  "Select Candidate"}
               </SelectValue>
             </SelectTrigger>
             <SelectContent>
@@ -313,14 +323,12 @@ export function InterviewFeedbackForm({
 
         <div className="space-y-2">
           <Label>Interviewer</Label>
-          {/* <Input
-            value={formData.interviewer?.name || ""}
-            disabled={formData.interviewer?.name ? true : false}
-            placeholder="Interviewer name"
-          /> */}
           <Select
-            value={formData.interviewer?.id || ""}
-            disabled={!!formData.interviewer?.name}
+            value={formData.interviewer_id || ""}
+            disabled={
+              !!existingFeedback?.interviewer?.id || formData.interviewer_id
+            }
+            // disabled={!!existingFeedback?.interviewer?.id}
             onValueChange={(value) => {
               const selectedInterviewer = interviewers?.find(
                 (ele) => ele?.id === value
@@ -328,13 +336,16 @@ export function InterviewFeedbackForm({
               if (selectedInterviewer) {
                 setFormData({
                   ...formData,
-                  interviewer_id: selectedInterviewer?.id,
+                  interviewer_id: selectedInterviewer.id,
+                  interviewer: selectedInterviewer,
                 });
               }
             }}
           >
             <SelectTrigger>
-              <SelectValue placeholder="Select Interviewer name" />
+              <SelectValue placeholder="Select Interviewer name">
+                {formData?.interviewer?.name || "Select Interviewer"}
+              </SelectValue>
             </SelectTrigger>
             <SelectContent>
               {interviewers?.map((ele) => (

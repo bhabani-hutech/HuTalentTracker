@@ -99,8 +99,8 @@ export default function InterviewSchedule() {
         variant: "destructive",
         title: "Error",
         description: selectedInterview
-          ? "Failed to update interview"
-          : "Failed to schedule interview",
+          ? `Failed to update interview - ${error}`
+          : `Failed to schedule interview - ${error}`,
       });
     }
   };
