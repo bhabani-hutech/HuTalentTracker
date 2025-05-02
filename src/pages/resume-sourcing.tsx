@@ -419,32 +419,40 @@ export default function ResumeSourcing() {
       });
     }
   };
-  const handleDeleteCandidate = (id: string) => {
-    deleteCandidateHook(id)
-      .then(() => {
-        toast({
-          title: "Candidate Deleted",
-          description: "The candidate has been successfully deleted.",
-        });
-      })
-      .catch((error: any) => {
-         console.error("Error deleting candidate:", error);
-        if (error.response?.status === 409) {
-          toast({
-            variant: "destructive",
-            title: "Conflict Error",
-            description:
-              "Cannot delete candidate due to a conflict. The candidate may be linked to another resource.",
-          });
-        } else {
-          toast({
-            variant: "destructive",
-            title: "Error",
-            description: "Failed to delete candidate. Please try again.",
-          });
-        }
-      });
+  // const handleDeleteCandidate = (id: string) => {
+  //   deleteCandidateHook(id)
+  //     .then(() => {
+  //       toast({
+  //         title: "Candidate Deleted",
+  //         description: "The candidate has been successfully deleted.",
+  //       });
+  //     })
+  //     .catch((error: any) => {
+  //        console.error("Error deleting candidate:", error);
+  //       if (error.response?.status === 409) {
+  //         toast({
+  //           variant: "destructive",
+  //           title: "Conflict Error",
+  //           description:
+  //             "Cannot delete candidate due to a conflict. The candidate may be linked to another resource.",
+  //         });
+  //       } else {
+  //         toast({
+  //           variant: "destructive",
+  //           title: "Error",
+  //           description: "Failed to delete candidate. Please try again.",
+  //         });
+  //       }
+  //     });
+  // };
+  const handleDeleteCandidate = async (id: string) => {
+    const { error } = await supabase.from('candidates').delete().eq('id', id);
+  
+    if (error) {
+      throw new Error(error.message);
+    }
   };
+  
 
   // Function to open the Add Candidate modal
   const openAddCandidateModal = () => {

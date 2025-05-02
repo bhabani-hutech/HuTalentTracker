@@ -163,6 +163,7 @@ export function OrganizationsList() {
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead>Logo</TableHead>
                 <TableHead>Name</TableHead>
                 <TableHead>Type</TableHead>
                 <TableHead>Industry</TableHead>
@@ -182,6 +183,20 @@ export function OrganizationsList() {
               ) : (
                 organizations.map((org) => (
                   <TableRow key={org.id}>
+                    <TableCell className="font-medium">
+                      {org.logo_url ? (
+                        <img
+                          src={org.logo_url}
+                          alt="Logo"
+                          className="h-8 w-8 object-contain rounded"
+                        />
+                      ) : (
+                        <div className="h-8 w-8 rounded bg-gray-200 flex items-center justify-center font-semibold text-gray-600 uppercase">
+                          {org.name?.slice(0, 2) || "NA"}
+                        </div>
+                      )}
+                    </TableCell>
+
                     <TableCell className="font-medium">{org.name}</TableCell>
                     <TableCell>
                       <Badge
@@ -289,8 +304,7 @@ export function OrganizationsList() {
             const nameExists = selectedOrganization?.id
               ? existingOrgs.some(
                   (org) =>
-                    org.id !== selectedOrganization.id &&
-                    org.name === data.name,
+                    org.id !== selectedOrganization.id && org.name === data.name
                 )
               : existingOrgs.length > 0;
 
@@ -351,7 +365,9 @@ export function OrganizationsList() {
             // First show success message
             toast({
               title: "Success",
-              description: `Organization ${selectedOrganization ? "updated" : "added"} successfully`,
+              description: `Organization ${
+                selectedOrganization ? "updated" : "added"
+              } successfully`,
             });
 
             // Then close the form
@@ -365,7 +381,9 @@ export function OrganizationsList() {
             toast({
               variant: "destructive",
               title: "Error",
-              description: `Failed to ${selectedOrganization ? "update" : "add"} organization`,
+              description: `Failed to ${
+                selectedOrganization ? "update" : "add"
+              } organization`,
             });
           }
         }}

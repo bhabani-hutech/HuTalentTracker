@@ -282,7 +282,15 @@ export function AddCandidateModal({
       setFormData({ ...formData, experience: value });
     }
   };
-  const [emailError, setEmailError] = useState<string>("");
+  interface ErrorValidation {
+    emailError: string;
+    nameError: string;
+  }
+
+  const [errorValidation, setErrorValidation] = useState<ErrorValidation>({
+    emailError: "",
+    nameError: "",
+  });
 
   // const emailErrorFormat =(error: string)=>{
   //   setEmailError(error);
@@ -347,19 +355,43 @@ export function AddCandidateModal({
                 value={formData.name}
                 onChange={(e) => {
                   const value = e.target.value;
+
+                  // Format name (capitalize each word)
                   const formattedValue = value
-                    .split(" ") // Split into words
+                    .split(" ")
+                    // .filter(Boolean) // Remove extra spaces
                     .map(
                       (word) =>
                         word.charAt(0).toUpperCase() +
                         word.slice(1).toLowerCase()
-                    ) // Capitalize each word
-                    .join(" "); // Join back
+                    )
+                    .join(" ");
 
                   setFormData({ ...formData, name: formattedValue });
+
+                  const nameRegex = /^[A-Za-z.]+(?: [A-Za-z.]+)*$/;
+
+                  if (
+                    formattedValue &&
+                    (!nameRegex.test(formattedValue) ||
+                      formattedValue.length > 50)
+                  ) {
+                    setErrorValidation({
+                      ...errorValidation,
+                      nameError:
+                        "Name can only contain letters, dots, and spaces (max 50 characters)",
+                    });
+                  } else {
+                    setErrorValidation({ ...errorValidation, nameError: "" });
+                  }
                 }}
                 placeholder="Enter candidate's full name"
               />
+              {errorValidation.nameError && (
+                <p className="text-sm text-red-500">
+                  {errorValidation.nameError}
+                </p>
+              )}
             </div>
 
             {/* Email - Editable */}
@@ -376,15 +408,20 @@ export function AddCandidateModal({
                   // Validate email format
                   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
                   if (value && !emailRegex.test(value)) {
-                    setEmailError("Invalid email format");
+                    setErrorValidation({
+                      ...errorValidation,
+                      emailError: "Invalid email format",
+                    });
                   } else {
-                    setEmailError(""); // Clear error
+                    setErrorValidation({ ...errorValidation, emailError: "" }); // Clear error
                   }
                 }}
                 placeholder="Enter candidate's email"
               />
-              {emailError && (
-                <p className="text-sm text-red-500">{emailError}</p>
+              {errorValidation.emailError && (
+                <p className="text-sm text-red-500">
+                  {errorValidation.emailError}
+                </p>
               )}
             </div>
 
@@ -420,17 +457,21 @@ export function AddCandidateModal({
 
             {/* Notice Period - Editable */}
             <div className="space-y-2">
-              <Label>Notice Period</Label>{" "}
-              <span className="text-red-500">*</span>
-              <Input
-                required
-                value={formData.notice_period}
-                onChange={(e) =>
-                  setFormData({ ...formData, notice_period: e.target.value })
-                }
-                placeholder="e.g. 30 days"
-              />
-            </div>
+  <Label>Notice Period (in days)</Label>{" "}
+  <span className="text-red-500">*</span>
+  <Input
+    required
+    value={formData.notice_period}
+    onChange={(e) => {
+      const value = e.target.value;
+      if (/^\d*$/.test(value)) {
+        setFormData({ ...formData, notice_period: value });
+      }
+    }}
+    placeholder="e.g. 30"
+  />
+</div>
+
 
             {/* Department - Dropdown */}
             <div className="space-y-2">

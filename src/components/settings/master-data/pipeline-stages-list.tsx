@@ -36,7 +36,7 @@ export function PipelineStagesList() {
           name: stage.stage,
           description: stage.description || "",
           stage_order: stage.stage_order,
-        })),
+        }))
       );
     } catch (error) {
       console.error("Error loading pipeline stages:", error);
@@ -122,8 +122,8 @@ export function PipelineStagesList() {
   const updateStage = (id: number, key: keyof Stage, value: string) => {
     setStages(
       stages.map((stage) =>
-        stage.id === id ? { ...stage, [key]: value } : stage,
-      ),
+        stage.id === id ? { ...stage, [key]: value } : stage
+      )
     );
   };
 
@@ -167,7 +167,76 @@ export function PipelineStagesList() {
         </div>
       </CardHeader>
       <CardContent>
+        {console.log(stages)}
         <div className="space-y-4">
+          {stages.map((stage, index) => {
+            const isLocked = ["screening", "hired", "rejected"].includes(
+              stage.name.toLowerCase()
+            );
+
+            return (
+              <div
+                key={stage.id}
+                className="flex items-start gap-4 p-2 rounded border bg-background"
+                draggable={!isLocked}
+                onDragStart={
+                  !isLocked ? () => (dragItem.current = index) : undefined
+                }
+                onDragEnter={
+                  !isLocked ? () => (dragOverItem.current = index) : undefined
+                }
+                onDragOver={(e) => !isLocked && e.preventDefault()}
+                onDragEnd={!isLocked ? handleDragEnd : undefined}
+              >
+                <div
+                  className={isLocked ? "cursor-not-allowed" : "cursor-move"}
+                >
+                  <GripVertical
+                    className={`h-5 w-5 text-muted-foreground ${
+                      isLocked ? "opacity-30" : ""
+                    }`}
+                  />
+                </div>
+                <div className="flex-1 space-y-2">
+                  <div className="flex gap-4">
+                    <div className="flex-1">
+                      <Label className="sr-only">Stage name</Label>
+                      <Input
+                        value={stage.name}
+                        onChange={(e) =>
+                          updateStage(stage.id, "name", e.target.value)
+                        }
+                        placeholder="Enter stage name"
+                        disabled={isLocked}
+                      />
+                    </div>
+                    <div className="flex-[2]">
+                      <Label className="sr-only">Description</Label>
+                      <Input
+                        value={stage.description}
+                        onChange={(e) =>
+                          updateStage(stage.id, "description", e.target.value)
+                        }
+                        placeholder="Enter stage description"
+                        // disabled={isLocked}
+                      />
+                    </div>
+                  </div>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => !isLocked && removeStage(stage.id)}
+                  disabled={isLocked}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* <div className="space-y-4">
           {stages.map((stage, index) => (
             <div
               key={stage.id}
@@ -214,7 +283,7 @@ export function PipelineStagesList() {
               </Button>
             </div>
           ))}
-        </div>
+        </div> */}
       </CardContent>
     </Card>
   );

@@ -25,6 +25,7 @@ import { useCandidates } from "@/lib/api/hooks/useCandidates";
 import { useInterviewers } from "@/lib/api/hooks/useInterviewers";
 import { useInterviewRounds } from "@/lib/api/interviewRounds";
 import { getInterviews } from "@/lib/api/interviews";
+import { supabase } from "@/lib/supabase";
 
 interface InterviewFormProps {
   isOpen: boolean;
@@ -44,34 +45,69 @@ export function InterviewForm({
   const { data: candidates } = useCandidates();
   const { data: interviewers } = useInterviewers();
   const { data: interviewRounds } = useInterviewRounds();
-  console.log(initialData);
 
   const getInitialFormData = () => ({
     job_id: initialData?.job_id || "",
     candidate_id: initialData?.candidate_id || "",
     interviewer_id: initialData?.interviewer_id || "",
-    round_id: initialData?.round_id || null,
+    round_id: initialData?.round_id?.toString() || "",  // Ensure it's a string
     date: initialData?.date ? new Date(initialData.date) : new Date(),
-    time: initialData?.time ? initialData?.time : "09:00",
+    time: initialData?.time || "09:00",
     type: initialData?.type || "F2F",
   });
   const InterviewData = getInterviews();
   console.log(InterviewData);
   const [formData, setFormData] = useState(getInitialFormData());
+  const [unAttendedInterview, setUnAttendedInterview] = useState<any[]>([]);
 
   // Reset form data when modal opens or initialData changes
   useEffect(() => {
     if (isOpen && initialData) {
       setFormData(getInitialFormData());
     }
-  }, [isOpen, initialData?.id]);
+  }, [isOpen, initialData]);
+  
+  useEffect(() => {
+    const fetchRound = async () => {
+      const { data: allRounds, error: roundsError } = await supabase
+        .from("interview_rounds")
+        .select("id, name");
+
+      if (roundsError) {
+        console.error("Error fetching interview rounds:", roundsError);
+        return;
+      }
+
+      const { data: attendedRounds, error: attendedError } = await supabase
+        .from("interviews")
+        .select("round_id")
+        .eq("candidate_id", formData.candidate_id);
+
+      if (attendedError) {
+        console.error("Error fetching attended rounds:", attendedError);
+        return;
+      }
+
+      const attendedRoundIds = attendedRounds.map((r) => r.round_id);
+
+      // Step 3: Filter rounds not attended
+      const notAttendedRounds = allRounds.filter(
+        (round) => !attendedRoundIds.includes(round.id)
+      );
+      setUnAttendedInterview(notAttendedRounds);
+      // Final result
+      console.log("Rounds not attended:", notAttendedRounds);
+    };
+
+    fetchRound();
+  }, [formData.candidate_id]);
 
   const handleClose = () => {
     setFormData({
       job_id: "",
       candidate_id: "",
       interviewer_id: "",
-      round_id: null,
+      round_id: 0,
       date: new Date(),
       time: "09:00",
       type: "F2F",
@@ -181,7 +217,6 @@ export function InterviewForm({
         selectedCandidate,
       ]
     : filteredCandidates;
-  console.log(formData);
   return (
     <Dialog
       open={isOpen}
@@ -223,11 +258,13 @@ export function InterviewForm({
                 <SelectValue placeholder="Select job" />
               </SelectTrigger>
               <SelectContent>
-                {jobs?.map((job) => (
-                  <SelectItem key={job.id} value={job.id}>
-                    {job.title}-{job.location}
-                  </SelectItem>
-                ))}
+                {jobs
+                  ?.filter((job) => job.status !== "Draft")
+                  .map((job) => (
+                    <SelectItem key={job.id} value={job.id}>
+                      {job.title} - {job.location}
+                    </SelectItem>
+                  ))}
               </SelectContent>
             </Select>
           </div>
@@ -266,22 +303,39 @@ export function InterviewForm({
                 <span className="text-red-500">*</span>
               </span>
             </Label>
-
+            {console.log(unAttendedInterview)}
             <Select
-              value={formData.round_id?.toString()}
+              value={formData.round_id}
               onValueChange={(value) =>
-                setFormData({ ...formData, round_id: Number(value) })
+                setFormData({ ...formData, round_id: value })
               }
             >
               <SelectTrigger>
                 <SelectValue placeholder="Select interview round" />
               </SelectTrigger>
-              <SelectContent>
-                {interviewRounds?.map((round) => (
-                  <SelectItem key={round.id} value={round.id.toString()}>
+              {/* <SelectContent>
+                {unAttendedInterview?.map((round) => (
+                  <SelectItem key={round.id} value={round.id + ""}>
                     {round.name}
                   </SelectItem>
                 ))}
+              </SelectContent> */}
+              <SelectContent>
+                {interviewRounds?.map((round) => {
+                  const alreadyAttended = !unAttendedInterview.some(
+                    (r) => r.id === round.id
+                  );
+
+                  return (
+                    <SelectItem
+                      key={round.id}
+                      value={round.id + ""}
+                      disabled={alreadyAttended}
+                    >
+                      {round.name}
+                    </SelectItem>
+                  );
+                })}
               </SelectContent>
             </Select>
           </div>

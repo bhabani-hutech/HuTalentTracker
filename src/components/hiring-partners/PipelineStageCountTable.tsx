@@ -309,7 +309,7 @@ export function PipelineStageCountTable({
                 <TableRow key={`row-${jobTitle}`}>
                   <TableCell className="font-medium">{position}</TableCell>
                   <TableCell className="font-medium">{location}</TableCell>
-                  <TableCell className="font-medium">{date}</TableCell>
+                  <TableCell className="font-medium">{new Date(date).toLocaleDateString("en-GB")}</TableCell>
                   {stageItems.map((stage) => {
                     const count = partnerCand.filter((candidate) => {
                       const jobTitleMatch =

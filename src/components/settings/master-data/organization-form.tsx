@@ -210,7 +210,7 @@ export function OrganizationForm({
                 />
               </div>
             </div>
-
+            {/* 
             <div className="space-y-2">
               <Label>Logo URL</Label>
               <Input
@@ -221,6 +221,41 @@ export function OrganizationForm({
                 }
                 placeholder="Enter logo URL"
               />
+            </div> */}
+            <div className="space-y-2">
+              <Label>Upload Logo</Label>
+              <Input
+                type="file"
+                accept="image/*"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  console.log(file,URL.createObjectURL(file));
+                  if (file) {
+                    const imageUrl = URL.createObjectURL(file); // For preview
+                    setFormData({ ...formData, logo_url: imageUrl });
+
+                    // TODO: upload the image and update logo_url with uploaded URL
+                  }
+                }}
+              />
+
+              {formData.logo_url && (
+                <div className="relative mt-2 w-fit">
+                  <img
+                    src={formData.logo_url}
+                    alt="Logo Preview"
+                    className="h-20 w-20 object-contain rounded border"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setFormData({ ...formData, logo_url: "" })}
+                    className="absolute -top-2 -right-2 rounded-full bg-red-500 text-white w-5 h-5 flex items-center justify-center text-xs"
+                    aria-label="Remove logo"
+                  >
+                    ×
+                  </button>
+                </div>
+              )}
             </div>
 
             {/* Departments Section */}

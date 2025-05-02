@@ -19,6 +19,7 @@ import { useInterviews } from "@/lib/api/hooks/useInterviews";
 import { format } from "date-fns";
 import { useSkills } from "@/lib/api/hooks/useSkills";
 import { useInterviewRounds } from "@/lib/api/interviewRounds";
+import { supabase } from "@/lib/supabase";
 
 interface Props {
   existingFeedback?: InterviewFeedback;
@@ -42,9 +43,12 @@ export function InterviewFeedbackForm({
   const { skills: technicalSkills } = useSkills("technical");
   const { skills: domainSkills } = useSkills("domain");
   const { skills: softSkills } = useSkills("soft");
+  const [candidateInterviews, setCandidateInterviews] = useState<any[]>([]);
+  const [interviewLoading, setInterviewLoading] = useState(false);
+
 
   const [skillRatings, setSkillRatings] = useState<Record<string, number>>({});
-  console.log(selectedInterview);
+  console.log(interviews);
   const [formData, setFormData] = useState<Partial<InterviewFeedback>>(
     existingFeedback
       ? {
@@ -63,6 +67,7 @@ export function InterviewFeedbackForm({
           round_id: existingFeedback.round_id || selectedInterviewId || "",
           interview: existingFeedback.interview,
           interviewer: existingFeedback.interviewer,
+          date: existingFeedback.date || "",
         }
       : {
           technical_skills: 0,
@@ -78,9 +83,42 @@ export function InterviewFeedbackForm({
           interview: selectedInterview,
           interviewer: selectedInterview?.interviewer,
           round_id: selectedInterview?.round_id,
+          date: selectedInterview?.date || "",
         }
   );
   console.log(interviews);
+  const fetchCandidateInterviews = async (candidateId: string) => {
+    setInterviewLoading(true);
+    const { data, error } = await supabase
+      .from("interviews")
+      .select(
+        `
+    id,
+    candidate_id,
+    round_id,
+    date,
+    time,
+    interview_rounds(id, name),
+    users(id, name)
+  `
+      )
+      .eq("candidate_id", candidateId);
+    if (error) {
+      toast.error("Failed to fetch candidate interviews");
+      console.error(error);
+    } else {
+      setCandidateInterviews(data || []);
+    }
+    setInterviewLoading(false);
+  };
+  useEffect(() => {
+    if (formData.candidate_id) {
+      fetchCandidateInterviews(formData.candidate_id);
+    }
+  }, [formData.candidate_id]);
+
+ 
+
   // Initialize skill ratings based on existing feedback or candidate skills
   useEffect(() => {
     try {
@@ -156,91 +194,116 @@ export function InterviewFeedbackForm({
   ]);
 
   const handleSubmit = async () => {
-    console.log(formData);
-    try {
-      if (!formData.interviewer_id) {
+    if (!formData.interviewer_id) {
+      toast({
+        title: "Missing Information",
+        description: "Please select an interviewer.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!formData.candidate_id) {
+      toast({
+        title: "Missing Information",
+        description: "Please select a candidate.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!formData.interview_id) {
+      toast({
+        title: "Missing Information",
+        description: "Please select an interview.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (formData.interview?.date) {
+      const interviewDate = new Date(formData.interview.date);
+      const currentDate = new Date();
+
+      if (currentDate < interviewDate) {
         toast({
-          title: "Missing Information",
-          description: "Please select an interviewer",
+          title: "Invalid Action",
+          description:
+            "You cannot submit feedback before the interview has occurred.",
           variant: "destructive",
         });
         return;
       }
+    }
 
-      if (!formData.candidate_id) {
-        toast({
-          title: "Missing Information",
-          description: "Please select a candidate",
-          variant: "destructive",
-        });
-        return;
-      }
+    const feedbackData = {
+      interview_id: formData.interview_id,
+      candidate_id: formData.candidate_id,
+      round_id: formData.round_id,
+      interviewer_id: formData.interviewer_id,
+      technical_skills: formData.technical_skills || 0,
+      domain_skills: formData.domain_skills || 0,
+      soft_skills: formData.soft_skills || 0,
+      communication_skills: formData.communication_skills || 0,
+      problem_solving: formData.problem_solving || 0,
+      experience_fit: formData.experience_fit || 0,
+      cultural_fit: formData.cultural_fit || 0,
+      skill_set:
+        typeof formData.skill_set === "number" ? formData.skill_set : 0,
+      skill_ratings: skillRatings,
+      strengths: formData.strengths || "",
+      improvements: formData.improvements || "",
+      recommendation: formData.recommendation || "Maybe",
+      comments: formData.comments || "",
+    };
 
-      if (!formData.interview_id) {
-        toast({
-          title: "Missing Information",
-          description: "Please select an interview",
-          variant: "destructive",
-        });
-        return;
-      }
-      if (formData.interview?.date) {
-        const interviewDate = new Date(formData.interview.date);
-        const currentDate = new Date();
-
-        if (currentDate < interviewDate) {
-          toast({
-            title: "Invalid Action",
-            description:
-              "You cannot submit feedback before the interview has occurred.",
-            variant: "destructive",
-          });
-          return;
-        }
-      }
-
-      // Create a clean feedback data object without nested objects
-      const feedbackData = {
-        interview_id: formData.interview_id,
-        candidate_id: formData.candidate_id,
-        round_id: formData.round_id,
-        interviewer_id: formData.interviewer_id,
-        technical_skills: formData.technical_skills || 0,
-        domain_skills: formData.domain_skills || 0,
-        soft_skills: formData.soft_skills || 0,
-        skill_ratings: skillRatings, // Store the detailed skill ratings
-        strengths: formData.strengths || "",
-        improvements: formData.improvements || "",
-        recommendation: formData.recommendation || "Maybe",
-        comments: formData.comments || "",
-      };
-
-      if (existingFeedback?.id) {
-        // Make sure to include the ID in the update but exclude nested objects
-        await updateFeedback({
+    if (existingFeedback?.id) {
+      updateFeedback(
+        {
           id: existingFeedback.id,
           updates: feedbackData,
-        });
-      } else {
-        await createFeedback(feedbackData as any);
-      }
-
-      // Use toast instead of alert for better UX
-      toast({
-        title: existingFeedback ? "Feedback Updated" : "Feedback Submitted",
-        description: existingFeedback
-          ? "Feedback has been updated successfully"
-          : "Feedback has been submitted successfully",
-        variant: "default",
-      });
-
-      if (onClose) onClose();
-    } catch (error) {
-      console.error("Error saving feedback:", error);
-      toast({
-        title: "Error",
-        description: "Failed to save feedback. Please try again.",
-        variant: "destructive",
+        },
+        {
+          onSuccess: () => {
+            toast({
+              title: "Feedback Updated",
+              description: "Feedback has been updated successfully.",
+              variant: "default",
+            });
+            if (onClose) onClose();
+          },
+          onError: (error: any) => {
+            console.error("Update failed:", error);
+            toast({
+              title: "Error",
+              description:
+                error?.message ||
+                "Something went wrong while updating feedback.",
+              variant: "destructive",
+            });
+          },
+        }
+      );
+    } else {
+      createFeedback(feedbackData, {
+        onSuccess: () => {
+          toast({
+            title: "Feedback Submitted",
+            description: "Feedback has been submitted successfully.",
+            variant: "default",
+          });
+          if (onClose) onClose();
+        },
+        onError: (error: any) => {
+          console.error("Creation failed:", error);
+          toast({
+            title: "Error",
+            description:
+              error?.message ||
+              "Feedback for this candidate and round already exists.",
+            variant: "destructive",
+          });
+        },
       });
     }
   };
@@ -316,23 +379,91 @@ export function InterviewFeedbackForm({
               </SelectValue>
             </SelectTrigger>
             <SelectContent>
-              {candidates?.map((candidate) => (
-                <SelectItem key={candidate.id} value={candidate.id}>
-                  {candidate.name}
+              {Array.from(
+                new Map(
+                  interviews?.map((interview) => [
+                    interview?.candidate?.id,
+                    interview?.candidate,
+                  ])
+                ).values()
+              ).map((candidate) => (
+                <SelectItem key={candidate?.id} value={candidate?.id}>
+                  {candidate?.name}
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
         </div>
-
+        <div className="space-y-2">
+          <Label>Interview Round</Label>
+          <Select
+            value={formData.round_id}
+            onValueChange={(value) => {
+              console.log(value);
+              const selectedRound = candidateInterviews.find(
+                (interview) => interview.interview_rounds?.id === value
+              );
+              console.log(selectedRound);
+              setFormData((prev) => ({
+                ...prev,
+                round_id: selectedRound?.interview_rounds?.id,
+                interviewer_id: selectedRound?.users?.id || prev.interviewer_id,
+                interviewer: selectedRound?.users || prev.interviewer,
+                date: selectedRound?.date,
+              }));
+            }}
+            // onValueChange={(value) =>
+            //   setFormData((prev) => ({
+            //     ...prev,
+            //     round_id: value,
+            //     interviewer:
+            //       candidateInterviews[1]?.users?.name || prev.interviewer,
+            //   }))
+            // }
+            // disabled={!formData.candidateId || interviewLoading}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Select Interview Round" />
+            </SelectTrigger>
+            <SelectContent>
+              {candidateInterviews.length > 0 ? (
+                candidateInterviews.map((interview) => (
+                  <SelectItem
+                    key={interview?.interview_rounds?.id}
+                    value={interview?.interview_rounds?.id}
+                  >
+                    {interview.interview_rounds?.name || "Unnamed Round"}
+                  </SelectItem>
+                ))
+              ) : (
+                <SelectItem value="No Rounds Available" disabled>
+                  No Rounds Available
+                </SelectItem>
+              )}
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+      <div className="grid gap-4 md:grid-cols-2">
+        <div className="space-y-2">
+          <Label>Interview Date & Time</Label>
+          <Input
+            type="text"
+            value={
+              formData?.date ? format(new Date(formData?.date), "PPp") : ""
+            }
+            disabled={formData.round_id ? true : false}
+            placeholder="Interview details"
+          />
+        </div>
         <div className="space-y-2">
           <Label>Interviewer</Label>
           <Select
             value={formData.interviewer_id || ""}
-            disabled={
-              !!existingFeedback?.interviewer?.id || formData.interviewer_id
-            }
-            // disabled={!!existingFeedback?.interviewer?.id}
+            // disabled={
+            //   !!existingFeedback?.interviewer?.id || formData.interviewer_id
+            // }
+            disabled={formData.round_id ? true : false}
             onValueChange={(value) => {
               const selectedInterviewer = interviewers?.find(
                 (ele) => ele?.id === value
@@ -355,51 +486,6 @@ export function InterviewFeedbackForm({
               {interviewers?.map((ele) => (
                 <SelectItem key={ele?.id} value={ele?.id}>
                   {ele?.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
-      <div className="grid gap-4 md:grid-cols-2">
-        <div className="space-y-2">
-          <Label>Interview Date & Time</Label>
-          <Input
-            type="text"
-            value={
-              formData.interview?.date
-                ? format(new Date(formData.interview.date), "PPp")
-                : ""
-            }
-            disabled={formData.interview?.date ? true : false}
-            placeholder="Interview details"
-          />
-        </div>
-        <div className="space-y-2">
-          <Label>Interview Round</Label>
-          <Select
-            value={formData.round_id || ""}
-            disabled={formData.round_id}
-            onValueChange={(value) => {
-              setFormData((prev) => ({
-                ...prev,
-                round_id: value,
-              }));
-            }}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Select Interview Round">
-                <SelectValue placeholder="Select Interview Round">
-                  {interviewRounds?.find(
-                    (round) => round.id === formData.round_id
-                  )?.name || "Select Interview Round"}
-                </SelectValue>
-              </SelectValue>
-            </SelectTrigger>
-            <SelectContent>
-              {interviewRounds?.map((round) => (
-                <SelectItem key={round.id} value={round.id.toString()}>
-                  {round.name}
                 </SelectItem>
               ))}
             </SelectContent>

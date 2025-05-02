@@ -176,14 +176,14 @@ export default function HiringPartners() {
     const fetchPartnerDetails = async () => {
       setIsLoadingPartnerDetails(true);
       try {
+        console.log(selectedPartner.locations.map((ele) => ele.name));
         setTimeout(() => {
           setPartnerDetails({
             name: selectedPartner.name,
-            industry: selectedPartner.industry || "Technology",
-            location: selectedPartner.location || "San Francisco, CA",
-            founded: selectedPartner.founded || "2010",
-            employees: selectedPartner.employees || "100-500",
-            website: selectedPartner.website || "https://example.com",
+            industry: selectedPartner.industry || "",
+            location:
+              selectedPartner.locations.map((ele) => ele.name).join(",") || "",
+            website: selectedPartner.website || "",
             agreement: {
               startDate: "2023-01-15",
               endDate: "2024-01-14",
@@ -234,9 +234,7 @@ export default function HiringPartners() {
         console.error("Error fetching candidates:", error);
       } else {
         setPartnerCand(data);
-        setStageDataCount(
-          data.filter((c) => c.stages[0]?.id === 2).length
-        );
+        setStageDataCount(data.filter((c) => c.stages[0]?.id === 2).length);
       }
     };
 
@@ -539,6 +537,7 @@ export default function HiringPartners() {
                 </p>
               </CardContent>
             </Card>
+            {console.log(partnerStats)}
             <Card>
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-medium flex items-center gap-2">
@@ -594,13 +593,11 @@ export default function HiringPartners() {
                     candidates
                   </Badge>
                 </CardHeader>
-                {console.log(candidates, jobs)}
                 <CardContent>
                   <p className="text-muted-foreground mb-4">
                     Detailed list of candidates sourced by{" "}
                     {selectedPartner.name}
                   </p>
-                  {console.log(selectedPartner)}
                   {selectedPartner ? (
                     (() => {
                       // Flatten all stage data across all jobs
@@ -654,43 +651,37 @@ export default function HiringPartners() {
                         Company Details
                       </h3>
                       <div className="space-y-2">
-                        <div className="flex justify-between">
-                          <span className="text-muted-foreground">
-                            Industry:
-                          </span>
-                          <span>{partnerDetails.industry}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-muted-foreground">
-                            Location:
-                          </span>
-                          <span>{partnerDetails.location}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-muted-foreground">
-                            Founded:
-                          </span>
-                          <span>{partnerDetails.founded}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-muted-foreground">
-                            Employees:
-                          </span>
-                          <span>{partnerDetails.employees}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-muted-foreground">
-                            Website:
-                          </span>
-                          <a
-                            href={partnerDetails.website}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-primary hover:underline"
-                          >
-                            {partnerDetails.website}
-                          </a>
-                        </div>
+                        {partnerDetails.industry && (
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">
+                              Industry:
+                            </span>
+                            <span>{partnerDetails.industry}</span>
+                          </div>
+                        )}
+                        {partnerDetails.location && (
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">
+                              Location:
+                            </span>
+                            <span>{partnerDetails.location}</span>
+                          </div>
+                        )}
+                        {partnerDetails.website && (
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">
+                              Website:
+                            </span>
+                            <a
+                              href={partnerDetails.website}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-primary hover:underline"
+                            >
+                              {partnerDetails.website}
+                            </a>
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>
