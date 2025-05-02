@@ -185,11 +185,25 @@ export function OrganizationsList() {
                   <TableRow key={org.id}>
                     <TableCell className="font-medium">
                       {org.logo_url ? (
-                        <img
-                          src={org.logo_url}
-                          alt="Logo"
-                          className="h-8 w-8 object-contain rounded"
-                        />
+                        <div className="h-8 w-8 relative">
+                          <img
+                            src={org.logo_url}
+                            alt="Logo"
+                            className="h-8 w-8 object-contain rounded"
+                            onError={(e) => {
+                              // If image fails to load, show fallback
+                              e.currentTarget.style.display = "none";
+                              e.currentTarget.nextElementSibling.style.display =
+                                "flex";
+                            }}
+                          />
+                          <div
+                            className="h-8 w-8 rounded bg-gray-200 flex items-center justify-center font-semibold text-gray-600 uppercase"
+                            style={{ display: "none" }}
+                          >
+                            {org.name?.slice(0, 2) || "NA"}
+                          </div>
+                        </div>
                       ) : (
                         <div className="h-8 w-8 rounded bg-gray-200 flex items-center justify-center font-semibold text-gray-600 uppercase">
                           {org.name?.slice(0, 2) || "NA"}
@@ -304,7 +318,8 @@ export function OrganizationsList() {
             const nameExists = selectedOrganization?.id
               ? existingOrgs.some(
                   (org) =>
-                    org.id !== selectedOrganization.id && org.name === data.name
+                    org.id !== selectedOrganization.id &&
+                    org.name === data.name,
                 )
               : existingOrgs.length > 0;
 

@@ -13,6 +13,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/lib/supabase";
 import { Switch } from "@/components/ui/switch";
+import { Loader2 } from "lucide-react";
 
 interface Location {
   id?: string;
@@ -37,7 +38,10 @@ interface Organization {
   description?: string;
   website?: string;
   email_domain?: string;
+  phone?: string;
+  email?: string;
   logo_url?: string;
+  logo_file?: File;
   is_own_org?: boolean;
   locations?: Location[];
   departments?: Department[];
@@ -63,11 +67,15 @@ export function OrganizationForm({
     description: "",
     website: "",
     email_domain: "",
+    email: "",
+    phone: "",
     logo_url: "",
     is_own_org: false,
     locations: [],
     departments: [],
   });
+
+  const [isUploading, setIsUploading] = useState(false);
 
   const [newLocation, setNewLocation] = useState<Location>({
     name: "",
@@ -85,14 +93,23 @@ export function OrganizationForm({
 
   useEffect(() => {
     if (initialData) {
-      setFormData(initialData);
+      // When editing, load the existing data including the logo URL
+      setFormData({
+        ...initialData,
+        // Ensure locations and departments are arrays
+        locations: initialData.locations || [],
+        departments: initialData.departments || [],
+      });
     } else {
+      // Reset form for new organization
       setFormData({
         name: "",
         industry: "",
         description: "",
         website: "",
         email_domain: "",
+        email: "",
+        phone: "",
         logo_url: "",
         is_own_org: false,
         locations: [],
@@ -113,9 +130,53 @@ export function OrganizationForm({
         return;
       }
 
+      setIsUploading(true);
+
+      // Handle logo upload if there's a file
+      if (formData.logo_file) {
+        try {
+          const fileExt = formData.logo_file.name.split(".").pop();
+          const fileName = `${Date.now()}.${fileExt}`;
+
+          // Upload to the organization-logos bucket directly
+          const { error: uploadError } = await supabase.storage
+            .from("organization-logos")
+            .upload(fileName, formData.logo_file, {
+              cacheControl: "3600",
+              upsert: true,
+            });
+
+          if (uploadError) {
+            throw uploadError;
+          }
+
+          // Get public URL for the uploaded file
+          const { data } = supabase.storage
+            .from("organization-logos")
+            .getPublicUrl(fileName);
+
+          if (data) {
+            formData.logo_url = data.publicUrl;
+          }
+        } catch (uploadError) {
+          console.error("Error uploading logo:", uploadError);
+          toast({
+            variant: "destructive",
+            title: "Upload Error",
+            description: "Failed to upload logo. Please try again.",
+          });
+          setIsUploading(false);
+          return;
+        }
+      }
+
+      // Remove the file object before submitting to API
+      const { logo_file, ...dataToSubmit } = formData;
+
       // Pass the form data to the parent component's onSubmit handler
       // Let the parent component handle the API call and state updates
-      onSubmit(formData);
+      onSubmit(dataToSubmit);
+      setIsUploading(false);
       onClose();
     } catch (error) {
       console.error("Error in form submission:", error);
@@ -124,6 +185,7 @@ export function OrganizationForm({
         title: "Error",
         description: `Failed to submit organization form`,
       });
+      setIsUploading(false);
     }
   };
 
@@ -199,29 +261,43 @@ export function OrganizationForm({
                 />
               </div>
               <div className="space-y-2">
-                <Label>Hiring Contact Email</Label>
+                <Label>Hiring Contact Email Domain</Label>
                 <Input
                   type="text"
                   value={formData.email_domain}
                   onChange={(e) =>
                     setFormData({ ...formData, email_domain: e.target.value })
                   }
-                  placeholder="e.g. hr@company.com"
+                  placeholder="e.g. company.com"
                 />
               </div>
             </div>
-            {/* 
-            <div className="space-y-2">
-              <Label>Logo URL</Label>
-              <Input
-                type="url"
-                value={formData.logo_url}
-                onChange={(e) =>
-                  setFormData({ ...formData, logo_url: e.target.value })
-                }
-                placeholder="Enter logo URL"
-              />
-            </div> */}
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Email</Label>
+                <Input
+                  type="email"
+                  value={formData.email}
+                  onChange={(e) =>
+                    setFormData({ ...formData, email: e.target.value })
+                  }
+                  placeholder="Enter organization email"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Phone</Label>
+                <Input
+                  type="tel"
+                  value={formData.phone}
+                  onChange={(e) =>
+                    setFormData({ ...formData, phone: e.target.value })
+                  }
+                  placeholder="Enter phone number"
+                />
+              </div>
+            </div>
+
             <div className="space-y-2">
               <Label>Upload Logo</Label>
               <Input
@@ -229,12 +305,14 @@ export function OrganizationForm({
                 accept="image/*"
                 onChange={(e) => {
                   const file = e.target.files?.[0];
-                  console.log(file,URL.createObjectURL(file));
                   if (file) {
-                    const imageUrl = URL.createObjectURL(file); // For preview
-                    setFormData({ ...formData, logo_url: imageUrl });
-
-                    // TODO: upload the image and update logo_url with uploaded URL
+                    // Create a preview URL for the UI
+                    const imageUrl = URL.createObjectURL(file);
+                    setFormData({
+                      ...formData,
+                      logo_url: imageUrl,
+                      logo_file: file, // Store the file object for later upload
+                    });
                   }
                 }}
               />
@@ -248,7 +326,13 @@ export function OrganizationForm({
                   />
                   <button
                     type="button"
-                    onClick={() => setFormData({ ...formData, logo_url: "" })}
+                    onClick={() =>
+                      setFormData({
+                        ...formData,
+                        logo_url: "",
+                        logo_file: undefined,
+                      })
+                    }
                     className="absolute -top-2 -right-2 rounded-full bg-red-500 text-white w-5 h-5 flex items-center justify-center text-xs"
                     aria-label="Remove logo"
                   >
@@ -459,10 +543,26 @@ export function OrganizationForm({
           </div>
 
           <DialogFooter className="mt-4">
-            <Button type="button" variant="outline" onClick={onClose}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onClose}
+              disabled={isUploading}
+            >
               Cancel
             </Button>
-            <Button type="submit">{initialData ? "Update" : "Create"}</Button>
+            <Button type="submit" disabled={isUploading}>
+              {isUploading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  {initialData ? "Updating..." : "Creating..."}
+                </>
+              ) : initialData ? (
+                "Update"
+              ) : (
+                "Create"
+              )}
+            </Button>
           </DialogFooter>
         </form>
       </DialogContent>

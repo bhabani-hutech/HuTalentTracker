@@ -65,6 +65,21 @@ export interface User {
   updated_at?: string;
 }
 
+export interface Organization {
+  id: number;
+  name: string;
+  industry?: string;
+  description?: string;
+  website?: string;
+  email_domain?: string;
+  logo_url?: string;
+  is_own_org?: boolean;
+  email?: string;
+  phone?: string;
+  locations?: any[];
+  departments?: any[];
+}
+
 export interface InterviewPanel {
   id: string;
   name: string;
@@ -80,7 +95,7 @@ export interface InterviewFeedback {
   id: string;
   interview_id: string;
   candidate_id: string;
-  round_id: string| number;
+  round_id: string | number;
   interviewer_id: string;
   technical_skills: number;
   communication_skills: number;
