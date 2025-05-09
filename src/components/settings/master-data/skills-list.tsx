@@ -7,7 +7,7 @@ import { supabase } from "@/lib/supabase";
 import { SkillForm } from "./skill-form";
 
 interface Skill {
-  id: number;
+  id: string;
   name: string;
   category: string;
   skill_order: number;
@@ -50,8 +50,8 @@ export function SkillsList() {
   // Remove a skill
   const removeSkill = async (id: number) => {
     try {
-      await supabase.from("skills").delete().eq("id", id);
-      setSkills(skills.filter((skill) => skill.id !== id));
+      await supabase.from("skills").delete().eq("id", id.toString());
+      setSkills(skills.filter((skill) => skill.id !== id.toString()));
       toast({
         title: "Success",
         description: "Skill removed successfully",
@@ -110,7 +110,7 @@ export function SkillsList() {
                 <Button
                   variant="ghost"
                   size="icon"
-                  onClick={() => removeSkill(skill.id)}
+                  onClick={() => removeSkill(Number(skill.id))}
                 >
                   <Trash2 className="h-4 w-4" />
                 </Button>
@@ -135,7 +135,7 @@ export function SkillsList() {
                   name: data.name,
                   category: data.category,
                 })
-                .eq("id", selectedSkill.id);
+                .eq("id", selectedSkill.id.toString());
             } else {
               await supabase.from("skills").insert([
                 {

@@ -14,6 +14,7 @@ import {
 import { Badge } from "../ui/badge";
 import { OnboardingProgress } from "./onboarding-progress";
 import { OnboardingTasks } from "./onboarding-tasks";
+import { Progress } from "@radix-ui/react-progress";
 
 interface Employee {
   id: string;

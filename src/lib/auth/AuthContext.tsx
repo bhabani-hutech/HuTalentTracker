@@ -8,7 +8,7 @@ type AuthContextType = {
   loading: boolean;
   signIn: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
-  signUp: (email: string, password: string, name?: string) => Promise<void>;
+  // signUp: (email: string, password: string, name?: string) => Promise<void>;
   signInWithGoogle: () => Promise<void>;
 };
 
@@ -52,8 +52,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 auth_id: session.user.id,
                 email: session.user.email || "",
                 name: session.user.user_metadata?.full_name || "",
-                role: "User", // Default role
-                status: "Active",
+                role: "HR", // Default role
               });
             }
           } catch (error) {
@@ -66,41 +65,41 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setUser(session?.user ?? null);
         }
         setLoading(false);
-      },
+      }
     );
 
     return () => subscription?.subscription.unsubscribe();
   }, []);
 
-  const signUp = async (email: string, password: string, name?: string) => {
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: {
-          full_name: name || "",
-        },
-      },
-    });
+  // const signUp = async (email: string, password: string, name?: string) => {
+  //   const { data, error } = await supabase.auth.signUp({
+  //     email,
+  //     password,
+  //     options: {
+  //       data: {
+  //         full_name: name || "",
+  //       },
+  //     },
+  //   });
 
-    if (error) throw error;
+  //   if (error) throw error;
 
-    // Create a user record in our users table
-    if (data.user) {
-      try {
-        await createUser({
-          auth_id: data.user.id,
-          email: email,
-          name: name || "",
-          role: "User", // Default role
-          status: "Active",
-        });
-      } catch (err) {
-        console.error("Error creating user record:", err);
-        // Consider whether to throw this error or handle it silently
-      }
-    }
-  };
+  //   // Create a user record in our users table
+  //   if (data.user) {
+  //     try {
+  //       await createUser({
+  //         auth_id: data.user.id,
+  //         email: email,
+  //         name: name || "",
+  //         role: "HR", // Default role
+  //         status: "Active",
+  //       });
+  //     } catch (err) {
+  //       console.error("Error creating user record:", err);
+  //       // Consider whether to throw this error or handle it silently
+  //     }
+  //   }
+  // };
 
   const signIn = async (email: string, password: string) => {
     const { error } = await supabase.auth.signInWithPassword({
@@ -140,7 +139,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         loading,
         signIn,
         signOut,
-        signUp,
+        // signUp,
         signInWithGoogle,
       }}
     >

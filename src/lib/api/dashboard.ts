@@ -33,7 +33,7 @@ export async function getDashboardMetrics() {
     activeCandidates: candidates?.length || 0,
     interviewsThisWeek: interviews?.length || 0,
     offersAccepted:
-      candidates?.filter((c) => c.stages?.stage === "Offered")?.length || 0,
+      candidates?.filter((c) => c.stages?.[0]?.stage === "Offered")?.length || 0,
   };
 }
 
@@ -50,30 +50,30 @@ export async function getRecruitmentPipeline() {
     {
       stage: "Screening",
       count:
-        candidates?.filter((c) => c.stages?.stage === "Rejected in screening")
+        candidates?.filter((c) => c.stages?.[0]?.stage === "Rejected in screening")
           ?.length || 0,
     },
     {
       stage: "Interview",
       count:
         candidates?.filter((c) =>
-          ["Rejected -1", "Rejected in -2"].includes(c.stages?.stage || ""),
+          ["Rejected -1", "Rejected in -2"].includes(c.stages?.[0]?.stage || ""),
         )?.length || 0,
     },
     {
       stage: "Technical",
       count:
-        candidates?.filter((c) => c.stages?.stage === "Cleared")?.length || 0,
+        candidates?.filter((c) => c.stages?.[0]?.stage=== "Cleared")?.length || 0,
     },
     {
       stage: "HR Round",
       count:
-        candidates?.filter((c) => c.stages?.stage === "HR round")?.length || 0,
+        candidates?.filter((c) =>c.stages?.[0]?.stage === "HR round")?.length || 0,
     },
     {
       stage: "Offered",
       count:
-        candidates?.filter((c) => c.stages?.stage === "Offered")?.length || 0,
+        candidates?.filter((c) => c.stages?.[0]?.stage === "Offered")?.length || 0,
     },
   ];
 
@@ -95,9 +95,9 @@ export async function getRecentActivities() {
     .limit(5);
 
   if (interviewsError) throw interviewsError;
-
+console.log(interviews)
   return (
-    interviews?.map((interview) => ({
+    interviews?.map((interview:any) => ({
       id: interview.id,
       type: "interview",
       message: `Interview scheduled with ${interview.candidates?.name} for ${

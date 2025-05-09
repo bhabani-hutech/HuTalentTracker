@@ -21,7 +21,7 @@ const generateMonthlyData = (candidates, partnerId, months = 6) => {
   const partnerCandidates = candidates.filter(
     (c) =>
       c.hiring_partner_id === partnerId.toString() ||
-      (c.candidate_source === "Hiring Partner" &&
+      ("candidate_source" in c && c.candidate_source === "Hiring Partner" &&
         c.hiring_partner_id === partnerId.toString())
   );
 
@@ -65,7 +65,7 @@ export default function HiringPartners() {
     ownOrganization,
     isLoading: isLoadingOrgs,
     error: orgsError,
-    queryClient,
+    // queryClient,
   } = useOrganizations();
   const {
     data: candidates,
@@ -75,7 +75,7 @@ export default function HiringPartners() {
     updateCandidate,
     deleteCandidate,
   } = useCandidates();
-  const { jobs, isLoading: isLoadingJobs, error: jobsError } = useJobs();
+  const { jobs, isLoading: isLoadingJobs, queryError: jobsError } = useJobs();
   const { stagesD, isLoading: isLoadingStages } = usePipelineStages();
   const [selectedPartner, setSelectedPartner] = useState<any>(null);
   const [partnerStats, setPartnerStats] = useState<any>(null);
@@ -144,7 +144,7 @@ export default function HiringPartners() {
             data?.filter(
               (c) =>
                 c.hiring_partner_id === partnerId.toString() ||
-                (c.candidate_source === "Hiring Partner" &&
+                ("candidate_source" in c && c.candidate_source === "Hiring Partner" &&
                   c.hiring_partner_id === partnerId.toString())
             ).length || 0;
           return acc;
@@ -537,7 +537,6 @@ export default function HiringPartners() {
                 </p>
               </CardContent>
             </Card>
-            {console.log(partnerStats)}
             <Card>
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-medium flex items-center gap-2">

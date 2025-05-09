@@ -50,7 +50,7 @@ export function InterviewForm({
     job_id: initialData?.job_id || "",
     candidate_id: initialData?.candidate_id || "",
     interviewer_id: initialData?.interviewer_id || "",
-    round_id: initialData?.round_id?.toString() || "",  // Ensure it's a string
+    round_id: initialData?.round_id?.toString() || "", // Ensure it's a string
     date: initialData?.date ? new Date(initialData.date) : new Date(),
     time: initialData?.time || "09:00",
     type: initialData?.type || "F2F",
@@ -66,7 +66,7 @@ export function InterviewForm({
       setFormData(getInitialFormData());
     }
   }, [isOpen, initialData]);
-  
+
   useEffect(() => {
     const fetchRound = async () => {
       const { data: allRounds, error: roundsError } = await supabase
@@ -103,6 +103,7 @@ export function InterviewForm({
   }, [formData.candidate_id]);
 
   const handleClose = () => {
+    onClose();
     setFormData({
       job_id: "",
       candidate_id: "",
@@ -112,7 +113,6 @@ export function InterviewForm({
       time: "09:00",
       type: "F2F",
     });
-    onClose();
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -220,8 +220,9 @@ export function InterviewForm({
   return (
     <Dialog
       open={isOpen}
-      onOpenChange={(open) => !open && handleClose()}
-      // key={initialData?.id || "new"}
+      onOpenChange={(open) => {
+        if (!open) handleClose();
+      }}
     >
       <DialogContent className="max-w-[800px] max-h-[85vh] overflow-y-auto">
         <DialogHeader>
@@ -248,9 +249,13 @@ export function InterviewForm({
                 setFormData({
                   ...formData,
                   job_id: value,
-                  // Reset candidate if job changes
                   candidate_id:
                     value !== formData.job_id ? "" : formData.candidate_id,
+                  round_id: "",
+                  interviewer_id: "",
+                  time: "09:00",
+                  date: new Date(),
+                  // Optionally reset more fields
                 });
               }}
             >
@@ -303,7 +308,6 @@ export function InterviewForm({
                 <span className="text-red-500">*</span>
               </span>
             </Label>
-            {console.log(unAttendedInterview)}
             <Select
               value={formData.round_id}
               onValueChange={(value) =>

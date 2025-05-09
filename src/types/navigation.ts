@@ -1,7 +1,8 @@
+import { ComponentType } from "react";
 export interface NavItem {
   title: string;
   href: string;
-  icon?: React.ComponentType;
+  icon?: ComponentType<{ className?: string }>;
   disabled?: boolean;
   role?: string;
 }

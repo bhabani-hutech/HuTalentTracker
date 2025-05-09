@@ -16,7 +16,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/lib/supabase";
 
 interface Organization {
-  id: number;
+  id: string;
   name: string;
   industry: string;
   description: string;
@@ -193,8 +193,10 @@ export function OrganizationsList() {
                             onError={(e) => {
                               // If image fails to load, show fallback
                               e.currentTarget.style.display = "none";
-                              e.currentTarget.nextElementSibling.style.display =
-                                "flex";
+                              (
+                                e.currentTarget
+                                  .nextElementSibling as HTMLElement
+                              ).style.display = "flex";
                             }}
                           />
                           <div
@@ -215,11 +217,11 @@ export function OrganizationsList() {
                     <TableCell>
                       <Badge
                         variant={org.is_own_org ? "default" : "outline"}
-                        className={
+                        className={`text-white ${
                           org.is_own_org
                             ? "bg-green-500 hover:bg-green-600"
                             : "bg-blue-500 hover:bg-blue-600"
-                        }
+                        }`}
                       >
                         {org.is_own_org ? "Own Organization" : "Hiring Partner"}
                       </Badge>
@@ -284,7 +286,7 @@ export function OrganizationsList() {
                         <Button
                           variant="ghost"
                           size="icon"
-                          onClick={() => handleDelete(org.id)}
+                          onClick={() => handleDelete(Number(org.id))}
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
@@ -318,8 +320,7 @@ export function OrganizationsList() {
             const nameExists = selectedOrganization?.id
               ? existingOrgs.some(
                   (org) =>
-                    org.id !== selectedOrganization.id &&
-                    org.name === data.name,
+                    org.id !== selectedOrganization.id && org.name === data.name
                 )
               : existingOrgs.length > 0;
 

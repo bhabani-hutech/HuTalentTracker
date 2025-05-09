@@ -7,7 +7,7 @@ import { SkillForm } from "./skill-form";
 import { useSkills } from "@/lib/api/hooks/useSkills";
 
 interface Skill {
-  id: number;
+  id: string;
   name: string;
   category: string;
   skill_type: string;
@@ -88,7 +88,7 @@ export function TechnicalSkillsList() {
                   <Button
                     variant="ghost"
                     size="icon"
-                    onClick={() => removeSkill(skill.id)}
+                    onClick={() => removeSkill(Number(skill.id))}
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>
@@ -109,7 +109,7 @@ export function TechnicalSkillsList() {
           if (selectedSkill?.id) {
             updateSkill(
               {
-                id: selectedSkill.id,
+                id: Number(selectedSkill.id),
                 updates: {
                   name: data.name,
                   category: "",
@@ -132,7 +132,7 @@ export function TechnicalSkillsList() {
                     description: "Failed to update technical skill",
                   });
                 },
-              },
+              }
             );
           } else {
             createSkill(
@@ -141,6 +141,7 @@ export function TechnicalSkillsList() {
                 category: "",
                 skill_type: "technical",
                 skill_order: skills.length + 1,
+                // Removed id as it is not expected
               },
               {
                 onSuccess: () => {
@@ -158,7 +159,7 @@ export function TechnicalSkillsList() {
                     description: "Failed to add technical skill",
                   });
                 },
-              },
+              }
             );
           }
         }}

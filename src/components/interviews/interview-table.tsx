@@ -10,7 +10,7 @@ import {
 } from "../ui/table";
 import { Badge } from "../ui/badge";
 import { format } from "date-fns";
-import {  Trash2, FileText, PenSquare } from "lucide-react";
+import { Trash2, FileText, PenSquare } from "lucide-react";
 import { Interview } from "@/lib/api/interviews";
 import {
   AlertDialog,
@@ -92,10 +92,12 @@ export function InterviewTable({
                   <Button
                     variant="ghost"
                     size="icon"
+                    disabled={new Date(interview.date) < new Date()}
                     onClick={() => onEdit(interview)}
                   >
                     <PenSquare className="h-4 w-4" />
                   </Button>
+
                   <Button
                     variant="ghost"
                     size="icon"

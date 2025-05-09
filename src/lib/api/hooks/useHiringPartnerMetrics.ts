@@ -88,7 +88,7 @@ async function fetchHiringPartnerMetrics(
         timeToHireData.push({
           name: candidate.name,
           days: diffDays,
-          position: candidate.jobs?.title || "Unknown Position",
+          position: Array.isArray(candidate.jobs) && candidate.jobs[0]?.title || "Unknown Position",
         });
       }
     }
@@ -114,7 +114,7 @@ export function useHiringPartnerMetrics(partnerId: string) {
     queryFn: () => fetchHiringPartnerMetrics(partnerId),
     enabled: !!partnerId,
     staleTime: 5 * 60 * 1000, // 5 minutes
-    cacheTime: 10 * 60 * 1000, // 10 minutes
+    // cacheTime: 10 * 60 * 1000, // 10 minutes
     refetchOnWindowFocus: false,
     refetchOnMount: false,
     refetchOnReconnect: false,

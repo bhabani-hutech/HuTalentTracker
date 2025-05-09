@@ -80,92 +80,166 @@ export async function getInterviews() {
 /**
  * Create a new interview
  */
-export async function createInterview(
-  interview: Omit<Interview, "id" | "created_at" | "updated_at">,
-) {
-  // Sanitize data to prevent empty string UUID errors
-  const sanitizedData = {
-    ...interview,
-    job_id: interview.job_id || null,
-    candidate_id: interview.candidate_id || null,
-    interviewer_id: interview.interviewer_id || null,
-    round_id: interview.round_id || null,
-  };
+// export async function createInterview(
+//   interview: Omit<Interview, "id" | "created_at" | "updated_at">,
+// ) {
+//   // Sanitize data to prevent empty string UUID errors
+//   const sanitizedData = {
+//     ...interview,
+//     job_id: interview.job_id || null,
+//     candidate_id: interview.candidate_id || null,
+//     interviewer_id: interview.interviewer_id || null,
+//     round_id: interview.round_id || null,
+//   };
 
-  // --- Check for Interviewer Time Conflict ---
-  if (sanitizedData.interviewer_id && sanitizedData.date) {
-    const interviewDate = new Date(sanitizedData.date);
+//   // --- Check for Interviewer Time Conflict ---
+//   if (sanitizedData.interviewer_id && sanitizedData.date) {
+//     const interviewDate = new Date(sanitizedData.date);
 
-    const startTime = new Date(interviewDate.getTime());
-    const endTime = new Date(interviewDate.getTime() + 60 * 60 * 1000); // +1 hour
+//     const startTime = new Date(interviewDate.getTime());
+//     const endTime = new Date(interviewDate.getTime() + 60 * 60 * 1000); // +1 hour
 
-    const formattedStartTime = startTime.toISOString();
-    const formattedEndTime = endTime.toISOString();
+//     const formattedStartTime = startTime.toISOString();
+//     const formattedEndTime = endTime.toISOString();
 
-    const { data: existingInterviews, error: conflictError } = await supabase
-      .from("interviews")
-      .select("id, date")
-      .eq("interviewer_id", sanitizedData.interviewer_id)
-      .gte("date", formattedStartTime)
-      .lt("date", formattedEndTime);
+//     const { data: existingInterviews, error: conflictError } = await supabase
+//       .from("interviews")
+//       .select("id, date")
+//       .eq("interviewer_id", sanitizedData.interviewer_id)
+//       .gte("date", formattedStartTime)
+//       .lt("date", formattedEndTime);
 
-    if (conflictError) {
-      console.error("Error checking interviewer conflicts:", conflictError);
-      throw conflictError;
+//     if (conflictError) {
+//       console.error("Error checking interviewer conflicts:", conflictError);
+//       throw conflictError;
+//     }
+
+//     if (existingInterviews && existingInterviews.length > 0) {
+//       const error = new Error(
+//         "The selected interviewer is already scheduled at this time."
+//       );
+//       error.name = "InterviewerConflict";
+//       throw error;
+//     }
+//   }
+
+//   // --- Check for Duplicate Candidate Round ---
+//   if (sanitizedData.candidate_id && sanitizedData.round_id) {
+//     const { data: existingRounds, error: roundsError } = await supabase
+//       .from("interviews")
+//       .select("id")
+//       .eq("candidate_id", sanitizedData.candidate_id)
+//       .eq("round_id", sanitizedData.round_id);
+
+//     if (roundsError) {
+//       console.error("Error checking for duplicate rounds:", roundsError);
+//       throw roundsError;
+//     }
+
+//     if (existingRounds && existingRounds.length > 0) {
+//       const error = new Error(
+//         "This candidate has already been scheduled for this interview round."
+//       );
+//       error.name = "DuplicateRound";
+//       throw error;
+//     }
+//   }
+
+//   // --- Create Interview ---
+//   const { data, error } = await supabase
+//     .from("interviews")
+//     .insert([sanitizedData])
+//     .select(
+//       `
+//       *,
+//       candidate:candidates!candidate_id(id, name, job_id, stage_id),
+//       interviewer:users!interviewer_id(id, name),
+//       interview_round:interview_rounds(id, name)
+//     `,
+//     )
+//     .single();
+
+//   if (error) {
+//     console.error("Error creating interview:", error);
+//     throw error;
+//   }
+
+//   return data as Interview;
+// }
+
+export async function createInterview(interviewData) {
+  try {
+    const sanitizedData = {
+      ...interviewData,
+      date: new Date(interviewData.date).toISOString(), // ensure date format
+    };
+
+    console.log("🟡 Step 1: Payload to insert:", sanitizedData);
+
+    const formattedStartTime = sanitizedData.date;
+    const formattedEndTime = new Date(new Date(sanitizedData.date).getTime() + 30 * 60 * 1000).toISOString(); // +30 mins
+    
+    // 🔍 Panel schedule conflict check
+    if (sanitizedData.type) {
+      const { data: panelConflicts, error: panelError } = await supabase
+        .from("interviews")
+        .select("id")
+        .eq("candidate_id", sanitizedData.candidate_id)
+      //  .eq("interviewer_id", sanitizedData.interviewer_id)
+        .eq("date", formattedStartTime)  // check if date is greater than or equal to the start time
+        //.lt("date", formattedEndTime);    // check if date is less than the end time
+        const { data: interviwerConflicts, error: interviwerError } = await supabase
+        .from("interviews")
+        .select("id")
+        .eq("interviewer_id", sanitizedData.interviewer_id)
+    
+        .eq("date", formattedStartTime)  
+    
+      if (panelError) {
+        console.error("❌ Panel schedule check error:", panelError);
+        throw panelError;
+      }
+    
+      // If there are any conflicts, throw an error
+      if (panelConflicts && panelConflicts.length > 0) {
+        const conflictError = new Error("The selected candidate is already scheduled for a round with another panel member at the same time.");
+        conflictError.name = "PanelScheduleConflict";
+        throw conflictError;
+      }
+      if (interviwerConflicts && interviwerConflicts.length > 0) {
+        const conflictError = new Error("The selected interviewer is already scheduled for a round with another candidate at the same time.");
+        conflictError.name = "InterviewerScheduleConflict";
+        throw conflictError;
+      }
     }
+    
 
-    if (existingInterviews && existingInterviews.length > 0) {
-      const error = new Error(
-        "The selected interviewer is already scheduled at this time."
-      );
-      error.name = "InterviewerConflict";
+    // ✅ Insert into interviews
+    const { data, error } = await supabase
+      .from("interviews")
+      .insert([sanitizedData])
+      .select()
+      .single();
+
+    console.log("🟢 Step 2: Insert result:", { data, error });
+
+    if (error) {
+      console.error("❌ Insert failed:", error.message);
       throw error;
     }
-  }
 
-  // --- Check for Duplicate Candidate Round ---
-  if (sanitizedData.candidate_id && sanitizedData.round_id) {
-    const { data: existingRounds, error: roundsError } = await supabase
-      .from("interviews")
-      .select("id")
-      .eq("candidate_id", sanitizedData.candidate_id)
-      .eq("round_id", sanitizedData.round_id);
-
-    if (roundsError) {
-      console.error("Error checking for duplicate rounds:", roundsError);
-      throw roundsError;
+    if (!data) {
+      throw new Error("⚠️ No data returned from insert. Possibly blocked by RLS or missing required fields.");
     }
 
-    if (existingRounds && existingRounds.length > 0) {
-      const error = new Error(
-        "This candidate has already been scheduled for this interview round."
-      );
-      error.name = "DuplicateRound";
-      throw error;
-    }
-  }
-
-  // --- Create Interview ---
-  const { data, error } = await supabase
-    .from("interviews")
-    .insert([sanitizedData])
-    .select(
-      `
-      *,
-      candidate:candidates!candidate_id(id, name, job_id, stage_id),
-      interviewer:users!interviewer_id(id, name),
-      interview_round:interview_rounds(id, name)
-    `,
-    )
-    .single();
-
-  if (error) {
-    console.error("Error creating interview:", error);
+    return data;
+  } catch (error) {
+    console.error("🚨 Interview creation error:", error);
     throw error;
   }
-
-  return data as Interview;
 }
+
+
 
 
 /**
@@ -173,152 +247,107 @@ export async function createInterview(
  */
 export async function updateInterview(
   id: string,
-  updates: Partial<Omit<Interview, "id" | "created_at" | "updated_at">>,
+  updates: Partial<Omit<Interview, "id" | "created_at" | "updated_at">>
 ) {
-  // Sanitize data to prevent empty string UUID errors
-  const sanitizedData = {
-    ...updates,
-    job_id: updates.job_id || null,
-    candidate_id: updates.candidate_id || null,
-    interviewer_id: updates.interviewer_id || null,
-    round_id: updates.round_id || null,
-  };
+  try {
+    const sanitizedData = {
+      ...updates,
+      date: updates.date ? new Date(updates.date).toISOString() : undefined,
+      job_id: updates.job_id || null,
+      candidate_id: updates.candidate_id || null,
+      interviewer_id: updates.interviewer_id || null,
+      round_id: updates.round_id || null,
+    };
 
-  // Check for interviewer time conflicts if interviewer_id and date are being updated
-  if (
-    (sanitizedData.interviewer_id || sanitizedData.date) &&
-    (sanitizedData.interviewer_id || sanitizedData.date)
-  ) {
-    // Get the current interview data to determine if interviewer or date is changing
+    console.log("🟡 Step 1: Sanitized update data:", sanitizedData);
+
     const { data: currentInterview, error: fetchError } = await supabase
       .from("interviews")
-      .select("interviewer_id, date")
+      .select("interviewer_id, date, candidate_id, round_id")
       .eq("id", id)
       .single();
 
     if (fetchError) {
-      console.error("Error fetching current interview:", fetchError);
+      console.error("❌ Fetch current interview error:", fetchError);
       throw fetchError;
     }
 
-    const interviewerChanged =
-      sanitizedData.interviewer_id &&
-      sanitizedData.interviewer_id !== currentInterview.interviewer_id;
-    const dateChanged =
-      sanitizedData.date && sanitizedData.date !== currentInterview.date;
+    const dateToUse = sanitizedData.date || currentInterview.date;
+    const interviewerToUse = sanitizedData.interviewer_id || currentInterview.interviewer_id;
+    const candidateToUse = sanitizedData.candidate_id || currentInterview.candidate_id;
+    const roundToUse = sanitizedData.round_id || currentInterview.round_id;
 
-    // Only check for conflicts if interviewer or date is changing
-    if (interviewerChanged || dateChanged) {
-      const interviewDate = new Date(
-        sanitizedData.date || currentInterview.date,
-      );
-      const interviewerId =
-        sanitizedData.interviewer_id || currentInterview.interviewer_id;
+    // ⏰ Check for interviewer schedule conflicts (within 1-hour window)
+    const startTime = new Date(dateToUse);
+    const endTime = new Date(startTime.getTime() + 60 * 60 * 1000);
 
-      // Create a time window of 1 hour (typical interview duration)
-      const startTime = new Date(interviewDate.getTime());
-      const endTime = new Date(interviewDate.getTime() + 60 * 60 * 1000); // Add 1 hour
+    const { data: conflicts, error: conflictError } = await supabase
+      .from("interviews")
+      .select("id")
+      .eq("interviewer_id", interviewerToUse)
+      .gte("date", startTime.toISOString())
+      .lt("date", endTime.toISOString())
+      .neq("id", id);
 
-      // Format dates for comparison
-      const formattedStartTime = startTime.toISOString();
-      const formattedEndTime = endTime.toISOString();
-
-      // Check for existing interviews for this interviewer in the same time slot
-      const { data: existingInterviews, error: conflictError } = await supabase
-        .from("interviews")
-        .select("id, date")
-        .eq("interviewer_id", interviewerId)
-        .gte("date", formattedStartTime)
-        .lt("date", formattedEndTime)
-        .neq("id", id); // Exclude the current interview
-
-      if (conflictError) {
-        console.error(
-          "Error checking for interviewer conflicts:",
-          conflictError,
-        );
-        throw conflictError;
-      }
-
-      if (existingInterviews && existingInterviews.length > 0) {
-        const error = new Error(
-          "The selected interviewer is already scheduled at this time.",
-        );
-        error.name = "InterviewerConflict";
-        throw error;
-      }
+    if (conflictError) {
+      console.error("❌ Conflict check error:", conflictError);
+      throw conflictError;
     }
 
-    // Check for duplicate rounds if candidate_id or round_id is changing
+    if (conflicts.length > 0) {
+      throw new Error("The interviewer is already scheduled during this time.");
+    }
+
+    // 🔁 Check for duplicate candidate+round
     if (
-      (sanitizedData.candidate_id || sanitizedData.round_id) &&
-      sanitizedData.round_id
+      candidateToUse !== currentInterview.candidate_id ||
+      roundToUse !== currentInterview.round_id
     ) {
-      const { data: currentData, error: currentError } = await supabase
+      const { data: duplicateRounds, error: roundError } = await supabase
         .from("interviews")
-        .select("candidate_id, round_id")
-        .eq("id", id)
-        .single();
+        .select("id")
+        .eq("candidate_id", candidateToUse)
+        .eq("round_id", roundToUse)
+        .neq("id", id);
 
-      if (currentError) {
-        console.error("Error fetching current interview data:", currentError);
-        throw currentError;
+      if (roundError) {
+        console.error("❌ Round duplication check error:", roundError);
+        throw roundError;
       }
 
-      const candidateId =
-        sanitizedData.candidate_id || currentData.candidate_id;
-      const roundId = sanitizedData.round_id;
-
-      if (
-        roundId !== currentData.round_id ||
-        sanitizedData.candidate_id !== currentData.candidate_id
-      ) {
-        const { data: existingRounds, error: roundsError } = await supabase
-          .from("interviews")
-          .select("id, round_id")
-          .eq("candidate_id", candidateId)
-          .eq("round_id", roundId)
-          .neq("id", id); // Exclude the current interview
-
-        if (roundsError) {
-          console.error("Error checking for duplicate rounds:", roundsError);
-          throw roundsError;
-        }
-
-        if (existingRounds && existingRounds.length > 0) {
-          const error = new Error(
-            "This candidate has already been scheduled for this interview round.",
-          );
-          error.name = "DuplicateRound";
-          throw error;
-        }
+      if (duplicateRounds.length > 0) {
+        throw new Error("This candidate already has this round scheduled.");
       }
     }
-  }
 
-  console.log("Updating interview with sanitized data:", sanitizedData);
-
-  const { data, error } = await supabase
-    .from("interviews")
-    .update(sanitizedData)
-    .eq("id", id)
-    .select(
+    // ✅ Perform update
+    const { data, error } = await supabase
+      .from("interviews")
+      .update(sanitizedData)
+      .eq("id", id)
+      .select(
+        `
+        *,
+        candidate:candidates!candidate_id(id, name, job_id, stage_id),
+        interviewer:users!interviewer_id(id, name),
+        interview_round:interview_rounds(id, name)
       `
-      *,
-      candidate:candidates!candidate_id(id, name, job_id, stage_id),
-      interviewer:users!interviewer_id(id, name),
-      interview_round:interview_rounds(id, name)
-    `,
-    )
-    .single();
+      )
+      .single();
 
-  if (error) {
-    console.error("Error updating interview:", error);
+    if (error) {
+      console.error("❌ Update failed:", error.message);
+      throw error;
+    }
+
+    console.log("🟢 Interview successfully updated:", data);
+    return data as Interview;
+  } catch (error) {
+    console.error("🚨 Interview update error:", error);
     throw error;
   }
-  console.log(data);
-  return data as Interview;
 }
+
 
 /**
  * Delete an interview by ID

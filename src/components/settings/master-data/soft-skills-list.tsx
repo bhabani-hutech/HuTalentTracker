@@ -7,7 +7,7 @@ import { SkillForm } from "./skill-form";
 import { useSkills } from "@/lib/api/hooks/useSkills";
 
 interface Skill {
-  id: number;
+  id: string;
   name: string;
   category: string;
   skill_type: string;
@@ -109,7 +109,7 @@ export function SoftSkillsList() {
           if (selectedSkill?.id) {
             updateSkill(
               {
-                id: selectedSkill.id,
+                id: Number(selectedSkill.id),
                 updates: {
                   name: data.name,
                   category: "",

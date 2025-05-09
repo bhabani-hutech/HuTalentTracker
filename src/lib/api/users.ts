@@ -1,9 +1,27 @@
 import { supabase } from "../supabase";
 import { User } from "@/types/database";
 
-export async function createUser(
-  associate: Omit<User, "id" | "created_at" | "updated_at">,
-) {
+// export async function createUser(
+//   associate: any,
+// ) {
+//   const { data, error } = await supabase
+//     .from("users")
+//     .insert([associate])
+//     .select()
+//     .single();
+
+//   if (error) throw error;
+//   return data;
+// }
+export async function createUser(associate: any) {
+  const requiredFields = ["name", "email", "department", "role"];
+
+  for (const field of requiredFields) {
+    if (!associate[field]) {
+      throw new Error(`${field.charAt(0).toUpperCase() + field.slice(1)} is a required field.`);
+    }
+  }
+
   const { data, error } = await supabase
     .from("users")
     .insert([associate])
@@ -14,11 +32,12 @@ export async function createUser(
   return data;
 }
 
+
 export async function getInterviewers() {
   const { data, error } = await supabase
     .from("users")
     .select("*")
-    .in("role", ["Interviewer", "HR", "Hiring Manager", "Admin"]) // Include all roles that can interview
+    .in("role", ["Interviewer", "HR", "Hiring Manager"]) // Include all roles that can interview
     .order("name");
 
   if (error) {
@@ -50,7 +69,7 @@ export async function getUsers() {
   if (error) throw error;
   return data;
 }
-export async function updateUser(id: string, updates: Partial<Associate>) {
+export async function updateUser(id: string, updates: Partial<User>) {
   const { data, error } = await supabase
     .from("users")
     .update(updates)

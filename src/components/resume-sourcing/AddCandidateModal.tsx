@@ -22,7 +22,7 @@ import {
   updateCandidate,
   uploadResume,
 } from "@/lib/api/candidates";
-import { Job, JobType } from "@/types/database";
+import { Job, JobType, Candidate } from "@/types/database"; // Import Candidate type
 import { useSkills } from "@/lib/api/hooks/useSkills";
 import { useOrganizations } from "@/lib/api/hooks/useOrganizations";
 import { useJobs } from "@/lib/api/hooks/useJobs";
@@ -49,7 +49,7 @@ interface CandidateData {
   experience: string;
   candidate_source: "Direct Apply" | "Hiring Partner";
   hiring_partner_id?: string;
-  file_url?: File;
+  file_url?: File | string;
   job_id?: string;
   department?: string;
   hiring_partner_name?: string;
@@ -115,11 +115,8 @@ export function AddCandidateModal({
         file_url: candidateData.file_url,
         job_id: candidateData.job_id,
         department: candidateData.department,
-        hiring_partner_id: candidateData.hiring_partner_id || null, // Ensure this is set
-        hiring_partner_name:
-          candidateData.hiring_partner_name ||
-          candidateData.Organization?.name ||
-          "", // Ensure this is set
+        hiring_partner_id: candidateData.hiring_partner_id || null,
+        hiring_partner_name: candidateData.Organization?.name || "",
       });
     }
   }, [candidateData]);
@@ -457,21 +454,20 @@ export function AddCandidateModal({
 
             {/* Notice Period - Editable */}
             <div className="space-y-2">
-  <Label>Notice Period (in days)</Label>{" "}
-  <span className="text-red-500">*</span>
-  <Input
-    required
-    value={formData.notice_period}
-    onChange={(e) => {
-      const value = e.target.value;
-      if (/^\d*$/.test(value)) {
-        setFormData({ ...formData, notice_period: value });
-      }
-    }}
-    placeholder="e.g. 30"
-  />
-</div>
-
+              <Label>Notice Period (in days)</Label>{" "}
+              <span className="text-red-500">*</span>
+              <Input
+                required
+                value={formData.notice_period}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  if (/^\d*$/.test(value)) {
+                    setFormData({ ...formData, notice_period: value });
+                  }
+                }}
+                placeholder="e.g. 30"
+              />
+            </div>
 
             {/* Department - Dropdown */}
             <div className="space-y-2">

@@ -25,7 +25,6 @@ import { Input } from "@/components/ui/input";
 import { AddCandidateModal } from "../components/resume-sourcing/AddCandidateModal";
 import { ViewResumeModal } from "../components/resume-sourcing/ViewResumeModal";
 import { ViewProfileModal } from "../components/resume-sourcing/ViewProfileModal";
-import { InterviewScheduler } from "../components/interview-schedule/interview-scheduler";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { InterviewForm } from "@/components/interviews/interview-form";
 import { createInterview, updateInterview } from "@/lib/api/interviews";
@@ -120,7 +119,7 @@ export default function ResumeSourcing() {
     if (filters.departmentId) {
       filtered = filtered.filter((candidate) => {
         const job = jobs?.find((j) => j.id === candidate.job_id);
-        return job?.department_id === filters.departmentId;
+        return job?.department === filters.departmentId;
       });
     }
 
@@ -311,14 +310,21 @@ export default function ResumeSourcing() {
             match_score: parsedData.matchScore || 0, // Ensure match_score is always defined
             notice_period: "",
             stage_id: 1, // Default to screening stage
-            type: "Full Time",
+            type: "Full Time" as
+              | "Full Time"
+              | "Part Time"
+              | "Contract"
+              | "Internship",
             experience: parsedData.experience?.join(", ") || "0",
             skills: parsedData.skills?.join(", ") || "",
             location: parsedData.location || "Remote",
-            candidate_source: hiringPartnerId
+            candidate_source: hiringPartnerId !== undefined
               ? "Hiring Partner"
-              : "Direct Apply",
+              : "Direct Apply" as "Direct Apply" | "Hiring Partner",
             hiring_partner_id: hiringPartnerId,
+            Organization: parsedData.Organization
+              ? { name: parsedData.Organization }
+              : null, // Wrap Organization in an object
           };
 
           console.log("Creating candidate with data:", candidateData);
@@ -446,13 +452,12 @@ export default function ResumeSourcing() {
   //     });
   // };
   const handleDeleteCandidate = async (id: string) => {
-    const { error } = await supabase.from('candidates').delete().eq('id', id);
-  
+    const { error } = await supabase.from("candidates").delete().eq("id", id);
+
     if (error) {
       throw new Error(error.message);
     }
   };
-  
 
   // Function to open the Add Candidate modal
   const openAddCandidateModal = () => {

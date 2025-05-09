@@ -62,7 +62,7 @@ export function InterviewRoundsList() {
       const { error } = await supabase
         .from("interview_rounds")
         .upsert(updates, {
-          onConflict: ["id"],
+          onConflict: "id",
         });
 
       if (error) throw error;

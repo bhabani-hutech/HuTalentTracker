@@ -23,7 +23,7 @@ import { SiteHeader } from "./components/layout/site-header";
 import { SiteFooter } from "./components/layout/site-footer";
 import { DocumentPreviewPage } from "./components/associate-onboarding/document-preview-page";
 import { Login } from "./components/auth/Login";
-import { Signup } from "./components/auth/Signup";
+// import { Signup } from "./components/auth/Signup";
 import { NavItem } from "./types/navigation";
 import { useRoutes } from "react-router-dom";
 import {
@@ -92,7 +92,7 @@ function AppContent() {
 
   // Check if the current page is login or signup
   const isAuthPage =
-    location.pathname === "/login" || location.pathname === "/signup";
+    location.pathname === "/login";
 
   return (
     <div className="relative flex min-h-screen">
@@ -116,7 +116,7 @@ function AppContent() {
           <Routes>
             {/* Public Routes */}
             <Route path="/login" element={<Login />} />
-            <Route path="/signup" element={<Signup />} />
+            {/* <Route path="/signup" element={<Signup />} /> */}
             <Route path="/careers/:id" element={<CareerPost />} />
 
             {/* Protected Routes */}

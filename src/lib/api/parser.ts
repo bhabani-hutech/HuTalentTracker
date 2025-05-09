@@ -20,6 +20,7 @@ interface ParsedResume {
   pdfText?: string;
   pdfMetadata?: any;
   pdfFonts?: string[];
+  Organization?: string;
 }
 
 function calculateMatchScore(

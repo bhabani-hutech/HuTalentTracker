@@ -103,16 +103,44 @@ export default function NewJob() {
   } = form; // Destructure handleSubmit and errors
 
   const onSubmit = useCallback(
-    async (data: z.infer<typeof jobFormSchema>) => {
+    async (data: any) => {
       try {
         if (id) {
-          await updateJob({ id, updates: data });
+          await updateJob({
+            id,
+            updates: {
+              ...data,
+              technical_skills: data.technical_skills.map(
+                (skill) => skill.name
+              ), // Extract names
+              domain_skills: data.domain_skills.map((skill) => skill.name), // Extract names
+              soft_skills: data.soft_skills.map((skill) => skill.name), // Extract names
+            },
+          });
           toast({
             title: "Success",
             description: "Job posting updated successfully",
           });
         } else {
-          await createJob(data);
+          await createJob({
+            title: data.title || "", // Ensure required fields are provided
+            department: data.department || "",
+            location: data.location || "",
+            type: data.type || "Full Time",
+            level: data.level || "Mid Level",
+            status: data.status || "Draft",
+            description: data.description || "",
+            requirements: data.requirements || [],
+            responsibilities: data.responsibilities || [],
+            skills: data.skills || [],
+            domain_skills: data.domain_skills, // Extract names
+            technical_skills: data.technical_skills, // Extract names
+            soft_skills: data.soft_skills, // Extract names
+            openings: data.openings || 1,
+            interview_rounds: data.interview_rounds || [],
+            experience_min: data.experience_min || 0,
+            experience_max: data.experience_max || 0,
+          });
           toast({
             title: "Success",
             description: "Job posting created successfully",
@@ -146,9 +174,12 @@ export default function NewJob() {
           requirements: jobToEdit.requirements || [],
           responsibilities: jobToEdit.responsibilities || [],
           skills: jobToEdit.skills || [],
-          domain_skills: jobToEdit.domain_skills || [],
-          technical_skills: jobToEdit.technical_skills || [],
-          soft_skills: jobToEdit.soft_skills || [],
+          domain_skills:
+            jobToEdit.domain_skills || [],
+          technical_skills:
+            jobToEdit.technical_skills || [],
+          soft_skills:
+            jobToEdit.soft_skills || [],
           openings: jobToEdit.openings || 1,
           interview_rounds: jobToEdit.interview_rounds || [
             { name: "Initial Screening", type: "HR", duration: 30 },
@@ -465,7 +496,7 @@ export default function NewJob() {
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <Label>Description</Label>
-                <Button
+                {/* <Button
                   type="button"
                   variant="outline"
                   size="sm"
@@ -525,7 +556,7 @@ export default function NewJob() {
                     <Wand2 className="h-4 w-4" />
                   )}
                   {isGenerating ? "Generating..." : "Generate with AI"}
-                </Button>
+                </Button> */}
               </div>
               <Textarea
                 {...form.register("description")}

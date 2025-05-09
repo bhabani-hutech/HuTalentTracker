@@ -26,6 +26,13 @@ interface EditUserDialogProps {
   user: User | null;
 }
 
+interface ErrorValidation {
+  nameError: string;
+  emailError: string;
+  departmentError: string;
+  roleError: string;
+}
+
 export function EditUserDialog({
   isOpen,
   onClose,
@@ -33,6 +40,7 @@ export function EditUserDialog({
   user,
 }: EditUserDialogProps) {
   const { departments } = useDepartments();
+
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -40,40 +48,82 @@ export function EditUserDialog({
     department: "",
   });
 
-  // Update form data when user changes
-  // useEffect(() => {
-  //   if (user) {
-  //     setFormData({
-  //       name: user.name,
-  //       email: user.email,
-  //       role: user.role,
-  //       department: user.department || "",
-  //     });
-  //   }
-  // }, [user]);
+  const [errors, setErrors] = useState<ErrorValidation>({
+    nameError: "",
+    emailError: "",
+    departmentError: "",
+    roleError: "",
+  });
 
   useEffect(() => {
     if (user) {
-        setFormData({
-            name: user.name || "",
-            email: user.email || "",
-            role: user.role || "Interviewer",
-            department: user.department || "",
-        });
+      setFormData({
+        name: user.name || "",
+        email: user.email || "",
+        role: user.role || "Interviewer",
+        department: user.department || "",
+      });
     } else {
-        setFormData({
-            name: "",
-            email: "",
-            role: "Interviewer",
-            department: "",
-        });
+      setFormData({
+        name: "",
+        email: "",
+        role: "Interviewer",
+        department: "",
+      });
     }
-}, [user]);
+    setErrors({
+      nameError: "",
+      emailError: "",
+      departmentError: "",
+      roleError: "",
+    });
+  }, [user]);
 
+  const validate = () => {
+    let valid = true;
+    const newErrors: ErrorValidation = {
+      nameError: "",
+      emailError: "",
+      departmentError: "",
+      roleError: "",
+    };
 
+    const nameRegex = /^[A-Za-z.]+(?: [A-Za-z.]+)*$/;
+    if (!formData.name.trim()) {
+      newErrors.nameError = "Name is required";
+      valid = false;
+    } else if (!nameRegex.test(formData.name) || formData.name.length > 50) {
+      newErrors.nameError =
+        "Name can only contain letters, dots, and spaces (max 50 characters)";
+      valid = false;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!formData.email.trim()) {
+      newErrors.emailError = "Email is required";
+      valid = false;
+    } else if (!emailRegex.test(formData.email)) {
+      newErrors.emailError = "Invalid email format";
+      valid = false;
+    }
+
+    if (!formData.department) {
+      newErrors.departmentError = "Department is required";
+      valid = false;
+    }
+
+    if (!formData.role) {
+      newErrors.roleError = "Role is required";
+      valid = false;
+    }
+
+    setErrors(newErrors);
+    return valid;
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!validate()) return;
     onSubmit(formData);
     onClose();
   };
@@ -86,18 +136,33 @@ export function EditUserDialog({
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label>Name</Label>
+            <Label>
+              Full Name <span className="text-red-500">*</span>
+            </Label>
             <Input
               required
               value={formData.name}
-              onChange={(e) =>
-                setFormData({ ...formData, name: e.target.value })
-              }
+              onChange={(e) => {
+                const formatted = e.target.value
+                  .split(" ")
+                  .map(
+                    (word) =>
+                      word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+                  )
+                  .join(" ");
+                setFormData({ ...formData, name: formatted });
+              }}
+              placeholder="Enter full name"
             />
+            {errors.nameError && (
+              <p className="text-sm text-red-500">{errors.nameError}</p>
+            )}
           </div>
 
           <div className="space-y-2">
-            <Label>Email</Label>
+            <Label>
+              Email <span className="text-red-500">*</span>
+            </Label>
             <Input
               type="email"
               required
@@ -105,11 +170,17 @@ export function EditUserDialog({
               onChange={(e) =>
                 setFormData({ ...formData, email: e.target.value })
               }
+              placeholder="Enter email"
             />
+            {errors.emailError && (
+              <p className="text-sm text-red-500">{errors.emailError}</p>
+            )}
           </div>
 
           <div className="space-y-2">
-            <Label>Department</Label>
+            <Label>
+              Department <span className="text-red-500">*</span>
+            </Label>
             <Select
               value={formData.department}
               onValueChange={(value) =>
@@ -127,10 +198,15 @@ export function EditUserDialog({
                 ))}
               </SelectContent>
             </Select>
+            {errors.departmentError && (
+              <p className="text-sm text-red-500">{errors.departmentError}</p>
+            )}
           </div>
 
           <div className="space-y-2">
-            <Label>Role</Label>
+            <Label>
+              Role <span className="text-red-500">*</span>
+            </Label>
             <Select
               value={formData.role}
               onValueChange={(value) =>
@@ -141,12 +217,14 @@ export function EditUserDialog({
                 <SelectValue placeholder="Select role" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="Admin">Admin</SelectItem>
                 <SelectItem value="HR">HR</SelectItem>
                 <SelectItem value="Hiring Manager">Hiring Manager</SelectItem>
                 <SelectItem value="Interviewer">Interviewer</SelectItem>
               </SelectContent>
             </Select>
+            {errors.roleError && (
+              <p className="text-sm text-red-500">{errors.roleError}</p>
+            )}
           </div>
 
           <DialogFooter>

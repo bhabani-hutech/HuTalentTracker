@@ -42,7 +42,7 @@ export async function parsePdf(
 
     return {
       text: fullText,
-      metadata: metadata.info || {},
+      metadata: "info" in metadata ? metadata.info : {},
       fonts: Array.from(fonts),
     };
   } catch (error) {

@@ -20,13 +20,13 @@ export function useFeedback() {
     queryKey: ["feedback"],
     queryFn: getFeedback,
     staleTime: 300000, // Data stays fresh for 5 minutes
-    cacheTime: 3600000, // Cache persists for 1 hour
+    // cacheTime: 3600000, // Cache persists for 1 hour
     refetchOnWindowFocus: false,
     refetchOnMount: false,
     refetchOnReconnect: false,
-    onError: (error) => {
-      console.error("Error in feedback hook:", error);
-    },
+    // onError: (error) => {
+    //   console.error("Error in feedback hook:", error);
+    // },
   });
 
   const createMutation = useMutation({

@@ -22,6 +22,7 @@ export async function getPipelineStages(): Promise<PipelineStage[]> {
 
   return data.map((stage) => ({
     id: stage.id,
+    stage: stage.stage,
     name: stage.stage,
     description: stage.description || "",
     stage_order: stage.stage_order,

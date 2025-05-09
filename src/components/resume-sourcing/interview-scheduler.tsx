@@ -176,6 +176,7 @@ export function InterviewScheduler({
         round_id: roundId,
         date: new Date(`${format(date, "yyyy-MM-dd")}T${time}`).toISOString(),
         type: interviewType,
+        status: "HR round" as const, // Ensure the status matches the allowed literals
         //stage_id: defaultStageId, // Set default stage to Screening
       };
 
@@ -234,7 +235,7 @@ export function InterviewScheduler({
               </SelectTrigger>
               <SelectContent>
                 {interviewRounds?.map((interviewRound) => (
-                  <SelectItem key={interviewRound.id} value={interviewRound.id}>
+                  <SelectItem key={interviewRound.id} value={String(interviewRound.id)}>
                     {interviewRound.name}
                   </SelectItem>
                 ))}

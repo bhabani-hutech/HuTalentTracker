@@ -171,7 +171,7 @@ export default function InterviewSchedule() {
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
-            <CardTitle>Upcoming Interviews</CardTitle>
+            <CardTitle>Scheduled Interviews</CardTitle>
             <div className="flex w-full max-w-sm items-center space-x-2">
               <Input
                 type="search"

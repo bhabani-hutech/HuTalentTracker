@@ -178,7 +178,7 @@ export default function Jobs() {
                               >
                                 <Eye className="h-4 w-4" />
                               </Button>
-                              <Button
+                              {/* <Button
                                 variant="ghost"
                                 size="icon"
                                 onClick={() => {
@@ -223,7 +223,7 @@ export default function Jobs() {
                                       : "text-gray-500"
                                   }`}
                                 />
-                              </Button>
+                              </Button> */}
                             </TableCell>
                           </TableRow>
                         ))

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { Dialog, DialogContent, DialogHeader } from "../components/ui/dialog";
 import { InterviewFeedbackForm } from "../components/interview-feedback/feedback-form";
 import { CandidateList } from "../components/interview-feedback/candidate-list";
@@ -7,12 +7,13 @@ import { useFeedback } from "@/lib/api/hooks/useFeedback";
 import { supabase } from "@/lib/supabase";
 import { useInterviews } from "@/lib/api/hooks/useInterviews";
 import { Icons } from "@/components/icons";
-import { FileText, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { DialogTitle } from "@radix-ui/react-dialog";
 
 export default function InterviewFeedback() {
   const location = useLocation();
+  const navigate = useNavigate();
   const params = new URLSearchParams(location.search);
   const interviewId = params.get("interview");
   const [showCreateForm, setShowCreateForm] = useState(false);
@@ -33,7 +34,6 @@ export default function InterviewFeedback() {
   const [selectedInterviewId, setSelectedInterviewId] = useState<string | null>(
     null
   );
-
   const [selectedInterview, setSelectedInterview] = useState<any>(null);
 
   useEffect(() => {
@@ -41,7 +41,6 @@ export default function InterviewFeedback() {
       if (interviewId) {
         setIsNew(params.get("new") === "true");
         try {
-          // First get the interview details
           const { data: interview, error: interviewError } = await supabase
             .from("interviews")
             .select(
@@ -79,7 +78,6 @@ export default function InterviewFeedback() {
           }
         } catch (error) {
           console.error("Error loading data:", error);
-          // Show create form as fallback
           setShowCreateForm(true);
         }
       }
@@ -87,6 +85,14 @@ export default function InterviewFeedback() {
 
     loadData();
   }, [interviewId]);
+
+  useEffect(() => {
+    setShowCreateForm(false);
+    setSelectedFeedback(null);
+    setSelectedInterviewId(null);
+    setSelectedInterview(null);
+    setIsNew(false);
+  }, [location.pathname, location.search]);
 
   if (feedbackLoading || interviewsLoading) {
     return (
@@ -104,6 +110,14 @@ export default function InterviewFeedback() {
     );
   }
 
+  const handleCreateFeedback = () => {
+    setShowCreateForm(true);
+    setSelectedFeedback(null);
+    setSelectedInterviewId(null);
+    // Clear just the search/query params
+    navigate(location.pathname, { replace: true });
+  };
+
   return (
     <div className="container py-8 space-y-8">
       <div className="flex items-center justify-between">
@@ -115,16 +129,11 @@ export default function InterviewFeedback() {
             Submit and review candidate interview feedback
           </p>
         </div>
-        <Button
-          onClick={() => {
-            setShowCreateForm(true);
-            setSelectedFeedback(null);
-            setSelectedInterviewId(null);
-          }}
-        >
+        <Button onClick={handleCreateFeedback}>
           <Plus className="mr-2 h-4 w-4" /> Interview Feedback
         </Button>
       </div>
+
       <CandidateList onFeedback={setSelectedFeedback} feedbackData={feedback} />
 
       <Dialog
@@ -132,8 +141,7 @@ export default function InterviewFeedback() {
         onOpenChange={() => {
           setSelectedFeedback(null);
           setShowCreateForm(false);
-          // Clear URL parameters when closing
-          window.history.replaceState({}, "", window.location.pathname);
+          navigate(location.pathname, { replace: true });
         }}
       >
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-background">
@@ -149,6 +157,7 @@ export default function InterviewFeedback() {
             onClose={() => {
               setSelectedFeedback(null);
               setShowCreateForm(false);
+              navigate(location.pathname, { replace: true });
             }}
           />
         </DialogContent>

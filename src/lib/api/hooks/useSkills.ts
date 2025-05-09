@@ -14,8 +14,7 @@ export function useSkills(type?: "domain" | "technical" | "soft") {
   const { data, isLoading, error } = useQuery({
     queryKey,
     queryFn: () => getSkills(type),
-    staleTime: 600000, // Data stays fresh for 10 minutes (skills change less frequently)
-    cacheTime: 3600000, // Cache persists for 1 hour
+    staleTime: 600000,
     refetchOnWindowFocus: false,
     refetchOnMount: false,
     refetchOnReconnect: false,

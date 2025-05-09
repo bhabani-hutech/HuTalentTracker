@@ -14,14 +14,13 @@ export function useJobs() {
   } = useQuery({
     queryKey: ["jobs"],
     queryFn: getJobs,
-    staleTime: 300000, // Data stays fresh for 5 minutes
-    cacheTime: 3600000, // Cache persists for 1 hour
+    staleTime: 300000,
     refetchOnWindowFocus: false,
     refetchOnMount: false,
     refetchOnReconnect: false,
-    onError: (error) => {
-      console.error("Error in job hook:", error);
-    },
+    // onError: (error) => {
+    //   console.error("Error in job hook:", error);
+    // },
   });
 
   const createMutation = useMutation({

@@ -65,7 +65,7 @@ export function PipelineStagesList() {
       }));
       console.log(updates);
       const { error } = await supabase.from("stages").upsert(updates, {
-        onConflict: ["id"],
+        onConflict: "id",
       });
 
       if (error) throw error;
@@ -167,7 +167,7 @@ export function PipelineStagesList() {
         </div>
       </CardHeader>
       <CardContent>
-        {console.log(stages)}
+  
         <div className="space-y-4">
           {stages.map((stage, index) => {
             const isLocked = ["screening", "hired", "rejected"].includes(

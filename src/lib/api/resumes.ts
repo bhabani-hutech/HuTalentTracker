@@ -2,6 +2,14 @@
 
 export interface Resume {
   id: string;
+  name: string; 
+  email: string;
+  phone: string;
+  skills?: string[];
+  position?: string;
+  experience?: string;
+  location?: string;
+  match_score?: number;
   candidate_id: string;
   file_url: string;
   parsed_data?: {

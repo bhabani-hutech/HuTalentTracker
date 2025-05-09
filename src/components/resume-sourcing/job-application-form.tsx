@@ -35,6 +35,7 @@ interface ApplicationData {
   skills: string;
   type: "Full Time" | "Part Time" | "Contract" | "Internship";
   experience: string;
+  Organization: string | null; // Add Organization property
 }
 
 export function JobApplicationForm({
@@ -50,8 +51,9 @@ export function JobApplicationForm({
     location: "",
     notice_period: "",
     skills: "",
-    type: "Full Time",
     experience: "",
+    Organization: null, // Initialize Organization
+    type: "Full Time", // Add default value for type
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -68,10 +70,14 @@ export function JobApplicationForm({
         match_score: 0, // This would be calculated based on job requirements
         job_id: null,
         stage_id: 1, // Default to screening stage
-        type: formData.type,
-        experience: formData.experience,
         skills: formData.skills,
+        type: formData.type, // Add type property
+        experience: formData.experience, // Add experience property
+        Organization: {
+          name: formData.Organization,
+        }, // Pass Organization to createCandidate
       });
+       
 
       toast({
         title: "Success",

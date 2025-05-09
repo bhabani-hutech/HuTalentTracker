@@ -18,6 +18,7 @@ export interface Candidate {
   file_url?: string;
   created_at?: string;
   updated_at?: string;
+  department?: string;
   candidate_source?: "Direct Apply" | "Hiring Partner";
   hiring_partner_id?: string; // UUID reference to organizations table
   Organization: {
@@ -59,7 +60,7 @@ export async function uploadResume(file: File): Promise<string> {
   }
 }
 export async function createCandidate(
-  candidate: Omit<Candidate, "id" | "created_at" | "updated_at">,
+  candidate: Omit<Candidate, "id" | "created_at" | "updated_at">
 ) {
   // Validate hiring_partner_id for source
   if (candidate.candidate_source === "Direct Apply") {
@@ -69,28 +70,29 @@ export async function createCandidate(
     !candidate.hiring_partner_id
   ) {
     console.warn(
-      "Hiring Partner source selected but no hiring_partner_id provided",
+      "Hiring Partner source selected but no hiring_partner_id provided"
     );
     throw new Error(
-      "A hiring partner must be selected when 'Hiring Partner' is the source",
+      "A hiring partner must be selected when 'Hiring Partner' is the source"
     );
   }
 
-  // Check for duplicate email or mobile number
-  const { data: existingCandidate, error: checkError } = await supabase
+  // ✅ Check for duplicate email or phone under the same job_id
+  const { data: existingCandidates, error: checkError } = await supabase
     .from("candidates")
-    .select("id")
-    .or(`email.eq.${candidate.email},phone.eq.${candidate.phone}`)
-    .maybeSingle();
+    .select("id, email, phone")
+    .or(
+      `and(email.eq.${candidate.email},job_id.eq.${candidate.job_id}),and(phone.eq.${candidate.phone},job_id.eq.${candidate.job_id})`
+    );
 
   if (checkError) {
     console.error("Error checking for existing candidate:", checkError);
     throw new Error("Could not verify uniqueness. Please try again.");
   }
 
-  if (existingCandidate) {
+  if (existingCandidates && existingCandidates.length > 0) {
     throw new Error(
-      "A candidate with the same email or mobile number already exists.",
+      "A candidate with the same email or phone has already applied to this job."
     );
   }
 
@@ -145,7 +147,7 @@ export async function createCandidate(
         ) {
           const jobSkills = Array.isArray(job.skills)
             ? job.skills.map((s) =>
-                typeof s === "string" ? s.toLowerCase() : "",
+                typeof s === "string" ? s.toLowerCase() : ""
               )
             : [];
 
@@ -157,7 +159,7 @@ export async function createCandidate(
                 (js) =>
                   js === skillLower ||
                   js.includes(skillLower) ||
-                  skillLower.includes(js),
+                  skillLower.includes(js)
               )
             ) {
               matchCount++;
@@ -165,7 +167,7 @@ export async function createCandidate(
           }
 
           const matchScore = Math.round(
-            (matchCount / jobSkills.length) * 100,
+            (matchCount / jobSkills.length) * 100
           );
           candidateWithDefaults.match_score = Math.min(matchScore, 100);
         }
@@ -189,6 +191,7 @@ export async function createCandidate(
   console.log("Created candidate:", data);
   return data;
 }
+
 
 
 // export async function getCandidates() {
@@ -281,32 +284,55 @@ export async function updateCandidate(id: string, updates: Partial<Candidate>) {
   }
 
   // 🔒 Check for uniqueness of email or mobile if they are being updated
-  if (updates.email || updates.phone) {
+  // if (updates.email || updates.phone) {
+  //   const { data: conflictCandidate, error: conflictError } = await supabase
+  //     .from("candidates")
+  //     .select("id")
+  //     .or(
+  //       [
+  //         updates.email ? `email.eq.${updates.email}` : null,
+  //         updates.phone ? `phone.eq.${updates.phone}` : null,
+  //       ]
+  //         .filter(Boolean)
+  //         .join(","),
+  //     )
+  //     .neq("id", id) // Ensure we’re not comparing with the same candidate
+  //     .maybeSingle();
+
+  //   if (conflictError) {
+  //     console.error("Error checking for duplicates:", conflictError);
+  //     throw new Error("Could not verify uniqueness. Please try again.");
+  //   }
+
+  //   if (conflictCandidate) {
+  //     throw new Error(
+  //       "This email address or phone  is already linked to another candidate.",
+  //     );
+  //   }
+  // }
+
+  if (updates.email && updates.phone && updates.job_id) {
     const { data: conflictCandidate, error: conflictError } = await supabase
       .from("candidates")
       .select("id")
-      .or(
-        [
-          updates.email ? `email.eq.${updates.email}` : null,
-          updates.phone ? `phone.eq.${updates.phone}` : null,
-        ]
-          .filter(Boolean)
-          .join(","),
-      )
-      .neq("id", id) // Ensure we’re not comparing with the same candidate
+      .eq("email", updates.email)
+      .eq("phone", updates.phone)
+      .eq("job_id", updates.job_id)
+      .neq("id", id)
       .maybeSingle();
-
+  
     if (conflictError) {
-      console.error("Error checking for duplicates:", conflictError);
+      console.error("Error checking for existing candidate:", conflictError);
       throw new Error("Could not verify uniqueness. Please try again.");
     }
-
+  
     if (conflictCandidate) {
       throw new Error(
-        "This email address or phone  is already linked to another candidate.",
+        "This candidate (email and phone) has already applied to this job.",
       );
     }
   }
+  
 
   // Set source defaults
   if (updates.candidate_source === "Hiring Partner" && !updates.source) {

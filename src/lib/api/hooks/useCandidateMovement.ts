@@ -46,7 +46,7 @@ export function useCandidateMovement() {
 
         // Determine the appropriate stage based on the interview round
         let targetStage = null;
-        const roundName = interview.interview_rounds?.name?.toLowerCase() || "";
+        const roundName = interview.interview_rounds?.[0]?.name?.toLowerCase() || "";
 
         if (roundName.includes("screen")) {
           // Screening round - move to Shortlisted
@@ -84,7 +84,7 @@ export function useCandidateMovement() {
         // If we found a target stage and it's different from the current stage
         if (targetStage && targetStage.id !== candidate.stage_id) {
           // Generate a move comment
-          const moveReason = `Automatically moved to ${targetStage.stage} after ${interview.interview_rounds?.name} was scheduled.`;
+          const moveReason = `Automatically moved to ${targetStage.stage} after ${interview.interview_rounds?.[0]?.name || "an interview round"} was scheduled.`;
 
           // Update the candidate's stage
           const { error: updateError } = await supabase

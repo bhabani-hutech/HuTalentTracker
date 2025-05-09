@@ -181,10 +181,10 @@ export default function StatusTracking() {
           <StatusOverview selectedJobId={selectedJobId} />
         </div>
         <div className="space-y-6">
-          <StatusAnalytics
+          {/* <StatusAnalytics
             selectedJobId={selectedJobId}
             selectedCandidateId={selectedCandidateId}
-          />
+          /> */}
           <StatusTimeline selectedCandidate={selectedCandidate} />
         </div>
       </div>

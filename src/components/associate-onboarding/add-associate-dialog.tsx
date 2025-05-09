@@ -24,22 +24,87 @@ interface AddAssociateDialogProps {
   onSubmit: (data: any) => void;
 }
 
+interface ErrorValidation {
+  emailError: string;
+  nameError: string;
+  departmentError: string;
+  roleError: string;
+}
+
 export function AddAssociateDialog({
   isOpen,
   onClose,
   onSubmit,
 }: AddAssociateDialogProps) {
   const { departments } = useDepartments();
+
   const [formData, setFormData] = useState({
     name: "",
     email: "",
-    role: "Interviewer",
+    role: "",
     department: "",
     is_active: true,
   });
 
+  const [errorValidation, setErrorValidation] = useState<ErrorValidation>({
+    emailError: "",
+    nameError: "",
+    departmentError: "",
+    roleError: "",
+  });
+
+  const validateForm = () => {
+    let valid = true;
+    const errors: ErrorValidation = {
+      emailError: "",
+      nameError: "",
+      departmentError: "",
+      roleError: "",
+    };
+
+    if (!formData.name.trim()) {
+      errors.nameError = "Name is required";
+      valid = false;
+    }
+
+    const nameRegex = /^[A-Za-z.]+(?: [A-Za-z.]+)*$/;
+    if (
+      formData.name &&
+      (!nameRegex.test(formData.name) || formData.name.length > 50)
+    ) {
+      errors.nameError =
+        "Name can only contain letters, dots, and spaces (max 50 characters)";
+      valid = false;
+    }
+
+    if (!formData.email.trim()) {
+      errors.emailError = "Email is required";
+      valid = false;
+    } else {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(formData.email)) {
+        errors.emailError = "Invalid email format";
+        valid = false;
+      }
+    }
+
+    if (!formData.department) {
+      errors.departmentError = "Department is required";
+      valid = false;
+    }
+
+    if (!formData.role) {
+      errors.roleError = "Role is required";
+      valid = false;
+    }
+
+    setErrorValidation(errors);
+    return valid;
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!validateForm()) return;
     onSubmit(formData);
     onClose();
   };
@@ -52,30 +117,50 @@ export function AddAssociateDialog({
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label>Name</Label>
+            <Label>Full Name <span className="text-red-500">*</span></Label>
             <Input
-              required
               value={formData.name}
-              onChange={(e) =>
-                setFormData({ ...formData, name: e.target.value })
-              }
+              onChange={(e) => {
+                const value = e.target.value;
+                const formattedValue = value
+                  .split(" ")
+                  .map(
+                    (word) =>
+                      word.charAt(0).toUpperCase() +
+                      word.slice(1).toLowerCase()
+                  )
+                  .join(" ");
+
+                setFormData({ ...formData, name: formattedValue });
+              }}
+              placeholder="Enter user's full name"
             />
+            {errorValidation.nameError && (
+              <p className="text-sm text-red-500">
+                {errorValidation.nameError}
+              </p>
+            )}
           </div>
 
           <div className="space-y-2">
-            <Label>Email</Label>
+            <Label>Email <span className="text-red-500">*</span></Label>
             <Input
               type="email"
-              required
               value={formData.email}
               onChange={(e) =>
-                setFormData({ ...formData, email: e.target.value })
+                setFormData({ ...formData, email: e.target.value.trim() })
               }
+              placeholder="Enter user's email"
             />
+            {errorValidation.emailError && (
+              <p className="text-sm text-red-500">
+                {errorValidation.emailError}
+              </p>
+            )}
           </div>
 
           <div className="space-y-2">
-            <Label>Department</Label>
+            <Label>Department <span className="text-red-500">*</span></Label>
             <Select
               value={formData.department}
               onValueChange={(value) =>
@@ -93,10 +178,15 @@ export function AddAssociateDialog({
                 ))}
               </SelectContent>
             </Select>
+            {errorValidation.departmentError && (
+              <p className="text-sm text-red-500">
+                {errorValidation.departmentError}
+              </p>
+            )}
           </div>
 
           <div className="space-y-2">
-            <Label>Role</Label>
+            <Label>Role <span className="text-red-500">*</span></Label>
             <Select
               value={formData.role}
               onValueChange={(value) =>
@@ -107,12 +197,16 @@ export function AddAssociateDialog({
                 <SelectValue placeholder="Select role" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="Admin">Admin</SelectItem>
                 <SelectItem value="HR">HR</SelectItem>
                 <SelectItem value="Hiring Manager">Hiring Manager</SelectItem>
                 <SelectItem value="Interviewer">Interviewer</SelectItem>
               </SelectContent>
             </Select>
+            {errorValidation.roleError && (
+              <p className="text-sm text-red-500">
+                {errorValidation.roleError}
+              </p>
+            )}
           </div>
 
           <DialogFooter>

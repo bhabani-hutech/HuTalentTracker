@@ -66,7 +66,6 @@ export function useInterviews(interviewId?: string) {
     refetchOnReconnect: false,
     retry: 3,
     staleTime: 300000, // 5 minutes
-    cacheTime: 3600000, // 1 hour
   });
 
   // React Query to get specific interview by ID
@@ -162,7 +161,7 @@ export function useInterviews(interviewId?: string) {
         { event: "*", schema: "public", table: "interviews" },
         (payload) => {
           // Only invalidate if the change affects the current interview or all interviews
-          if (!interviewId || (payload.new && payload.new.id === interviewId)) {
+          if (!interviewId || (payload.new && (payload.new as { id: string }).id === interviewId)) {
             queryClient.invalidateQueries({ queryKey: ["interviews"] });
 
             if (interviewId) {

@@ -20,7 +20,7 @@ interface User {
   id: string;
   name: string;
   email: string;
-  role: "Admin" | "HR" | "Hiring Manager" | "Interviewer";
+  role: "HR" | "Hiring Manager" | "Interviewer";
   department?: string;
   is_active: boolean;
 }

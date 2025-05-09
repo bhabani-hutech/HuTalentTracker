@@ -63,8 +63,8 @@ export function StatusAnalytics({
           });
 
           // Add current stage information
-          if (candidateData.stages?.stage) {
-            counts[`Current Stage: ${candidateData.stages.stage}`] = 1;
+          if (Array.isArray(candidateData.stages) && candidateData.stages[0]?.stage) {
+            counts[`Current Stage: ${candidateData.stages[0].stage}`] = 1;
           }
 
           // Format data for chart

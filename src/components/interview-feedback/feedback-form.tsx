@@ -46,9 +46,7 @@ export function InterviewFeedbackForm({
   const [candidateInterviews, setCandidateInterviews] = useState<any[]>([]);
   const [interviewLoading, setInterviewLoading] = useState(false);
 
-
   const [skillRatings, setSkillRatings] = useState<Record<string, number>>({});
-  console.log(interviews);
   const [formData, setFormData] = useState<Partial<InterviewFeedback>>(
     existingFeedback
       ? {
@@ -67,7 +65,7 @@ export function InterviewFeedbackForm({
           round_id: existingFeedback.round_id || selectedInterviewId || "",
           interview: existingFeedback.interview,
           interviewer: existingFeedback.interviewer,
-          date: existingFeedback.date || "",
+          date: existingFeedback.interview.date || "",
         }
       : {
           technical_skills: 0,
@@ -86,7 +84,6 @@ export function InterviewFeedbackForm({
           date: selectedInterview?.date || "",
         }
   );
-  console.log(interviews);
   const fetchCandidateInterviews = async (candidateId: string) => {
     setInterviewLoading(true);
     const { data, error } = await supabase
@@ -104,7 +101,11 @@ export function InterviewFeedbackForm({
       )
       .eq("candidate_id", candidateId);
     if (error) {
-      toast.error("Failed to fetch candidate interviews");
+      toast({
+        title: "Error",
+        description: "Failed to fetch candidate interviews",
+        variant: "destructive",
+      });
       console.error(error);
     } else {
       setCandidateInterviews(data || []);
@@ -116,8 +117,6 @@ export function InterviewFeedbackForm({
       fetchCandidateInterviews(formData.candidate_id);
     }
   }, [formData.candidate_id]);
-
- 
 
   // Initialize skill ratings based on existing feedback or candidate skills
   useEffect(() => {
@@ -244,12 +243,12 @@ export function InterviewFeedbackForm({
       technical_skills: formData.technical_skills || 0,
       domain_skills: formData.domain_skills || 0,
       soft_skills: formData.soft_skills || 0,
-      communication_skills: formData.communication_skills || 0,
-      problem_solving: formData.problem_solving || 0,
-      experience_fit: formData.experience_fit || 0,
-      cultural_fit: formData.cultural_fit || 0,
-      skill_set:
-        typeof formData.skill_set === "number" ? formData.skill_set : 0,
+      // communication_skills: formData.communication_skills || 0,
+      // problem_solving: formData.problem_solving || 0,
+      // experience_fit: formData.experience_fit || 0,
+      // cultural_fit: formData.cultural_fit || 0,
+      // skill_set:
+      //   typeof formData.skill_set === "number" ? formData.skill_set : 0,
       skill_ratings: skillRatings,
       strengths: formData.strengths || "",
       improvements: formData.improvements || "",
@@ -270,7 +269,9 @@ export function InterviewFeedbackForm({
               description: "Feedback has been updated successfully.",
               variant: "default",
             });
-            if (onClose) onClose();
+            if (onClose) {
+              handleClose();
+            }
           },
           onError: (error: any) => {
             console.error("Update failed:", error);
@@ -292,7 +293,9 @@ export function InterviewFeedbackForm({
             description: "Feedback has been submitted successfully.",
             variant: "default",
           });
-          if (onClose) onClose();
+          if (onClose) {
+            handleClose();
+            }
         },
         onError: (error: any) => {
           console.error("Creation failed:", error);
@@ -306,6 +309,30 @@ export function InterviewFeedbackForm({
         },
       });
     }
+  };
+
+  const resetFormData = () => {
+    setFormData({
+      technical_skills: 0,
+      domain_skills: 0,
+      soft_skills: 0,
+      strengths: "",
+      improvements: "",
+      recommendation: "Maybe",
+      comments: "",
+      candidate_id: "",
+      interviewer_id: "",
+      interview_id: "",
+      interview: null,
+      interviewer: null,
+      round_id: "",
+      date: "",
+    });
+  };
+
+  const handleClose = () => {
+    resetFormData(); // Clear the form data
+    if (onClose) onClose(); // Call the original onClose function
   };
 
   const renderRatingButtons = (field: keyof InterviewFeedback) => (
@@ -339,17 +366,17 @@ export function InterviewFeedbackForm({
       ))}
     </div>
   );
-  {
-    console.log(existingFeedback?.candidate?.id);
-  }
   return (
     <div className="grid gap-4 py-4">
       <div className="grid gap-4 md:grid-cols-2">
         <div className="space-y-2">
-          <Label>Candidate Name</Label>
+          <Label>Candidate Name</Label> <span className="text-red-500">*</span>
           <Select
             value={formData.candidate_id || ""}
-            disabled={!!existingFeedback?.candidate?.id}
+            disabled={
+              !!existingFeedback?.candidate?.id ||
+              selectedInterview?.candidate_id
+            }
             onValueChange={(value) => {
               const selectedCandidate = candidates?.find(
                 (candidate) => candidate.id === value
@@ -364,6 +391,7 @@ export function InterviewFeedbackForm({
                 candidate: selectedCandidate,
                 interview_id: selectedInterview?.id || prev.interview_id,
                 interview: selectedInterview || prev.interview,
+                date: selectedInterview?.date || prev.date,
                 interviewer_id:
                   selectedInterview?.interviewer?.id || prev.interviewer_id,
                 interviewer: selectedInterview?.interviewer || prev.interviewer,
@@ -395,15 +423,17 @@ export function InterviewFeedbackForm({
           </Select>
         </div>
         <div className="space-y-2">
-          <Label>Interview Round</Label>
+          <Label>Interview Round</Label> <span className="text-red-500">*</span>
           <Select
-            value={formData.round_id}
+            value={formData.round_id ? String(formData.round_id) : ""}
+            disabled={
+              !!existingFeedback?.candidate?.id ||
+              selectedInterview?.candidate_id
+            }
             onValueChange={(value) => {
-              console.log(value);
               const selectedRound = candidateInterviews.find(
-                (interview) => interview.interview_rounds?.id === value
+                (interview) => String(interview.interview_rounds?.id) === value
               );
-              console.log(selectedRound);
               setFormData((prev) => ({
                 ...prev,
                 round_id: selectedRound?.interview_rounds?.id,
@@ -412,15 +442,6 @@ export function InterviewFeedbackForm({
                 date: selectedRound?.date,
               }));
             }}
-            // onValueChange={(value) =>
-            //   setFormData((prev) => ({
-            //     ...prev,
-            //     round_id: value,
-            //     interviewer:
-            //       candidateInterviews[1]?.users?.name || prev.interviewer,
-            //   }))
-            // }
-            // disabled={!formData.candidateId || interviewLoading}
           >
             <SelectTrigger>
               <SelectValue placeholder="Select Interview Round" />
@@ -430,7 +451,7 @@ export function InterviewFeedbackForm({
                 candidateInterviews.map((interview) => (
                   <SelectItem
                     key={interview?.interview_rounds?.id}
-                    value={interview?.interview_rounds?.id}
+                    value={String(interview?.interview_rounds?.id)}
                   >
                     {interview.interview_rounds?.name || "Unnamed Round"}
                   </SelectItem>
@@ -446,18 +467,22 @@ export function InterviewFeedbackForm({
       </div>
       <div className="grid gap-4 md:grid-cols-2">
         <div className="space-y-2">
-          <Label>Interview Date & Time</Label>
+          <Label>Interview Date & Time</Label>{" "}
+          <span className="text-red-500">*</span>
           <Input
             type="text"
             value={
               formData?.date ? format(new Date(formData?.date), "PPp") : ""
             }
-            disabled={formData.round_id ? true : false}
+            disabled={
+              !!existingFeedback?.candidate?.id ||
+              selectedInterview?.candidate_id
+            }
             placeholder="Interview details"
           />
         </div>
         <div className="space-y-2">
-          <Label>Interviewer</Label>
+          <Label>Interviewer</Label> <span className="text-red-500">*</span>
           <Select
             value={formData.interviewer_id || ""}
             // disabled={
@@ -495,7 +520,8 @@ export function InterviewFeedbackForm({
 
       {/* Skill-specific ratings */}
       <div className="space-y-4">
-        <Label className="text-lg font-semibold">Skill-Specific Ratings</Label>
+        <Label className="text-lg font-semibold">Skill-Specific Ratings</Label>{" "}
+        <span className="text-red-500">*</span>
         <div className="grid gap-4">
           {Object.keys(skillRatings).length > 0 ? (
             Object.keys(skillRatings).map((skillName) => (
@@ -517,7 +543,8 @@ export function InterviewFeedbackForm({
 
       {/* Overall ratings */}
       <div className="space-y-4 mt-6 border-t pt-6">
-        <Label className="text-lg font-semibold">Overall Ratings</Label>
+        <Label className="text-lg font-semibold">Overall Ratings</Label>{" "}
+        <span className="text-red-500">*</span>
         <div className="grid gap-4">
           <div className="flex items-center justify-between border p-3 rounded-md">
             <span className="font-medium">Technical Skills</span>
@@ -588,7 +615,7 @@ export function InterviewFeedbackForm({
       </div>
 
       <div className="flex gap-4 justify-end">
-        <Button variant="outline" onClick={onClose}>
+        <Button variant="outline" onClick={handleClose}>
           Cancel
         </Button>
         <Button onClick={handleSubmit}>

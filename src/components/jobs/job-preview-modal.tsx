@@ -24,7 +24,7 @@ export function JobPreviewModal({
   const BASE_URL =
     import.meta.env.MODE === "development"
       ? window.location.origin
-      : `http://106.51.17.150:5172`;
+      : `https://hutalent.hutechsolutions.in`;
 
   const jobUrl = `${BASE_URL}/careers/${job.id}`;
   console.log(jobUrl, BASE_URL, import.meta.env.MODE);
@@ -43,7 +43,7 @@ export function JobPreviewModal({
         document.execCommand("copy");
         document.body.removeChild(textarea);
         console.log(textarea.value);
-        alert("Job posting URL copied to clipboard!");
+        alert("Job posting URL copied to clipboard! (legacy method)");
       } catch (fallbackErr) {
         console.error("Both clipboard methods failed:", fallbackErr);
         alert("Failed to copy. Your browser may not support clipboard access.");

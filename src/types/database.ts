@@ -7,7 +7,23 @@ export type JobLevel =
   | "Manager"
   | "Director";
 export type JobStatus = "Draft" | "Published" | "Closed" | "On Hold";
-
+export interface Associate {
+  id: string;
+  name: string;
+  email: string;
+  phone?: string;
+  position?: string;
+  location?: string;
+  type?: JobType;
+  level?: JobLevel;
+  status?: JobStatus;
+  created_at?: string;
+  updated_at?: string;
+}
+export interface Skill {
+  name: string;
+  level: "Basic" | "Intermediate" | "Expert";
+}
 export interface Job {
   id: string;
   title: string;
@@ -19,6 +35,9 @@ export interface Job {
   description: string;
   requirements: string[];
   responsibilities: string[];
+  technical_skills: Skill[]; 
+  domain_skills: Skill[];
+  soft_skills:Skill[];
   skills?: string[];
   salary_min?: number;
   salary_max?: number;
@@ -52,13 +71,17 @@ export interface Candidate {
   updated_at?: string;
   candidate_source?: "Direct Apply" | "Hiring Partner";
   hiring_partner_id?: string;
+  department?: string;
+  Organization?: {
+    name: string;
+  };
 }
 
 export interface User {
   id: string;
   name: string;
   email: string;
-  role: "Admin" | "HR" | "Hiring Manager" | "Interviewer";
+  role:  "HR" | "Hiring Manager" | "Interviewer";
   department?: string;
   is_active?: boolean;
   created_at?: string;
@@ -98,11 +121,14 @@ export interface InterviewFeedback {
   round_id: string | number;
   interviewer_id: string;
   technical_skills: number;
-  communication_skills: number;
-  problem_solving: number;
-  experience_fit: number;
-  cultural_fit: number;
-  skill_set: number;
+  domain_skills: number;
+  soft_skills: number;
+  skill_ratings?: Record<string, number>; 
+  // communication_skills: number;
+  // problem_solving: number;
+  // experience_fit: number;
+  // cultural_fit: number;
+  // skill_set: number;
   strengths: string;
   improvements: string;
   recommendation: string;
@@ -112,6 +138,7 @@ export interface InterviewFeedback {
   interview?: any;
   candidate?: any;
   interviewer?: any;
+  date?: string;
 }
 
 export interface Interview {

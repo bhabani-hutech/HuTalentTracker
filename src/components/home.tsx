@@ -35,7 +35,7 @@ function Home() {
     offersAccepted: 0,
   });
   const [pipelineData, setPipelineData] = useState<any[]>([]);
-  const [activities, setActivities] = useState<Activity[]>([]);
+  const [activities, setActivities] = useState<any[]>([]);
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -70,11 +70,11 @@ function Home() {
             Overview of your recruitment pipeline
           </p>
         </div>
-        <DashboardFilters />
+        {/* <DashboardFilters /> */}
       </div>
 
       {/* Date Range Picker */}
-      <DateRangePicker date={date} onDateChange={setDate} />
+      {/* <DateRangePicker date={date} onDateChange={setDate} /> */}
 
       {/* Error Message */}
       {error && <p className="text-red-600">{error}</p>}

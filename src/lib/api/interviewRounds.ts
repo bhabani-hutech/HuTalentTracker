@@ -35,12 +35,12 @@ export function useInterviewRounds() {
         duration: apiRound.duration,
       })) as InterviewRound[];
     },
-    onSuccess: (data) => {
-      console.log("Interview rounds fetched successfully:", data);
-    },
-    onError: (error) => {
-      console.error("Error in interviewRounds query:", error);
-    },
+    // onSuccess: (data) => {
+    //   console.log("Interview rounds fetched successfully:", data);
+    // },
+    // onError: (error) => {
+    //   console.error("Error in interviewRounds query:", error);
+    // },
   });
 }
 

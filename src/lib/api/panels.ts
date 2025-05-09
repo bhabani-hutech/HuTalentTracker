@@ -39,7 +39,7 @@ export async function getPanels() {
       id: panel.id,
       name: panel.name,
       department_id: panel.department_id,
-      department_name: panel.departments?.name,
+      department_name:  panel.departments?.[0]?.name,
       members: panel.members || [],
       created_at: panel.created_at,
       updated_at: panel.updated_at,
@@ -73,7 +73,7 @@ export async function getPanel(id: string) {
     id: data.id,
     name: data.name,
     department_id: data.department_id,
-    department_name: data.departments?.name,
+    department_name:  data.departments?.[0]?.name,
     members: data.members || [],
     created_at: data.created_at,
     updated_at: data.updated_at,
@@ -91,7 +91,7 @@ export async function createPanel(
       department_id = panel.department_id;
     } else if (typeof panel.department_id === "string") {
       // Skip strings that start with org-dept-
-      if (!panel.department_id.startsWith("org-dept-")) {
+      if (typeof panel.department_id === "string" && !(panel.department_id as string).startsWith("org-dept-")) {
         // Try to parse the string as a number
         const parsed = parseInt(panel.department_id, 10);
         if (!isNaN(parsed)) {
@@ -143,7 +143,7 @@ export async function updatePanel(
         department_id = updates.department_id;
       } else if (typeof updates.department_id === "string") {
         // Skip strings that start with org-dept-
-        if (!updates.department_id.startsWith("org-dept-")) {
+        if (typeof updates.department_id === "string" && !(updates.department_id as string).startsWith("org-dept-")) {
           // Try to parse the string as a number
           const parsed = parseInt(updates.department_id, 10);
           if (!isNaN(parsed)) {

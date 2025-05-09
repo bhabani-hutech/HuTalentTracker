@@ -75,6 +75,7 @@ export function PanelForm({ isOpen, onClose, initialData }: PanelFormProps) {
     const panelData = {
       name,
       members: selectedMembers,
+      department_id: initialData?.department_id || 0, // Provide a valid default or fetch dynamically
     };
 
     console.log("Submitting panel data:", panelData);
@@ -124,7 +125,7 @@ export function PanelForm({ isOpen, onClose, initialData }: PanelFormProps) {
                     </SelectItem>
                   ))
                 ) : (
-                  <SelectItem disabled>No pipeline stages available</SelectItem>
+                  <SelectItem value="no-stages" disabled>No pipeline stages available</SelectItem>
                 )}
               </SelectContent>
             </Select>
